@@ -19,11 +19,12 @@ from reportlab.platypus import ListFlowable, ListItem, PageBreak, Paragraph, Sim
 
 from app.file_parser import UnsupportedFileType, extract_text_from_file, summarize_document_signals
 from app.rag_ingest import ingest_datasheets
-from app.rag_store import rag_source_labels, retrieve_product_profiles, retrieve_rag_chunks
+from app.rag_store import CHUNKS_PATH, PRODUCT_PROFILES_PATH, rag_source_labels, retrieve_product_profiles, retrieve_rag_chunks
 
 load_dotenv()
 
 app = FastAPI(title="NIRACONCHEM AI API")
+_rag_ready = False
 
 frontend_origins = [
     "http://localhost:3000",
@@ -43,6 +44,15 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+
+def ensure_rag_indexes() -> None:
+    global _rag_ready
+    if _rag_ready and CHUNKS_PATH.exists() and PRODUCT_PROFILES_PATH.exists():
+        return
+    if not CHUNKS_PATH.exists() or not PRODUCT_PROFILES_PATH.exists():
+        ingest_datasheets()
+    _rag_ready = True
 
 
 class RecommendationRequest(BaseModel):
@@ -495,6 +505,7 @@ def build_recommendation(
     document_context: str | None = None,
     document_name: str | None = None,
 ) -> RecommendationResponse:
+    ensure_rag_indexes()
     response = build_rule_based_response(query, document_context, document_name)
     product_profiles = retrieve_product_profiles(query, document_context, limit=3)
     rag_chunks = retrieve_rag_chunks(query, document_context, limit=8)
@@ -1000,7 +1011,35 @@ async def analyze_file(file: UploadFile = File(...)) -> FileAnalysisResponse:
 @app.post("/rag/ingest", response_model=RagIngestResponse)
 def ingest_rag() -> RagIngestResponse:
     result = ingest_datasheets()
+    global _rag_ready
+    _rag_ready = True
     return RagIngestResponse(**result)
+
+
+@app.get("/rag/status")
+def rag_status() -> dict:
+    ensure_rag_indexes()
+    chunks_count = 0
+    profiles_count = 0
+    if CHUNKS_PATH.exists():
+        try:
+            payload = json.loads(CHUNKS_PATH.read_text(encoding="utf-8"))
+            chunks_count = len(payload.get("chunks", [])) if isinstance(payload, dict) else 0
+        except json.JSONDecodeError:
+            chunks_count = 0
+    if PRODUCT_PROFILES_PATH.exists():
+        try:
+            payload = json.loads(PRODUCT_PROFILES_PATH.read_text(encoding="utf-8"))
+            profiles_count = len(payload) if isinstance(payload, list) else 0
+        except json.JSONDecodeError:
+            profiles_count = 0
+    return {
+        "rag_ready": chunks_count > 0 and profiles_count > 0,
+        "chunks_path_exists": CHUNKS_PATH.exists(),
+        "product_profiles_path_exists": PRODUCT_PROFILES_PATH.exists(),
+        "chunks_count": chunks_count,
+        "product_profiles_count": profiles_count,
+    }
 
 
 @app.post("/recommend/report")
