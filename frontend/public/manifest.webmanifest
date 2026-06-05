@@ -1,0 +1,26 @@
+{
+  "name": "NIRACONCHEM AI",
+  "short_name": "NIRACONCHEM",
+  "description": "UAE construction chemicals recommendation agent",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#0d1222",
+  "theme_color": "#0f766e",
+  "categories": ["business", "productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/assets/atom-logo-transparent.png.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/assets/atom-logo-transparent.png.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ]
+}

@@ -197,6 +197,39 @@ body.theme-dark-body {
   transform: translateX(44px);
 }
 
+.app-install-button {
+  position: fixed;
+  top: 22px;
+  right: 122px;
+  z-index: 30;
+  min-height: 42px;
+  border: 1px solid rgba(255, 255, 255, 0.62);
+  border-radius: 999px;
+  padding: 0 16px;
+  color: var(--accent-strong);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.64), rgba(255, 255, 255, 0.28)),
+    rgba(255, 255, 255, 0.56);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.58),
+    0 14px 34px rgba(24, 45, 74, 0.16);
+  backdrop-filter: blur(18px) saturate(150%);
+  cursor: pointer;
+  font-size: 13px;
+  font-weight: 900;
+}
+
+.dark-theme .app-install-button {
+  color: #ffffff;
+  border-color: rgba(255, 255, 255, 0.18);
+  background:
+    linear-gradient(135deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.04)),
+    rgba(4, 4, 4, 0.76);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.18),
+    0 18px 38px rgba(0, 0, 0, 0.44);
+}
+
 .three-wave-background {
   display: none;
   position: fixed;
@@ -1201,6 +1234,14 @@ h1 {
 
   .dark-theme .theme-toggle-knob {
     transform: translateX(38px);
+  }
+
+  .app-install-button {
+    top: 14px;
+    right: 98px;
+    min-height: 38px;
+    padding: 0 12px;
+    font-size: 12px;
   }
 
   .dark-theme .three-wave-background {

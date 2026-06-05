@@ -54,6 +54,11 @@ type ClarificationAnswers = {
   notes: string;
 };
 
+type BeforeInstallPromptEvent = Event & {
+  prompt: () => Promise<void>;
+  userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
+};
+
 const examples = [
   "Basement waterproofing in Dubai",
   "Coastal concrete repair for villa",
@@ -123,6 +128,7 @@ export default function Home() {
   const [isDownloading, setIsDownloading] = useState(false);
   const [isDarkTheme, setIsDarkTheme] = useState(false);
   const [error, setError] = useState("");
+  const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
 
   useEffect(() => {
     setIsDarkTheme(localStorage.getItem("niraconchem-theme") === "dark");
@@ -132,6 +138,16 @@ export default function Home() {
     document.documentElement.classList.toggle("theme-dark-body", isDarkTheme);
     document.body.classList.toggle("theme-dark-body", isDarkTheme);
   }, [isDarkTheme]);
+
+  useEffect(() => {
+    function handleBeforeInstallPrompt(event: Event) {
+      event.preventDefault();
+      setInstallPrompt(event as BeforeInstallPromptEvent);
+    }
+
+    window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+    return () => window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
+  }, []);
 
   function toggleTheme() {
     setIsDarkTheme((current) => {
@@ -236,6 +252,18 @@ export default function Home() {
     void submitRecommendation(query);
   }
 
+  async function installApp() {
+    if (!installPrompt) {
+      return;
+    }
+
+    await installPrompt.prompt();
+    const choice = await installPrompt.userChoice;
+    if (choice.outcome !== "dismissed") {
+      setInstallPrompt(null);
+    }
+  }
+
   async function handleFileUpload(event: ChangeEvent<HTMLInputElement>) {
     const file = event.target.files?.[0];
     if (!file) {
@@ -336,6 +364,11 @@ export default function Home() {
         <span className="theme-toggle-symbol theme-toggle-moon" aria-hidden="true">☾</span>
         <span className="theme-toggle-knob" aria-hidden="true" />
       </button>
+      {installPrompt ? (
+        <button className="app-install-button" onClick={installApp} type="button">
+          Install
+        </button>
+      ) : null}
       <ParticleWaveBackground />
       <header className="topbar">
         <div className="logo-card" aria-label="NIRACONCHEM chemistry logo">
