@@ -4,6 +4,7 @@ import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { ParticleWaveBackground } from "./components/ParticleWaveBackground";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+const API_TIMEOUT_MS = 45000;
 
 type Recommendation = {
   project_summary: string;
@@ -91,6 +92,20 @@ function shouldAskClarifyingQuestions(value: string, hasFileContext: boolean) {
   return !hasFileContext && (isBroadCategory || words.length <= 3 || missingCount >= 2);
 }
 
+async function apiFetch(path: string, options: RequestInit) {
+  const controller = new AbortController();
+  const timeoutId = window.setTimeout(() => controller.abort(), API_TIMEOUT_MS);
+
+  try {
+    return await fetch(`${API_BASE_URL}${path}`, {
+      ...options,
+      signal: controller.signal,
+    });
+  } finally {
+    window.clearTimeout(timeoutId);
+  }
+}
+
 export default function Home() {
   const [query, setQuery] = useState("");
   const [recommendation, setRecommendation] = useState<Recommendation | null>(null);
@@ -157,7 +172,7 @@ export default function Home() {
     setShowClarifier(false);
 
     try {
-      const response = await fetch(`${API_BASE_URL}/recommend`, {
+      const response = await apiFetch("/recommend", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -178,8 +193,12 @@ export default function Home() {
       if (nextQuery !== query) {
         setQuery(nextQuery);
       }
-    } catch {
-      setError("Backend is not reachable. Start the API server and try again.");
+    } catch (error) {
+      setError(
+        error instanceof DOMException && error.name === "AbortError"
+          ? "Backend took too long to respond. Check that the deployed API is awake and the Vercel backend URL is correct."
+          : "Backend is not reachable. Check NEXT_PUBLIC_API_BASE_URL, backend deployment, and CORS settings.",
+      );
     } finally {
       setIsLoading(false);
     }
@@ -229,7 +248,7 @@ export default function Home() {
     try {
       const formData = new FormData();
       formData.append("file", file);
-      const response = await fetch(`${API_BASE_URL}/analyze-file`, {
+      const response = await apiFetch("/analyze-file", {
         method: "POST",
         body: formData,
       });
@@ -240,8 +259,12 @@ export default function Home() {
 
       const data = (await response.json()) as FileAnalysis;
       setFileAnalysis(data);
-    } catch {
-      setError("Could not read that file. Try PDF, DOCX, XLSX, or TXT under 10 MB.");
+    } catch (error) {
+      setError(
+        error instanceof DOMException && error.name === "AbortError"
+          ? "File analysis took too long. Check that the deployed backend is running."
+          : "Could not read that file. Check the backend URL, CORS, and file type.",
+      );
       setFileAnalysis(null);
     } finally {
       setIsAnalyzingFile(false);
@@ -264,7 +287,7 @@ export default function Home() {
     setError("");
 
     try {
-      const response = await fetch(`${API_BASE_URL}/recommend/report`, {
+      const response = await apiFetch("/recommend/report", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -289,8 +312,12 @@ export default function Home() {
       link.click();
       link.remove();
       URL.revokeObjectURL(url);
-    } catch {
-      setError("Could not download the PDF report. Check that the backend is running.");
+    } catch (error) {
+      setError(
+        error instanceof DOMException && error.name === "AbortError"
+          ? "PDF generation took too long. Check that the deployed backend is running."
+          : "Could not download the PDF report. Check the backend URL and CORS settings.",
+      );
     } finally {
       setIsDownloading(false);
     }
