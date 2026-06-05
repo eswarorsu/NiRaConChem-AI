@@ -3,6 +3,8 @@
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
 import { ParticleWaveBackground } from "./components/ParticleWaveBackground";
 
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+
 type Recommendation = {
   project_summary: string;
   detected_location: string;
@@ -155,7 +157,7 @@ export default function Home() {
     setShowClarifier(false);
 
     try {
-      const response = await fetch("http://localhost:8000/recommend", {
+      const response = await fetch(`${API_BASE_URL}/recommend`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -227,7 +229,7 @@ export default function Home() {
     try {
       const formData = new FormData();
       formData.append("file", file);
-      const response = await fetch("http://localhost:8000/analyze-file", {
+      const response = await fetch(`${API_BASE_URL}/analyze-file`, {
         method: "POST",
         body: formData,
       });
@@ -262,7 +264,7 @@ export default function Home() {
     setError("");
 
     try {
-      const response = await fetch("http://localhost:8000/recommend/report", {
+      const response = await fetch(`${API_BASE_URL}/recommend/report`, {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
