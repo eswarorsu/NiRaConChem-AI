@@ -1,0 +1,17 @@
+.env
+backend/.env
+__pycache__/
+*.py[cod]
+.pytest_cache/
+frontend/.env*
+frontend/node_modules/
+frontend/.next/
+frontend/.npm-cache/
+frontend/next-err.log
+frontend/next-live.log
+frontend/next-out.log
+venv/
+data/vector_store/*
+!data/vector_store/.gitkeep
+reports/*
+!reports/.gitkeep
