@@ -372,9 +372,11 @@ def get_groq_enhancement(
                 "role": "system",
                 "content": (
                     "You are a UAE construction chemicals recommendation assistant. "
-                    "Select the best system and product roles using only retrieved datasheet context. "
+                    "Priority order is strict: first use selected product profile, then retrieved RAG datasheet context, "
+                    "then use your intelligence only to fill gaps such as explanation, precautions, missing questions, "
+                    "or generic application notes. Do not override datasheet-selected system, manufacturer, or products. "
                     "You may mention manufacturer and product names only when they appear in retrieved context. "
-                    "Use retrieved datasheet context as trusted technical reference when provided. "
+                    "Use retrieved datasheet context as the authoritative technical reference when provided. "
                     "Consider UAE heat, UV, humidity, salinity, dust, coastal/desert exposure, "
                     "and practical site application. Return strict JSON with keys: "
                     "best_recommended_system string, best_manufacturer string, recommended_products object "
@@ -538,15 +540,17 @@ def build_recommendation(
         response.ai_recommendation = enhancement.get("ai_recommendation")
         response.ai_precautions = enhancement.get("ai_precautions", [])
         response.ai_questions = enhancement.get("ai_questions", [])
-        response.best_recommended_system = response.best_recommended_system or enhancement.get("best_recommended_system")
-        response.best_manufacturer = enhancement.get("best_manufacturer") or response.best_manufacturer
-        if not response.selected_product_profile:
-            enhanced_products = enhancement.get("recommended_products") or {}
-            response.recommended_products = {
-                key: value or enhanced_products.get(key) or ""
-                for key, value in response.recommended_products.items()
-            }
-        response.why_recommended = enhancement.get("why_recommended") or response.why_recommended
+        if not product_profiles and not rag_chunks:
+            response.best_recommended_system = response.best_recommended_system or enhancement.get("best_recommended_system")
+            response.best_manufacturer = response.best_manufacturer or enhancement.get("best_manufacturer")
+            response.why_recommended = response.why_recommended or enhancement.get("why_recommended") or []
+        enhanced_products = enhancement.get("recommended_products") or {}
+        response.recommended_products = {
+            key: value or enhanced_products.get(key) or ""
+            for key, value in response.recommended_products.items()
+        }
+        if not response.why_recommended:
+            response.why_recommended = enhancement.get("why_recommended") or []
         response.source = "profiles+rag+groq" if product_profiles else ("rag+groq" if rag_chunks else "groq")
     elif product_profiles:
         response.source = "profiles+rag"
