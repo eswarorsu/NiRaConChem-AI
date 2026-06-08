@@ -135,6 +135,10 @@ body.theme-dark-body {
     transform 260ms ease;
 }
 
+.theme-toggle-symbol svg {
+  display: block;
+}
+
 .theme-toggle-sun {
   color: #0b4f4a;
   opacity: 1;
@@ -515,12 +519,6 @@ h1 {
   cursor: pointer;
   color: var(--accent-strong);
   font-size: 0;
-  line-height: 1;
-}
-
-.upload-icon-button::after {
-  content: "📎";
-  font-size: 21px;
   line-height: 1;
 }
 
@@ -1445,8 +1443,9 @@ h1 {
     height: 36px;
   }
 
-  .upload-icon-button::after {
-    font-size: 18px;
+  .upload-icon-button svg {
+    width: 18px;
+    height: 18px;
   }
 
   .query-input {

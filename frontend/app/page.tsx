@@ -1,6 +1,7 @@
 "use client";
 
 import { ChangeEvent, FormEvent, useEffect, useState } from "react";
+import { Moon, Paperclip, Sun } from "lucide-react";
 import { ParticleWaveBackground } from "./components/ParticleWaveBackground";
 
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
@@ -360,8 +361,12 @@ export default function Home() {
         title={isDarkTheme ? "Light theme" : "Dark theme"}
         type="button"
       >
-        <span className="theme-toggle-symbol theme-toggle-sun" aria-hidden="true">☀</span>
-        <span className="theme-toggle-symbol theme-toggle-moon" aria-hidden="true">☾</span>
+        <span className="theme-toggle-symbol theme-toggle-sun" aria-hidden="true">
+          <Sun size={17} strokeWidth={2.2} />
+        </span>
+        <span className="theme-toggle-symbol theme-toggle-moon" aria-hidden="true">
+          <Moon size={18} strokeWidth={2.2} />
+        </span>
         <span className="theme-toggle-knob" aria-hidden="true" />
       </button>
       {installPrompt ? (
@@ -384,7 +389,7 @@ export default function Home() {
       <section className={`search-stage${recommendation ? " has-result" : ""}`} aria-label="Construction chemicals search">
         <form className="search-box" onSubmit={handleSubmit}>
           <label className="upload-icon-button" htmlFor="project-file" title="Upload project file">
-            📎
+            <Paperclip size={20} strokeWidth={2.2} aria-hidden="true" />
           </label>
           <input
             accept=".pdf,.docx,.xlsx,.txt"
@@ -675,3 +680,4 @@ export default function Home() {
     </main>
   );
 }
+
