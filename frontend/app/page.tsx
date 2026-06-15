@@ -674,44 +674,35 @@ export default function Home() {
             <span>NIRACONCHEM AI Consultant</span>
             {latestChat?.report_ready ? <strong>Report ready</strong> : <strong>Collecting project data</strong>}
           </div>
-          <div className="chat-messages">
-  {chatMessages.map((message, index) => (
-    <div
-      className={`chat-message ${message.role}`}
-      key={`${message.role}-${index}`}
-    >
-      <span className="chat-avatar" aria-hidden="true">
-        {message.role === "assistant" ? (
-          <Bot size={16} />
-        ) : (
-          <User size={16} />
-        )}
-      </span>
-
-      <p>
-        {message.visibleContent ?? message.content}
-        {message.role === "assistant" &&
-        message.visibleContent !== undefined &&
-        message.visibleContent.length < message.content.length ? (
-          <span className="typing-cursor" aria-hidden="true" />
-        ) : null}
-      </p>
-    </div>
-  ))}
-</div>
-            {isAssistantTyping && chatMessages.at(-1)?.role === "user" ? (
-              <div className="chat-message assistant typing-preview">
-                <span className="chat-avatar" aria-hidden="true">
-                  <Bot size={16} />
-                </span>
-                <p aria-label="NIRACONCHEM AI is typing">
-                  <span />
-                  <span />
-                  <span />
-                </p>
-              </div>
-            ) : null}
-          </div>
+            <div className="chat-messages">
+              {chatMessages.map((message, index) => (
+                <div className={`chat-message ${message.role}`} key={`${message.role}-${index}`}>
+                  <span className="chat-avatar" aria-hidden="true">
+                    {message.role === "assistant" ? <BlinkingEyes /> : <User size={16} />}
+                  </span>
+                  <p>
+                    {message.visibleContent ?? message.content}
+                    {message.role === "assistant" &&
+                    message.visibleContent !== undefined &&
+                    message.visibleContent.length < message.content.length ? (
+                      <span className="typing-cursor" aria-hidden="true" />
+                    ) : null}
+                  </p>
+                </div>
+              ))}
+              {isAssistantTyping && chatMessages.at(-1)?.role === "user" ? (
+                <div className="chat-message assistant typing-preview">
+                  <span className="chat-avatar" aria-hidden="true">
+                    <BlinkingEyes />
+                  </span>
+                  <p aria-label="NIRACONCHEM AI is typing">
+                    <span />
+                    <span />
+                    <span />
+                  </p>
+                </div>
+              ) : null}
+            </div>
           {latestChat ? (
             <div className="chat-status">
               <div>
