@@ -605,6 +605,7 @@ def bullet_list(items: list[str], style: ParagraphStyle) -> ListFlowable:
 
 def build_pdf_report(query: str, recommendation: RecommendationResponse) -> BytesIO:
     _LOGO_PATH = Path(__file__).resolve().parent.parent / "assets" / "niraconchem-logo.png"
+    _PAGE_W, _PAGE_H = A4
     def detect_project_type() -> str:
         text = f"{query} {' '.join(recommendation.recommended_categories)}".lower()
         if has_any_term(text, ("roof", "rooftop")) or "waterproof" in text:
@@ -838,10 +839,25 @@ def build_pdf_report(query: str, recommendation: RecommendationResponse) -> Byte
         story.append(logo_img)
         story.append(Spacer(1, 15))
 
+    title_table = Table(
+        [[Paragraph("NIRACONCHEM AI TECHNICAL RECOMMENDATION REPORT", title_style)]],
+        colWidths=[174 * mm],
+        hAlign="CENTER",
+    )
+    title_table.setStyle(
+        TableStyle(
+            [
+                ("LINEBELOW", (0, 0), (-1, -1), 0.75, colors.HexColor("#0f766e")),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 6),
+                ("TOPPADDING", (0, 0), (-1, -1), 0),
+            ]
+        )
+    )
+
     story.extend(
         [
-            Paragraph("NIRACONCHEM AI TECHNICAL RECOMMENDATION REPORT", title_style),
-            Spacer(1, 8),
+            title_table,
+            Spacer(1, 12),
             section("1. PROJECT INFORMATION"),
         data_table(
             [
@@ -1037,7 +1053,6 @@ def build_pdf_report(query: str, recommendation: RecommendationResponse) -> Byte
 
     # ── per-page canvas decorations ──────────────────────────────────────────
     _REPORT_DATE = datetime.now().strftime("%d %B %Y")
-    _PAGE_W, _PAGE_H = A4
 
     def _draw_page_decorations(canvas_obj, _doc) -> None:
         canvas_obj.saveState()
