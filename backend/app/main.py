@@ -3,6 +3,7 @@ import os
 import re
 from datetime import datetime
 from io import BytesIO
+from pathlib import Path
 from xml.sax.saxutils import escape
 
 from dotenv import load_dotenv
@@ -729,8 +730,8 @@ def build_pdf_report(query: str, recommendation: RecommendationResponse) -> Byte
         pagesize=A4,
         rightMargin=18 * mm,
         leftMargin=18 * mm,
-        topMargin=18 * mm,
-        bottomMargin=16 * mm,
+        topMargin=38 * mm,
+        bottomMargin=36 * mm,
         title="NIRACONCHEM AI Technical Recommendation Report",
     )
 
@@ -1001,7 +1002,82 @@ def build_pdf_report(query: str, recommendation: RecommendationResponse) -> Byte
         ]
     )
 
-    doc.build(story)
+    # ── per-page canvas decorations ──────────────────────────────────────────
+    _LOGO_PATH = Path(__file__).parent.parent / "assets" / "niraconchem-logo.png"
+    _REPORT_DATE = datetime.now().strftime("%d %B %Y")
+    _PAGE_W, _PAGE_H = A4
+
+    def _draw_page_decorations(canvas_obj, _doc) -> None:
+        canvas_obj.saveState()
+
+        # ── logo top-left ─────────────────────────────────────────────────────
+        logo_size = 22 * mm
+        logo_x = 18 * mm
+        logo_y = _PAGE_H - 18 * mm - logo_size
+        if _LOGO_PATH.exists():
+            canvas_obj.drawImage(
+                str(_LOGO_PATH),
+                logo_x,
+                logo_y,
+                width=logo_size,
+                height=logo_size,
+                preserveAspectRatio=True,
+                mask="auto",
+            )
+        # Brand name next to logo
+        canvas_obj.setFont("Helvetica-Bold", 10)
+        canvas_obj.setFillColor(colors.HexColor("#0b4f4a"))
+        canvas_obj.drawString(logo_x + logo_size + 4 * mm, logo_y + 13 * mm, "NIRACONCHEM AI")
+        canvas_obj.setFont("Helvetica", 7.5)
+        canvas_obj.setFillColor(colors.HexColor("#53677d"))
+        canvas_obj.drawString(logo_x + logo_size + 4 * mm, logo_y + 8.5 * mm, "Construction Chemical Intelligence")
+
+        # ── thin teal header rule ─────────────────────────────────────────────
+        rule_y = _PAGE_H - 18 * mm - logo_size - 3 * mm
+        canvas_obj.setStrokeColor(colors.HexColor("#0f766e"))
+        canvas_obj.setLineWidth(0.6)
+        canvas_obj.line(18 * mm, rule_y, _PAGE_W - 18 * mm, rule_y)
+
+        # ── page number top-right ─────────────────────────────────────────────
+        canvas_obj.setFont("Helvetica", 7.5)
+        canvas_obj.setFillColor(colors.HexColor("#53677d"))
+        page_label = f"Page {canvas_obj.getPageNumber()}"
+        canvas_obj.drawRightString(_PAGE_W - 18 * mm, logo_y + 10 * mm, page_label)
+
+        # ── thin footer rule ──────────────────────────────────────────────────
+        footer_rule_y = 20 * mm
+        canvas_obj.setStrokeColor(colors.HexColor("#d7e7e3"))
+        canvas_obj.setLineWidth(0.5)
+        canvas_obj.line(18 * mm, footer_rule_y, _PAGE_W - 18 * mm, footer_rule_y)
+
+        # ── authority signature block (bottom-right) ──────────────────────────
+        sig_right = _PAGE_W - 18 * mm
+        sig_y_base = footer_rule_y - 2 * mm
+
+        # Signature line
+        canvas_obj.setStrokeColor(colors.HexColor("#0b4f4a"))
+        canvas_obj.setLineWidth(0.6)
+        canvas_obj.line(sig_right - 60 * mm, sig_y_base - 5 * mm, sig_right, sig_y_base - 5 * mm)
+
+        # Labels
+        canvas_obj.setFont("Helvetica-Bold", 7)
+        canvas_obj.setFillColor(colors.HexColor("#0b4f4a"))
+        canvas_obj.drawRightString(sig_right, sig_y_base - 7.5 * mm, "Approved by: NIRACONCHEM AI System")
+
+        canvas_obj.setFont("Helvetica", 6.5)
+        canvas_obj.setFillColor(colors.HexColor("#53677d"))
+        canvas_obj.drawRightString(sig_right, sig_y_base - 10.5 * mm, f"Report generated: {_REPORT_DATE}")
+        canvas_obj.drawRightString(sig_right, sig_y_base - 13 * mm, "For guidance purposes only – verify before implementation")
+
+        # Left footer confidentiality note
+        canvas_obj.setFont("Helvetica", 6.5)
+        canvas_obj.setFillColor(colors.HexColor("#53677d"))
+        canvas_obj.drawString(18 * mm, sig_y_base - 7.5 * mm, "CONFIDENTIAL — NIRACONCHEM AI Technical Report")
+        canvas_obj.drawString(18 * mm, sig_y_base - 10.5 * mm, "www.niraconchem.ai")
+
+        canvas_obj.restoreState()
+
+    doc.build(story, onFirstPage=_draw_page_decorations, onLaterPages=_draw_page_decorations)
     buffer.seek(0)
     return buffer
 

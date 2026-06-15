@@ -30,6 +30,22 @@ def main() -> int:
     if not broad.questions:
         raise AssertionError("expected clarification questions for broad waterproofing query")
 
+    broad_chemicals = app_main.chat(app_main.ChatRequest(message="I need construction chemicals"))
+    assert broad_chemicals.intent == "technical_consultation"
+    assert broad_chemicals.needs_clarification
+    assert not broad_chemicals.report_ready
+    assert_contains(" ".join(broad_chemicals.questions), "Which area is this for")
+    assert_contains(" ".join(broad_chemicals.questions), "What is the substrate")
+    assert_contains(" ".join(broad_chemicals.questions), "What exposure should the system handle")
+    assert_contains(" ".join(broad_chemicals.questions), "Where is the project located")
+
+    general = app_main.chat(app_main.ChatRequest(message="What is waterproofing?"))
+    assert general.intent == "general_question"
+    assert not general.needs_clarification
+    assert not general.report_ready
+    if general.questions:
+        raise AssertionError("expected no project-detail questions for a general knowledge question")
+
     follow_up = app_main.chat(
         app_main.ChatRequest(
             session_id=broad.session_id,

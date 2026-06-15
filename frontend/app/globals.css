@@ -436,10 +436,18 @@ h1 {
   order: 3;
 }
 
+.consultant-title {
+  margin: 12px 0 0;
+  font-size: 32px;
+  font-weight: 800;
+  letter-spacing: -0.015em;
+  color: var(--accent-strong);
+}
+
 .assistant-label {
-  margin: 14px 0 0;
+  margin: 6px 0 0;
   color: rgba(19, 32, 29, 0.82);
-  font-size: 22px;
+  font-size: 16px;
   font-weight: 700;
 }
 
@@ -520,6 +528,11 @@ h1 {
   color: var(--accent-strong);
   font-size: 0;
   line-height: 1;
+}
+
+.dark-theme .consultant-title {
+  color: #ffffff;
+  text-shadow: 0 0 24px rgba(255, 255, 255, 0.35);
 }
 
 .dark-theme .assistant-label {
@@ -956,20 +969,23 @@ h1 {
   display: flex;
   align-items: center;
   justify-content: center;
-
-  background: linear-gradient(145deg,#0f766e,#0b4f4a);
-
-  border-radius: 50%;
-
-  box-shadow:
-      0 0 12px rgba(0,229,255,.4),
-      inset 0 0 8px rgba(255,255,255,.15);
+  background: transparent;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
 }
 
 .chat-message.user .chat-avatar {
   grid-column: 2;
   grid-row: 1;
-  background: linear-gradient(145deg, #232a31, #07090c);
+  background:
+    radial-gradient(circle at 30% 24%, rgba(255, 255, 255, 0.92), transparent 34%),
+    linear-gradient(145deg, #f8fcff 0%, #b8f4ee 48%, #70d8ce 100%);
+  border: 1px solid rgba(255, 255, 255, 0.82);
+  border-radius: 50%;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.95),
+    0 10px 20px rgba(15, 118, 110, 0.22);
 }
 
 .chat-message p {
@@ -1717,67 +1733,102 @@ h1 {
     font-size: 12px;
   }
 }
-/* ============================
-   NIRACONCHEM AI Eyes
-============================ */
-
-.eyesWrapper {
-  width: 34px;
+.ai-head-icon {
+  width: 42px;
   height: 34px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  gap: 5px;
+  display: grid;
+  place-items: center;
+  border-radius: 15px;
+  background:
+    radial-gradient(circle at 35% 18%, rgba(255, 255, 255, 0.96), transparent 28%),
+    linear-gradient(145deg, #fbfbff 0%, #d9ddf2 52%, #afb8dc 100%);
+  border: 1px solid rgba(255, 255, 255, 0.86);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.92),
+    inset 0 -2px 4px rgba(82, 93, 142, 0.18),
+    0 8px 16px rgba(83, 103, 148, 0.18);
 }
 
-.eye {
-  width: 12px;
-  height: 12px;
-  background: white;
-  border-radius: 50%;
+.ai-face-screen {
+  width: 32px;
+  height: 20px;
   position: relative;
-  overflow: hidden;
-  animation: blink 4.5s infinite;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  border-radius: 9px;
+  background:
+    radial-gradient(circle at 70% 24%, rgba(62, 231, 255, 0.16), transparent 20%),
+    linear-gradient(145deg, #1c2440 0%, #0c1020 100%);
+  box-shadow:
+    inset 0 1px 2px rgba(255, 255, 255, 0.08),
+    inset 0 -1px 3px rgba(0, 0, 0, 0.35);
 }
 
-.pupil {
-  width: 5px;
-  height: 5px;
-  background: #00e5ff;
+.ai-eye {
+  width: 7px;
+  height: 7px;
+  display: block;
   border-radius: 50%;
+  background:
+    radial-gradient(circle at 62% 34%, #ffffff 0 12%, transparent 14%),
+    #56e4ff;
+  box-shadow: 0 0 6px rgba(73, 223, 255, 0.8);
+  transform-origin: center;
+  animation: cute-eye-blink 4.4s infinite ease-in-out;
+}
+
+.ai-eye-right {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+}
+
+.classic-user-avatar {
+  width: 26px;
+  height: 26px;
+  position: relative;
+}
+
+.classic-user-head {
+  width: 10px;
+  height: 10px;
   position: absolute;
-  top: 3px;
-  left: 3px;
-  box-shadow: 0 0 8px #00e5ff;
-  animation: lookAround 5s infinite ease-in-out;
+  top: 1px;
+  left: 8px;
+  border-radius: 50%;
+  background: linear-gradient(180deg, #ffffff 0%, #eafefa 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.9),
+    0 1px 2px rgba(15, 118, 110, 0.22);
 }
 
-@keyframes blink {
-  0%, 94%, 100% {
-    height: 12px;
-    margin-top: 0;
-  }
-
-  96% {
-    height: 2px;
-    margin-top: 5px;
-  }
+.classic-user-shoulders {
+  width: 18px;
+  height: 10px;
+  position: absolute;
+  left: 4px;
+  bottom: 2px;
+  border-radius: 10px 10px 7px 7px;
+  background: linear-gradient(180deg, #ffffff 0%, #d9fbf5 100%);
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.88),
+    0 1px 2px rgba(15, 118, 110, 0.2);
 }
 
-@keyframes lookAround {
-  0%,100% {
-    transform: translateX(0);
+@keyframes cute-eye-blink {
+  0%,
+  88%,
+  100% {
+    transform: scaleY(1);
   }
 
-  25% {
-    transform: translateX(-2px);
+  90% {
+    transform: scaleY(0.18);
   }
 
-  50% {
-    transform: translateX(2px);
-  }
-
-  75% {
-    transform: translateX(-1px);
+  92% {
+    transform: scaleY(1);
   }
 }

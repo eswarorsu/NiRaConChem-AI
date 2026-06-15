@@ -1,8 +1,9 @@
-﻿"use client";
+"use client";
 
 import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
-import { Moon, Paperclip, Sun, User } from "lucide-react";
+import { Moon, Paperclip, Sun } from "lucide-react";
 import BlinkingEyes from "./components/BlinkingEyes";
+import ClassicUserAvatar from "./components/ClassicUserAvatar";
 import { ParticleWaveBackground } from "./components/ParticleWaveBackground";
 
 const RENDER_API_BASE_URL = "https://niraconchem-ai.onrender.com";
@@ -129,6 +130,48 @@ function shouldAskClarifyingQuestions(value: string, hasFileContext: boolean) {
   const missingCount = [missingArea, missingExposure, missingSubstrate].filter(Boolean).length;
 
   return !hasFileContext && (isBroadCategory || words.length <= 3 || missingCount >= 2);
+}
+
+function renderAssistantContent(content: string, showCursor: boolean) {
+  const blocks = content.split(/\n{2,}/).filter((block) => block.trim());
+
+  return (
+    <div className="chat-answer">
+      {blocks.map((block, blockIndex) => {
+        const lines = block.split("\n").filter((line) => line.trim());
+        const isList = lines.every((line) => /^[-•]\s+/.test(line.trim()));
+
+        if (isList) {
+          return (
+            <ul className="chat-answer-list" key={`${block}-${blockIndex}`}>
+              {lines.map((line, lineIndex) => (
+                <li key={`${line}-${lineIndex}`}>{line.replace(/^[-•]\s+/, "")}</li>
+              ))}
+            </ul>
+          );
+        }
+
+        const text = lines.join(" ");
+        const [label, ...rest] = text.split(":");
+        const hasShortLabel = rest.length > 0 && label.length <= 34;
+
+        return (
+          <p className={blockIndex === 0 ? "chat-answer-lead" : ""} key={`${text}-${blockIndex}`}>
+            {hasShortLabel ? (
+              <>
+                <strong>{label}:</strong>
+                {rest.join(":")}
+              </>
+            ) : (
+              text
+            )}
+            {showCursor && blockIndex === blocks.length - 1 ? <span className="typing-cursor" aria-hidden="true" /> : null}
+          </p>
+        );
+      })}
+      {showCursor && blocks.length === 0 ? <span className="typing-cursor" aria-hidden="true" /> : null}
+    </div>
+  );
 }
 
 async function apiFetch(path: string, options: RequestInit) {
@@ -525,6 +568,7 @@ export default function Home() {
             alt="NIRACONCHEM chemistry logo"
           />
         </div>
+        <h1 className="consultant-title">NIRACONCHEM AI</h1>
         <p className="assistant-label">Ask for UAE-ready construction chemical guidance</p>
       </header>
 
@@ -678,7 +722,7 @@ export default function Home() {
               {chatMessages.map((message, index) => (
                 <div className={`chat-message ${message.role}`} key={`${message.role}-${index}`}>
                   <span className="chat-avatar" aria-hidden="true">
-                    {message.role === "assistant" ? <BlinkingEyes /> : <User size={16} />}
+                    {message.role === "assistant" ? <BlinkingEyes /> : <ClassicUserAvatar />}
                   </span>
                   <p>
                     {message.visibleContent ?? message.content}

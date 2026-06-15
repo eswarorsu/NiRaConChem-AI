@@ -152,6 +152,37 @@ REQUIREMENT_TERMS = {
     "protection",
 }
 
+PROJECT_REQUEST_TERMS = {
+    "i need",
+    "need",
+    "recommend",
+    "suggest",
+    "select",
+    "best",
+    "use for",
+    "for my",
+    "project",
+    "site",
+    "problem",
+    "solution",
+    "system",
+    "report",
+    "pdf",
+}
+
+KNOWLEDGE_QUESTION_STARTERS = (
+    "what is",
+    "what are",
+    "explain",
+    "define",
+    "difference between",
+    "how does",
+    "how do",
+    "why does",
+    "why do",
+    "tell me about",
+)
+
 
 def normalize_message(message: str) -> str:
     return " ".join(message.strip().split())
@@ -200,6 +231,24 @@ def extract_requirements(message: str) -> dict[str, str | None]:
         "exposure": first_matching_term(normalized, EXPOSURE_TERMS),
         "location": first_matching_term(normalized, LOCATION_TERMS),
     }
+
+
+def is_general_knowledge_question(message: str) -> bool:
+    normalized = normalize_search_text(message)
+    has_question_shape = normalized.endswith("?") or any(
+        normalized.startswith(starter) for starter in KNOWLEDGE_QUESTION_STARTERS
+    )
+    if not has_question_shape:
+        return False
+    if has_any_term(normalized, PROJECT_REQUEST_TERMS):
+        return False
+    return True
+
+
+def is_requirement_detail_message(message: str) -> bool:
+    normalized = normalize_search_text(message)
+    detail_terms = REQUIREMENT_TERMS | AREA_TERMS | SUBSTRATE_TERMS | EXPOSURE_TERMS | LOCATION_TERMS
+    return has_any_term(normalized, detail_terms)
 
 
 def missing_requirements(requirements: dict[str, str | None]) -> list[str]:
@@ -277,11 +326,13 @@ def detect_intent(message: str) -> str:
         return "brand_identity"
     if has_any_term(normalized, {"hi", "hello", "hey"}) and len(normalized.split()) <= 4:
         return "greeting"
+    if is_general_knowledge_question(normalized):
+        return "general_question"
     if has_any_term(normalized, CONSTRUCTION_TERMS):
         return "technical_consultation"
     if "niraconchem" in normalized:
         return "brand_identity"
-    return "out_of_scope"
+    return "general_question"
 
 
 def clarification_questions(message: str) -> list[str]:
@@ -297,7 +348,7 @@ def clarification_questions(message: str) -> list[str]:
         questions.append("What exposure should the system handle: UV/heat, water pressure, traffic, chemicals, coastal chloride, or interior use?")
     if not requirements["location"]:
         questions.append("Where is the project located?")
-    return questions[:4]
+    return questions
 
 
 def needs_clarification(message: str) -> bool:
@@ -352,6 +403,50 @@ def fallback_technical_reply(recommendation: Any) -> str:
         "checked against the project specification, site condition, and manufacturer datasheet."
     )
     return "\n\n".join(reply)
+
+
+def fallback_general_reply(message: str) -> str:
+    normalized = normalize_search_text(message)
+    if has_any_term(normalized, {"thank", "thanks"}):
+        return "You are welcome. Ask me anything, or tell me a construction chemical requirement when you want a project recommendation."
+    return (
+        "I can answer general questions too. For a deeper LLM answer, connect the Groq API key in the backend environment. "
+        "If you want a construction chemical recommendation, tell me the project problem and I will collect the area, "
+        "substrate, exposure, and location."
+    )
+
+
+def get_general_llm_reply(message: str, history: list[dict[str, str]]) -> str | None:
+    api_key = os.getenv("GROQ_API_KEY")
+    if not api_key:
+        return None
+
+    client = Groq(api_key=api_key)
+    model = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
+    completion = client.chat.completions.create(
+        model=model,
+        temperature=0.45,
+        messages=[
+            {
+                "role": "system",
+                "content": (
+                    "You are NIRACONCHEM AI. Answer normal general questions naturally and concisely. "
+                    "If the user asks for construction chemical product selection, site recommendation, "
+                    "or a PDF report, explain that you need project area, substrate, exposure, and location. "
+                    "Do not invent private company facts. Founder detail, if asked: Sravani Uppu is the founder "
+                    "and is a construction chemicals specifications specialist with 10 years of experience."
+                ),
+            },
+            *[
+                {"role": item["role"], "content": item["content"]}
+                for item in history[-6:]
+                if item.get("role") in {"user", "assistant"} and item.get("content")
+            ],
+            {"role": "user", "content": message},
+        ],
+    )
+    reply = completion.choices[0].message.content
+    return reply.strip() if reply else None
 
 
 def get_llm_chat_reply(message: str, history: list[dict[str, str]], recommendation: Any) -> str | None:
@@ -413,9 +508,22 @@ def run_chat_agent(
 ) -> dict[str, Any]:
     clean_message = normalize_message(message)
     context = consultation_context(clean_message, history)
-    intent = detect_intent(context)
+    current_intent = detect_intent(clean_message)
+    context_intent = detect_intent(context)
+    is_slot_follow_up = (
+        context_intent == "technical_consultation"
+        and is_requirement_detail_message(clean_message)
+        and not is_general_knowledge_question(clean_message)
+    )
+    intent = (
+        current_intent
+        if current_intent in {"brand_identity", "greeting"} or (current_intent == "general_question" and not is_slot_follow_up)
+        else context_intent
+    )
+    context_requirements = extract_requirements(context)
+    context_missing = missing_requirements(context_requirements)
 
-    if detect_intent(clean_message) == "brand_identity":
+    if current_intent == "brand_identity":
         return {
             "reply": FOUNDER_REPLY,
             "intent": intent,
@@ -430,7 +538,7 @@ def run_chat_agent(
             "report_payload": None,
         }
 
-    if detect_intent(clean_message) == "greeting" and not history:
+    if current_intent == "greeting" and not history:
         return {
             "reply": GREETING_REPLY,
             "intent": intent,
@@ -445,27 +553,23 @@ def run_chat_agent(
             "report_payload": None,
         }
 
-    if intent == "out_of_scope":
+    if current_intent == "general_question" and not is_slot_follow_up:
         return {
-            "reply": (
-                "I can help best with construction chemicals, waterproofing, concrete repair, flooring, "
-                "coatings, sealants, tile systems, and related civil engineering materials. Tell me the "
-                "project problem and I will guide you from there."
-            ),
+            "reply": get_general_llm_reply(clean_message, history) or fallback_general_reply(clean_message),
             "intent": intent,
             "needs_clarification": False,
             "questions": [],
             "sources": [],
             "recommendation": None,
-            "requirements": {},
-            "missing_requirements": [],
+            "requirements": context_requirements,
+            "missing_requirements": context_missing,
             "report_ready": False,
             "report_endpoint": None,
             "report_payload": None,
         }
 
-    requirements = extract_requirements(context)
-    missing = missing_requirements(requirements)
+    requirements = context_requirements
+    missing = context_missing
 
     if needs_clarification(context):
         questions = clarification_questions(context)
