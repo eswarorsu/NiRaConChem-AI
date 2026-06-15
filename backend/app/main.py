@@ -833,11 +833,6 @@ def build_pdf_report(query: str, recommendation: RecommendationResponse) -> Byte
         return Table(wrapped_rows, colWidths=widths, splitByRow=True, repeatRows=1 if header else 0, style=TableStyle(table_style))
 
     story = []
-    if _LOGO_PATH.exists():
-        logo_img = Image(str(_LOGO_PATH), width=30 * mm, height=30 * mm)
-        logo_img.hAlign = "CENTER"
-        story.append(logo_img)
-        story.append(Spacer(1, 15))
 
     title_table = Table(
         [[Paragraph("NIRACONCHEM AI TECHNICAL RECOMMENDATION REPORT", title_style)]],
@@ -1057,6 +1052,22 @@ def build_pdf_report(query: str, recommendation: RecommendationResponse) -> Byte
     def _draw_page_decorations(canvas_obj, _doc) -> None:
         canvas_obj.saveState()
         page_num = canvas_obj.getPageNumber()
+
+        # ── Page 1 Center Logo ────────────────────────────────────────────────
+        if page_num == 1:
+            logo_size = 24 * mm
+            logo_x = (_PAGE_W - logo_size) / 2
+            logo_y = _PAGE_H - 8 * mm - logo_size
+            if _LOGO_PATH.exists():
+                canvas_obj.drawImage(
+                    str(_LOGO_PATH),
+                    logo_x,
+                    logo_y,
+                    width=logo_size,
+                    height=logo_size,
+                    preserveAspectRatio=True,
+                    mask="auto",
+                )
 
         # ── Running Header (Subsequent pages only) ────────────────────────────
         if page_num > 1:
