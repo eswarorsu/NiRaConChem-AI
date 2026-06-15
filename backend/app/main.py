@@ -1003,7 +1003,7 @@ def build_pdf_report(query: str, recommendation: RecommendationResponse) -> Byte
     )
 
     # ── per-page canvas decorations ──────────────────────────────────────────
-    _LOGO_PATH = Path(__file__).parent.parent / "assets" / "niraconchem-logo.png"
+    _LOGO_PATH = Path(__file__).resolve().parent.parent / "assets" / "niraconchem-logo.png"
     _REPORT_DATE = datetime.now().strftime("%d %B %Y")
     _PAGE_W, _PAGE_H = A4
 
@@ -1054,20 +1054,18 @@ def build_pdf_report(query: str, recommendation: RecommendationResponse) -> Byte
         sig_right = _PAGE_W - 18 * mm
         sig_y_base = footer_rule_y - 2 * mm
 
-        # Signature line
-        canvas_obj.setStrokeColor(colors.HexColor("#0b4f4a"))
-        canvas_obj.setLineWidth(0.6)
-        canvas_obj.line(sig_right - 60 * mm, sig_y_base - 5 * mm, sig_right, sig_y_base - 5 * mm)
-
-        # Labels
+        # Draw "Authority Signature:" label and empty line
         canvas_obj.setFont("Helvetica-Bold", 7)
         canvas_obj.setFillColor(colors.HexColor("#0b4f4a"))
-        canvas_obj.drawRightString(sig_right, sig_y_base - 7.5 * mm, "Approved by: NIRACONCHEM AI System")
+        canvas_obj.drawString(sig_right - 70 * mm, sig_y_base - 5 * mm, "Authority Signature:")
+        
+        canvas_obj.setStrokeColor(colors.HexColor("#0b4f4a"))
+        canvas_obj.setLineWidth(0.6)
+        canvas_obj.line(sig_right - 40 * mm, sig_y_base - 5 * mm, sig_right, sig_y_base - 5 * mm)
 
-        canvas_obj.setFont("Helvetica", 6.5)
-        canvas_obj.setFillColor(colors.HexColor("#53677d"))
-        canvas_obj.drawRightString(sig_right, sig_y_base - 10.5 * mm, f"Report generated: {_REPORT_DATE}")
-        canvas_obj.drawRightString(sig_right, sig_y_base - 13 * mm, "For guidance purposes only – verify before implementation")
+        # Draw "Date:" label and empty line
+        canvas_obj.drawString(sig_right - 70 * mm, sig_y_base - 11 * mm, "Date:")
+        canvas_obj.line(sig_right - 40 * mm, sig_y_base - 11 * mm, sig_right, sig_y_base - 11 * mm)
 
         # Left footer confidentiality note
         canvas_obj.setFont("Helvetica", 6.5)
