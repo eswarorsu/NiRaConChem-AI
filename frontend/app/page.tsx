@@ -1,10 +1,13 @@
-"use client";
+﻿"use client";
 
-import { ChangeEvent, FormEvent, useEffect, useState } from "react";
-import { Moon, Paperclip, Sun } from "lucide-react";
+import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
+import { Moon, Paperclip, Sun, User } from "lucide-react";
+import BlinkingEyes from "./components/BlinkingEyes";
 import { ParticleWaveBackground } from "./components/ParticleWaveBackground";
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8000";
+const API_BASE_URL =
+  process.env.NEXT_PUBLIC_API_BASE_URL ||
+  (process.env.NODE_ENV === "development" ? "http://localhost:8000" : "https://niraconchem-ai.onrender.com");
 const API_TIMEOUT_MS = 45000;
 
 type Recommendation = {
@@ -47,6 +50,31 @@ type FileAnalysis = {
   requirements: string[];
 };
 
+type ChatMessage = {
+  role: "user" | "assistant";
+  content: string;
+  visibleContent?: string;
+};
+
+type ChatResponse = {
+  session_id: string;
+  reply: string;
+  intent: string;
+  needs_clarification: boolean;
+  questions: string[];
+  sources: string[];
+  recommendation?: Record<string, unknown> | null;
+  requirements: Record<string, string | null>;
+  missing_requirements: string[];
+  report_ready: boolean;
+  report_endpoint?: string | null;
+  report_payload?: {
+    query?: string;
+    document_context?: string;
+    document_name?: string;
+  } | null;
+};
+
 type ClarificationAnswers = {
   area: string;
   exposure: string;
@@ -61,9 +89,9 @@ type BeforeInstallPromptEvent = Event & {
 };
 
 const examples = [
-  "Basement waterproofing in Dubai",
-  "Coastal concrete repair for villa",
-  "Rooftop heat exposure waterproofing",
+  "I need waterproofing",
+  "Dubai basement concrete hydrostatic pressure",
+  "Who founded NIRACONCHEM AI?",
 ];
 
 const clarificationOptions = {
@@ -114,6 +142,10 @@ async function apiFetch(path: string, options: RequestInit) {
 
 export default function Home() {
   const [query, setQuery] = useState("");
+  const [sessionId, setSessionId] = useState<string | null>(null);
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [latestChat, setLatestChat] = useState<ChatResponse | null>(null);
+  const [reportPayload, setReportPayload] = useState<ChatResponse["report_payload"]>(null);
   const [recommendation, setRecommendation] = useState<Recommendation | null>(null);
   const [fileAnalysis, setFileAnalysis] = useState<FileAnalysis | null>(null);
   const [showClarifier, setShowClarifier] = useState(false);
@@ -127,9 +159,12 @@ export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const [isAnalyzingFile, setIsAnalyzingFile] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isAssistantTyping, setIsAssistantTyping] = useState(false);
   const [isDarkTheme, setIsDarkTheme] = useState(false);
   const [error, setError] = useState("");
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+  const typingIntervalRef = useRef<number | null>(null);
+  const hasChatStarted = chatMessages.some((message) => message.role === "user");
 
   useEffect(() => {
     setIsDarkTheme(localStorage.getItem("niraconchem-theme") === "dark");
@@ -149,6 +184,57 @@ export default function Home() {
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
     return () => window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
   }, []);
+
+  useEffect(() => {
+    return () => {
+      if (typingIntervalRef.current) {
+        window.clearInterval(typingIntervalRef.current);
+      }
+    };
+  }, []);
+
+  function clearTypingAnimation() {
+    if (typingIntervalRef.current) {
+      window.clearInterval(typingIntervalRef.current);
+      typingIntervalRef.current = null;
+    }
+  }
+
+  function animateAssistantMessage(content: string) {
+    clearTypingAnimation();
+    setIsAssistantTyping(true);
+    setChatMessages((current) => [
+      ...current,
+      {
+        role: "assistant",
+        content,
+        visibleContent: "",
+      },
+    ]);
+
+    let index = 0;
+    typingIntervalRef.current = window.setInterval(() => {
+      index += 3;
+      const nextContent = content.slice(0, index);
+      setChatMessages((current) => {
+        const next = [...current];
+        const lastIndex = next.length - 1;
+        if (lastIndex < 0 || next[lastIndex].role !== "assistant") {
+          return current;
+        }
+        next[lastIndex] = {
+          ...next[lastIndex],
+          visibleContent: nextContent,
+        };
+        return next;
+      });
+
+      if (index >= content.length) {
+        clearTypingAnimation();
+        setIsAssistantTyping(false);
+      }
+    }, 18);
+  }
 
   function toggleTheme() {
     setIsDarkTheme((current) => {
@@ -221,6 +307,65 @@ export default function Home() {
     }
   }
 
+  async function submitChat(nextMessage = query) {
+    const trimmedMessage = nextMessage.trim();
+    if (!trimmedMessage) {
+      setError("Enter a construction chemical requirement first.");
+      return;
+    }
+
+    setIsLoading(true);
+    setIsAssistantTyping(true);
+    setError("");
+    setShowClarifier(false);
+    setChatMessages((current) => [...current, { role: "user", content: trimmedMessage }]);
+    setQuery("");
+
+    try {
+      const response = await apiFetch("/chat", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          session_id: sessionId,
+          message: trimmedMessage,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Chat request failed.");
+      }
+
+      const data = (await response.json()) as ChatResponse;
+      setSessionId(data.session_id);
+      setLatestChat(data);
+      setReportPayload(data.report_payload || null);
+      animateAssistantMessage(
+        [data.reply, ...data.questions.map((question) => `- ${question}`)].join(
+          data.questions.length ? "\n\n" : "",
+        ),
+      );
+
+      const reportQuery = data.report_payload?.query?.trim();
+      if (data.report_ready && reportQuery) {
+        setQuery("");
+      }
+    } catch (error) {
+      setError(
+        error instanceof DOMException && error.name === "AbortError"
+          ? "NIRACONCHEM AI took too long to respond. The backend may be waking up."
+          : "Chat backend is not reachable. Check NEXT_PUBLIC_API_BASE_URL, backend deployment, and CORS settings.",
+      );
+      clearTypingAnimation();
+      setIsAssistantTyping(false);
+      setChatMessages((current) => current.slice(0, -1));
+      setQuery(trimmedMessage);
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
   function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     const trimmedQuery = query.trim();
@@ -228,21 +373,13 @@ export default function Home() {
       setError("Enter a construction chemical requirement first.");
       return;
     }
-
-    if (shouldAskClarifyingQuestions(trimmedQuery, Boolean(fileAnalysis)) && !showClarifier) {
-      setRecommendation(null);
-      setError("");
-      setShowClarifier(true);
-      return;
-    }
-
-    void submitRecommendation(showClarifier ? buildClarifiedQuery() : trimmedQuery);
+    void submitChat(trimmedQuery);
   }
 
   function handleExample(example: string) {
     setQuery(example);
     setShowClarifier(false);
-    void submitRecommendation(example);
+    void submitChat(example);
   }
 
   function submitWithClarification() {
@@ -306,7 +443,7 @@ export default function Home() {
   }
 
   async function downloadReport() {
-    const trimmedQuery = query.trim();
+    const trimmedQuery = reportPayload?.query?.trim() || query.trim();
     if (!trimmedQuery) {
       setError("Generate a recommendation before downloading a PDF.");
       return;
@@ -323,8 +460,8 @@ export default function Home() {
         },
         body: JSON.stringify({
           query: trimmedQuery,
-          document_context: fileAnalysis?.preview,
-          document_name: fileAnalysis?.filename,
+          document_context: reportPayload?.document_context || fileAnalysis?.preview,
+          document_name: reportPayload?.document_name || fileAnalysis?.filename,
         }),
       });
 
@@ -353,7 +490,7 @@ export default function Home() {
   }
 
   return (
-    <main className={`home${recommendation ? " has-result" : ""}${isDarkTheme ? " dark-theme" : ""}`}>
+    <main className={`home${hasChatStarted ? " has-result" : ""}${isDarkTheme ? " dark-theme" : ""}`}>
       <button
         aria-label={isDarkTheme ? "Switch to light theme" : "Switch to dark theme"}
         className="theme-toggle"
@@ -386,7 +523,7 @@ export default function Home() {
         <p className="assistant-label">Ask for UAE-ready construction chemical guidance</p>
       </header>
 
-      <section className={`search-stage${recommendation ? " has-result" : ""}`} aria-label="Construction chemicals search">
+      <section className={`search-stage${hasChatStarted ? " has-result" : ""}`} aria-label="Construction chemicals search">
         <form className="search-box" onSubmit={handleSubmit}>
           <label className="upload-icon-button" htmlFor="project-file" title="Upload project file">
             <Paperclip size={20} strokeWidth={2.2} aria-hidden="true" />
@@ -402,12 +539,12 @@ export default function Home() {
             aria-label="Construction chemical recommendation query"
             className="query-input"
             onChange={(event) => setQuery(event.target.value)}
-            placeholder="Search: waterproofing for Dubai basement, tile adhesive for pool, repair mortar for coastal villa..."
+            placeholder="Chat: I need waterproofing, Dubai basement concrete, hydrostatic water pressure..."
             type="search"
             value={query}
           />
-          <button disabled={isLoading} type="submit">
-            {isLoading ? "Checking" : "Search"}
+          <button disabled={isLoading || isAssistantTyping} type="submit">
+            {isLoading ? "Thinking" : "Send"}
           </button>
         </form>
         <div className="quick-prompts" aria-label="Example searches">
@@ -526,156 +663,77 @@ export default function Home() {
 
         {error ? <p className="error-text">{error}</p> : null}
 
-        {recommendation ? (
-          <article className="result-panel report-preview">
-            <div className="result-header">
-              <p>NIRACONCHEM AI Technical Recommendation Report</p>
-              <span>PDF Preview</span>
-            </div>
-            <button className="download-button" disabled={isDownloading} onClick={downloadReport} type="button">
-              {isDownloading ? "Preparing PDF" : "Download PDF"}
-            </button>
+        {hasChatStarted ? (
+        <section className="chat-panel" aria-label="NIRACONCHEM AI chat">
+          <div className="chat-header">
+            <span>NIRACONCHEM AI Consultant</span>
+            {latestChat?.report_ready ? <strong>Report ready</strong> : <strong>Collecting project data</strong>}
+          </div>
+          <div className="chat-messages">
+  {chatMessages.map((message, index) => (
+    <div
+      className={`chat-message ${message.role}`}
+      key={`${message.role}-${index}`}
+    >
+      <span className="chat-avatar" aria-hidden="true">
+        {message.role === "assistant" ? (
+          <Bot size={16} />
+        ) : (
+          <User size={16} />
+        )}
+      </span>
 
-            <section className="report-section">
-              <h3>1. Project Information</h3>
-              <div className="report-table">
-                <div><strong>Project Query</strong><span>{query}</span></div>
-                <div><strong>Project Type</strong><span>{recommendation.selected_product_profile?.category || recommendation.recommended_categories[0] || "Construction chemical recommendation"}</span></div>
-                <div><strong>Project Area</strong><span>{recommendation.selected_product_profile?.application_areas?.join(", ") || "Not specified"}</span></div>
-                <div><strong>Detected Location</strong><span>{recommendation.detected_location}</span></div>
-                <div><strong>Recommendation Source</strong><span>AI + Vector Database + Technical Datasheets</span></div>
-              </div>
-            </section>
-
-            <section className="report-section">
-              <h3>2. Project Condition Assessment</h3>
-              <p>{recommendation.project_summary}</p>
-              <ul>
-                {recommendation.climate_context.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </section>
-
-            <section className="report-section">
-              <h3>3. Recommended System</h3>
-              <div className="report-table">
-                <div><strong>System Name</strong><span>{displayValue(recommendation.best_recommended_system)}</span></div>
-                <div><strong>System Category</strong><span>{recommendation.selected_product_profile?.category || recommendation.recommended_categories[0]}</span></div>
-                <div><strong>Recommended Manufacturer</strong><span>{displayValue(recommendation.best_manufacturer)}</span></div>
-                <div><strong>Confidence Score</strong><span>{recommendation.selected_product_profile?.score ? `${recommendation.selected_product_profile.score}/10` : "Datasheet profile matched"}</span></div>
-              </div>
-            </section>
-
-            <section className="report-section">
-              <h3>4. Recommended Products</h3>
-              <div className="product-preview">
-                <div><strong>Primer</strong><span>{displayValue(recommendation.recommended_products?.primer)}</span></div>
-                <div><strong>Main Product</strong><span>{displayValue(recommendation.recommended_products?.main_membrane)}</span></div>
-                <div><strong>Reinforcement</strong><span>{displayValue(recommendation.recommended_products?.reinforcement)}</span></div>
-                <div><strong>Top Coat</strong><span>{displayValue(recommendation.recommended_products?.top_coat)}</span></div>
-              </div>
-            </section>
-
-            <section className="report-section">
-              <h3>5. Technical Justification</h3>
-              <ul>
-                {(recommendation.why_recommended.length ? recommendation.why_recommended : ["System selected from matching datasheet profile."]).map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </section>
-
-            <section className="report-section">
-              <h3>6. Product Performance Data</h3>
-              <div className="report-table">
-                {Object.entries(recommendation.selected_product_profile?.performance || {}).length ? (
-                  Object.entries(recommendation.selected_product_profile?.performance || {}).map(([key, value]) => (
-                    <div key={key}><strong>{key.replaceAll("_", " ")}</strong><span>{value}</span></div>
-                  ))
-                ) : (
-                  <div><strong>Performance</strong><span>Verify final values in manufacturer datasheet.</span></div>
-                )}
-              </div>
-            </section>
-
-            <section className="report-section">
-              <h3>7. Application System</h3>
-              <ol>
-                <li>Surface preparation</li>
-                <li>Primer application where specified</li>
-                <li>Main product application</li>
-                <li>Reinforcement or detailing where required</li>
-                <li>Top coat or finishing layer where specified</li>
-                <li>Curing and final inspection</li>
-              </ol>
-            </section>
-
-            <section className="report-section">
-              <h3>8. Application Guidance</h3>
-              <ul>
-                {recommendation.application_guidance.map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </section>
-
-            <section className="report-section">
-              <h3>9. Quality Assurance Requirements</h3>
-              <ul>
-                <li>Verify substrate condition before application.</li>
-                <li>Use manufacturer-approved application method and trained applicator.</li>
-                <li>Confirm coverage, thickness, curing, and adhesion before handover.</li>
-              </ul>
-            </section>
-
-            <section className="report-section">
-              <h3>10. Safety Precautions</h3>
-              <ul>
-                {(recommendation.ai_precautions?.length ? recommendation.ai_precautions : [
-                  "Use PPE during application.",
-                  "Ensure adequate ventilation.",
-                  "Follow manufacturer SDS requirements.",
-                ]).map((item) => (
-                  <li key={item}>{item}</li>
-                ))}
-              </ul>
-            </section>
-
-            <section className="report-section">
-              <h3>11. Missing Information</h3>
-              {recommendation.missing_information.length ? (
-                <ul>
-                  {recommendation.missing_information.map((item) => (
-                    <li key={item}>{item}</li>
-                  ))}
-                </ul>
-              ) : (
-                <p>No major missing information detected from the provided project details.</p>
-              )}
-            </section>
-
-            <section className="report-section">
-              <h3>12. Datasheet References</h3>
-              <p>Recommendation is based on matched technical datasheet profiles and retrieved product evidence. Detailed references are included in the downloaded PDF.</p>
-            </section>
-
-            <section className="report-section">
-              <h3>13. Alternative Manufacturers</h3>
-              <p>Approved equal systems may be considered only after matching datasheet performance, application area, and project specification requirements.</p>
-            </section>
-
-            <section className="report-section">
-              <h3>14. Final Recommendation</h3>
-              <p>{recommendation.ai_recommendation || `Use ${displayValue(recommendation.best_recommended_system)} from ${displayValue(recommendation.best_manufacturer)} after confirming substrate, exposure, and project specification requirements.`}</p>
-            </section>
-
-            <section className="report-section muted-report-section">
-              <h3>15. Disclaimer</h3>
-              <p>This preview provides preliminary technical guidance based on available project information, vector database retrieval, technical datasheets, and AI-assisted analysis. Final product selection must be verified through site inspection, project specifications, manufacturer datasheets, method statements, and applicable local standards.</p>
-            </section>
-          </article>
+      <p>
+        {message.visibleContent ?? message.content}
+        {message.role === "assistant" &&
+        message.visibleContent !== undefined &&
+        message.visibleContent.length < message.content.length ? (
+          <span className="typing-cursor" aria-hidden="true" />
         ) : null}
+      </p>
+    </div>
+  ))}
+</div>
+            {isAssistantTyping && chatMessages.at(-1)?.role === "user" ? (
+              <div className="chat-message assistant typing-preview">
+                <span className="chat-avatar" aria-hidden="true">
+                  <Bot size={16} />
+                </span>
+                <p aria-label="NIRACONCHEM AI is typing">
+                  <span />
+                  <span />
+                  <span />
+                </p>
+              </div>
+            ) : null}
+          </div>
+          {latestChat ? (
+            <div className="chat-status">
+              <div>
+                <strong>Captured</strong>
+                <span>
+                  {Object.entries(latestChat.requirements)
+                    .filter(([, value]) => value)
+                    .map(([key, value]) => `${key.replaceAll("_", " ")}: ${value}`)
+                    .join(" â€¢ ") || "Waiting for project details"}
+                </span>
+              </div>
+              {latestChat.missing_requirements.length ? (
+                <div>
+                  <strong>Needed</strong>
+                  <span>{latestChat.missing_requirements.join(", ")}</span>
+                </div>
+              ) : null}
+            </div>
+          ) : null}
+          {latestChat?.report_ready ? (
+            <button className="download-button" disabled={isDownloading} onClick={downloadReport} type="button">
+              {isDownloading ? "Preparing PDF" : "Download PDF Report"}
+            </button>
+          ) : null}
+        </section>
+        ) : null}
+
       </section>
     </main>
   );

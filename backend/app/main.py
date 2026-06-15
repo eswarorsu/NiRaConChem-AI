@@ -17,6 +17,15 @@ from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import mm
 from reportlab.platypus import ListFlowable, ListItem, PageBreak, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
+from app.agent_prompt import NIRACONCHEM_AGENT_SYSTEM_PROMPT
+from app.chat_agent import run_chat_agent
+from app.chat_sessions import (
+    append_message,
+    get_or_create_session,
+    session_history,
+    session_snapshot,
+    update_session_from_chat_result,
+)
 from app.file_parser import UnsupportedFileType, extract_text_from_file, summarize_document_signals
 from app.rag_ingest import ingest_datasheets
 from app.rag_store import CHUNKS_PATH, PRODUCT_PROFILES_PATH, rag_source_labels, retrieve_product_profiles, retrieve_rag_chunks
@@ -76,6 +85,33 @@ class RagIngestResponse(BaseModel):
     chunk_count: int
 
 
+class ChatMessage(BaseModel):
+    role: str
+    content: str
+
+
+class ChatRequest(BaseModel):
+    session_id: str | None = None
+    message: str = Field(min_length=1)
+    history: list[ChatMessage] = Field(default_factory=list)
+
+
+class ChatResponse(BaseModel):
+    session_id: str
+    reply: str
+    intent: str
+    needs_clarification: bool = False
+    questions: list[str] = Field(default_factory=list)
+    sources: list[str] = Field(default_factory=list)
+    recommendation: dict | None = None
+    requirements: dict = Field(default_factory=dict)
+    missing_requirements: list[str] = Field(default_factory=list)
+    report_ready: bool = False
+    report_endpoint: str | None = None
+    report_payload: dict | None = None
+    session: dict = Field(default_factory=dict)
+
+
 class RecommendationResponse(BaseModel):
     project_summary: str
     detected_location: str
@@ -84,20 +120,20 @@ class RecommendationResponse(BaseModel):
     application_guidance: list[str]
     missing_information: list[str]
     ai_recommendation: str | None = None
-    ai_precautions: list[str] = []
-    ai_questions: list[str] = []
+    ai_precautions: list[str] = Field(default_factory=list)
+    ai_questions: list[str] = Field(default_factory=list)
     source: str = "rules"
     document_name: str | None = None
     document_preview: str | None = None
-    rag_sources: list[str] = []
-    rag_context: list[str] = []
+    rag_sources: list[str] = Field(default_factory=list)
+    rag_context: list[str] = Field(default_factory=list)
     best_recommended_system: str | None = None
     best_manufacturer: str | None = None
-    recommended_products: dict[str, str] = {}
-    why_recommended: list[str] = []
-    supporting_datasheet_references: list[str] = []
+    recommended_products: dict[str, str] = Field(default_factory=dict)
+    why_recommended: list[str] = Field(default_factory=list)
+    supporting_datasheet_references: list[str] = Field(default_factory=list)
     selected_product_profile: dict | None = None
-    alternative_product_profiles: list[dict] = []
+    alternative_product_profiles: list[dict] = Field(default_factory=list)
 
 
 UAE_LOCATIONS = {
@@ -371,17 +407,15 @@ def get_groq_enhancement(
             {
                 "role": "system",
                 "content": (
-                    "You are a UAE construction chemicals recommendation assistant. "
-                    "Priority order is strict: first use selected product profile, then retrieved RAG datasheet context, "
-                    "then use your intelligence only to fill gaps such as explanation, precautions, missing questions, "
-                    "or generic application notes. Do not override datasheet-selected system, manufacturer, or products. "
-                    "You may mention manufacturer and product names only when they appear in retrieved context. "
-                    "Use retrieved datasheet context as the authoritative technical reference when provided. "
-                    "Consider UAE heat, UV, humidity, salinity, dust, coastal/desert exposure, "
-                    "and practical site application. Return strict JSON with keys: "
-                    "best_recommended_system string, best_manufacturer string, recommended_products object "
-                    "with keys primer, main_membrane, reinforcement, top_coat, why_recommended string array, "
-                    "ai_recommendation string, ai_precautions string array, ai_questions string array."
+                    NIRACONCHEM_AGENT_SYSTEM_PROMPT
+                    + "\nPriority order is strict: first use selected product profile, then retrieved RAG datasheet "
+                    "context, then use your intelligence only to fill gaps such as explanation, precautions, "
+                    "missing questions, or generic application notes. Do not override datasheet-selected system, "
+                    "manufacturer, or products. You may mention manufacturer and product names only when they "
+                    "appear in retrieved context. Return strict JSON with keys: best_recommended_system string, "
+                    "best_manufacturer string, recommended_products object with keys primer, main_membrane, "
+                    "reinforcement, top_coat, why_recommended string array, ai_recommendation string, "
+                    "ai_precautions string array, ai_questions string array."
                 ),
             },
             {
@@ -984,6 +1018,26 @@ def recommend(request: RecommendationRequest) -> RecommendationResponse:
         request.document_context,
         request.document_name,
     )
+
+
+@app.post("/chat", response_model=ChatResponse)
+def chat(request: ChatRequest) -> ChatResponse:
+    session = get_or_create_session(request.session_id)
+    stored_history = session_history(session)
+    incoming_history = [message.model_dump() for message in request.history]
+    history = stored_history or incoming_history
+    clean_message = request.message.strip()
+    append_message(session, "user", clean_message)
+    result = run_chat_agent(
+        clean_message,
+        history,
+        build_recommendation,
+    )
+    append_message(session, "assistant", str(result.get("reply", "")))
+    update_session_from_chat_result(session, result)
+    result["session_id"] = session["session_id"]
+    result["session"] = session_snapshot(session)
+    return ChatResponse(**result)
 
 
 @app.post("/analyze-file", response_model=FileAnalysisResponse)

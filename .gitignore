@@ -16,3 +16,5 @@ data/vector_store/*
 !data/vector_store/.gitkeep
 reports/*
 !reports/.gitkeep
+
+repo-inspect-climatic-AI/
