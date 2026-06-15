@@ -16,7 +16,7 @@ from reportlab.lib import colors
 from reportlab.lib.pagesizes import A4
 from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
 from reportlab.lib.units import mm
-from reportlab.platypus import ListFlowable, ListItem, PageBreak, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
+from reportlab.platypus import Image, ListFlowable, ListItem, PageBreak, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 from app.agent_prompt import NIRACONCHEM_AGENT_SYSTEM_PROMPT
 from app.chat_agent import run_chat_agent
@@ -604,6 +604,7 @@ def bullet_list(items: list[str], style: ParagraphStyle) -> ListFlowable:
 
 
 def build_pdf_report(query: str, recommendation: RecommendationResponse) -> BytesIO:
+    _LOGO_PATH = Path(__file__).resolve().parent.parent / "assets" / "niraconchem-logo.png"
     def detect_project_type() -> str:
         text = f"{query} {' '.join(recommendation.recommended_categories)}".lower()
         if has_any_term(text, ("roof", "rooftop")) or "waterproof" in text:
@@ -830,10 +831,18 @@ def build_pdf_report(query: str, recommendation: RecommendationResponse) -> Byte
             )
         return Table(wrapped_rows, colWidths=widths, splitByRow=True, repeatRows=1 if header else 0, style=TableStyle(table_style))
 
-    story = [
-        Paragraph("NIRACONCHEM AI TECHNICAL RECOMMENDATION REPORT", title_style),
-        Spacer(1, 4),
-        section("1. PROJECT INFORMATION"),
+    story = []
+    if _LOGO_PATH.exists():
+        logo_img = Image(str(_LOGO_PATH), width=30 * mm, height=30 * mm)
+        logo_img.hAlign = "CENTER"
+        story.append(logo_img)
+        story.append(Spacer(1, 15))
+
+    story.extend(
+        [
+            Paragraph("NIRACONCHEM AI TECHNICAL RECOMMENDATION REPORT", title_style),
+            Spacer(1, 8),
+            section("1. PROJECT INFORMATION"),
         data_table(
             [
                 ["Project Query", query],
@@ -931,7 +940,7 @@ def build_pdf_report(query: str, recommendation: RecommendationResponse) -> Byte
         section("12. DATASHEET REFERENCES"),
         Paragraph("<b>Referenced Documents:</b>", body_style),
         bullet_list(recommendation.supporting_datasheet_references or ["No datasheet reference found."], body_style),
-    ]
+    ])
 
     if recommendation.document_preview:
         story.extend(
@@ -1002,76 +1011,68 @@ def build_pdf_report(query: str, recommendation: RecommendationResponse) -> Byte
         ]
     )
 
+    # ── Empty Authority Signature & Date Block (at the end of last page) ──
+    sig_data = [
+        [Paragraph("<b>Authority Signature:</b>", label_style), ""],
+        [Paragraph("<b>Date:</b>", label_style), ""]
+    ]
+    sig_table = Table(
+        sig_data,
+        colWidths=[38 * mm, 60 * mm],
+        hAlign="RIGHT",
+        spaceBefore=20,
+    )
+    sig_table.setStyle(
+        TableStyle(
+            [
+                ("LINEBELOW", (1, 0), (1, 0), 0.75, colors.HexColor("#0b4f4a")),
+                ("LINEBELOW", (1, 1), (1, 1), 0.75, colors.HexColor("#0b4f4a")),
+                ("VALIGN", (0, 0), (-1, -1), "BOTTOM"),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 4),
+                ("TOPPADDING", (0, 0), (-1, -1), 10),
+            ]
+        )
+    )
+    story.append(sig_table)
+
     # ── per-page canvas decorations ──────────────────────────────────────────
-    _LOGO_PATH = Path(__file__).resolve().parent.parent / "assets" / "niraconchem-logo.png"
     _REPORT_DATE = datetime.now().strftime("%d %B %Y")
     _PAGE_W, _PAGE_H = A4
 
     def _draw_page_decorations(canvas_obj, _doc) -> None:
         canvas_obj.saveState()
+        page_num = canvas_obj.getPageNumber()
 
-        # ── logo top-left ─────────────────────────────────────────────────────
-        logo_size = 22 * mm
-        logo_x = 18 * mm
-        logo_y = _PAGE_H - 18 * mm - logo_size
-        if _LOGO_PATH.exists():
-            canvas_obj.drawImage(
-                str(_LOGO_PATH),
-                logo_x,
-                logo_y,
-                width=logo_size,
-                height=logo_size,
-                preserveAspectRatio=True,
-                mask="auto",
-            )
-        # Brand name next to logo
-        canvas_obj.setFont("Helvetica-Bold", 10)
-        canvas_obj.setFillColor(colors.HexColor("#0b4f4a"))
-        canvas_obj.drawString(logo_x + logo_size + 4 * mm, logo_y + 13 * mm, "NIRACONCHEM AI")
-        canvas_obj.setFont("Helvetica", 7.5)
-        canvas_obj.setFillColor(colors.HexColor("#53677d"))
-        canvas_obj.drawString(logo_x + logo_size + 4 * mm, logo_y + 8.5 * mm, "Construction Chemical Intelligence")
+        # ── Running Header (Subsequent pages only) ────────────────────────────
+        if page_num > 1:
+            header_y = _PAGE_H - 18 * mm
+            
+            # Left side: report name
+            canvas_obj.setFont("Helvetica-Bold", 8)
+            canvas_obj.setFillColor(colors.HexColor("#0b4f4a"))
+            canvas_obj.drawString(18 * mm, header_y + 4 * mm, "NIRACONCHEM AI — TECHNICAL RECOMMENDATION REPORT")
+            
+            # Right side: page number
+            canvas_obj.setFont("Helvetica", 8)
+            canvas_obj.setFillColor(colors.HexColor("#53677d"))
+            canvas_obj.drawRightString(_PAGE_W - 18 * mm, header_y + 4 * mm, f"Page {page_num}")
+            
+            # Thin teal header rule
+            canvas_obj.setStrokeColor(colors.HexColor("#0f766e"))
+            canvas_obj.setLineWidth(0.6)
+            canvas_obj.line(18 * mm, header_y, _PAGE_W - 18 * mm, header_y)
 
-        # ── thin teal header rule ─────────────────────────────────────────────
-        rule_y = _PAGE_H - 18 * mm - logo_size - 3 * mm
-        canvas_obj.setStrokeColor(colors.HexColor("#0f766e"))
-        canvas_obj.setLineWidth(0.6)
-        canvas_obj.line(18 * mm, rule_y, _PAGE_W - 18 * mm, rule_y)
-
-        # ── page number top-right ─────────────────────────────────────────────
-        canvas_obj.setFont("Helvetica", 7.5)
-        canvas_obj.setFillColor(colors.HexColor("#53677d"))
-        page_label = f"Page {canvas_obj.getPageNumber()}"
-        canvas_obj.drawRightString(_PAGE_W - 18 * mm, logo_y + 10 * mm, page_label)
-
-        # ── thin footer rule ──────────────────────────────────────────────────
+        # ── Running Footer (All pages) ────────────────────────────────────────
         footer_rule_y = 20 * mm
         canvas_obj.setStrokeColor(colors.HexColor("#d7e7e3"))
         canvas_obj.setLineWidth(0.5)
         canvas_obj.line(18 * mm, footer_rule_y, _PAGE_W - 18 * mm, footer_rule_y)
 
-        # ── authority signature block (bottom-right) ──────────────────────────
-        sig_right = _PAGE_W - 18 * mm
-        sig_y_base = footer_rule_y - 2 * mm
-
-        # Draw "Authority Signature:" label and empty line
-        canvas_obj.setFont("Helvetica-Bold", 7)
-        canvas_obj.setFillColor(colors.HexColor("#0b4f4a"))
-        canvas_obj.drawString(sig_right - 70 * mm, sig_y_base - 5 * mm, "Authority Signature:")
-        
-        canvas_obj.setStrokeColor(colors.HexColor("#0b4f4a"))
-        canvas_obj.setLineWidth(0.6)
-        canvas_obj.line(sig_right - 40 * mm, sig_y_base - 5 * mm, sig_right, sig_y_base - 5 * mm)
-
-        # Draw "Date:" label and empty line
-        canvas_obj.drawString(sig_right - 70 * mm, sig_y_base - 11 * mm, "Date:")
-        canvas_obj.line(sig_right - 40 * mm, sig_y_base - 11 * mm, sig_right, sig_y_base - 11 * mm)
-
         # Left footer confidentiality note
         canvas_obj.setFont("Helvetica", 6.5)
         canvas_obj.setFillColor(colors.HexColor("#53677d"))
-        canvas_obj.drawString(18 * mm, sig_y_base - 7.5 * mm, "CONFIDENTIAL — NIRACONCHEM AI Technical Report")
-        canvas_obj.drawString(18 * mm, sig_y_base - 10.5 * mm, "www.niraconchem.ai")
+        canvas_obj.drawString(18 * mm, footer_rule_y - 7.5 * mm, "CONFIDENTIAL — NIRACONCHEM AI Technical Report")
+        canvas_obj.drawString(18 * mm, footer_rule_y - 10.5 * mm, "www.niraconchem.ai")
 
         canvas_obj.restoreState()
 
