@@ -5,9 +5,14 @@ import { Moon, Paperclip, Sun, User } from "lucide-react";
 import BlinkingEyes from "./components/BlinkingEyes";
 import { ParticleWaveBackground } from "./components/ParticleWaveBackground";
 
+const RENDER_API_BASE_URL = "https://niraconchem-ai.onrender.com";
+const configuredApiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.trim();
 const API_BASE_URL =
-  process.env.NEXT_PUBLIC_API_BASE_URL ||
-  (process.env.NODE_ENV === "development" ? "http://localhost:8000" : "https://niraconchem-ai.onrender.com");
+  process.env.NODE_ENV === "development"
+    ? configuredApiBaseUrl || "http://localhost:8000"
+    : configuredApiBaseUrl?.includes("onrender.com")
+      ? configuredApiBaseUrl
+      : RENDER_API_BASE_URL;
 const API_TIMEOUT_MS = 45000;
 
 type Recommendation = {
