@@ -206,6 +206,14 @@ body.theme-dark-body {
   font-weight: 900;
 }
 
+.install-icon {
+  display: none;
+}
+
+.install-text {
+  display: inline;
+}
+
 .dark-theme .app-install-button {
   color: #ffffff;
   border-color: rgba(255, 255, 255, 0.18);
@@ -1902,21 +1910,36 @@ h1 {
 
   .app-install-button {
     top: 14px;
-    right: 146px;
+    right: 14px;
+    width: 38px;
+    height: 38px;
     min-height: 38px;
-    padding: 0 12px;
-    font-size: 12px;
+    padding: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 999px;
+  }
+
+  .install-text {
+    display: none;
+  }
+
+  .install-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
   }
 
   .mode-toolbar {
-    top: 58px;
-    min-height: 36px;
-    max-width: calc(100vw - 28px);
+    top: 14px;
+    min-height: 38px;
+    max-width: calc(100vw - 120px);
     padding: 3px;
   }
 
   .mode-toolbar button {
-    min-height: 28px;
+    min-height: 30px;
     padding: 0 11px;
     font-size: 10px;
   }

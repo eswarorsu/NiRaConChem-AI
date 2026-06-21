@@ -1,7 +1,7 @@
 "use client";
 
 import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import { CheckCircle2, Circle, MoreVertical, Moon, Paperclip, SendHorizontal, Sun, Trash2, LogIn, X, Mail, Lock, UserPlus, ArrowRight } from "lucide-react";
+import { CheckCircle2, Circle, MoreVertical, Moon, Paperclip, SendHorizontal, Sun, Trash2, LogIn, X, Mail, Lock, UserPlus, ArrowRight, Download } from "lucide-react";
 import BlinkingEyes from "./components/BlinkingEyes";
 import ClassicUserAvatar from "./components/ClassicUserAvatar";
 import { ParticleWaveBackground } from "./components/ParticleWaveBackground";
@@ -751,8 +751,11 @@ export default function Home() {
         <span className="theme-toggle-knob" aria-hidden="true" />
       </button>
       {installPrompt ? (
-        <button className="app-install-button" onClick={installApp} type="button">
-          Install
+        <button className="app-install-button" onClick={installApp} type="button" title="Install App">
+          <span className="install-text">Install</span>
+          <span className="install-icon" aria-hidden="true">
+            <Download size={18} strokeWidth={2.4} />
+          </span>
         </button>
       ) : null}
       <button
