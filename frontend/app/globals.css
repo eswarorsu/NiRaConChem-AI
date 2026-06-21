@@ -1897,30 +1897,7 @@ h1 {
   }
 
   .theme-toggle {
-    top: 14px;
-    right: 62px;
-    width: 76px;
-    height: 38px;
-    padding: 4px 9px;
-  }
-
-  .theme-toggle-symbol {
-    width: 23px;
-    height: 23px;
-    font-size: 15px;
-  }
-
-  .theme-toggle-moon {
-    font-size: 18px;
-  }
-
-  .theme-toggle-knob {
-    width: 28px;
-    height: 28px;
-  }
-
-  .dark-theme .theme-toggle-knob {
-    transform: translateX(38px);
+    display: none;
   }
 
   .app-install-button {
