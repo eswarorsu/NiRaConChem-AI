@@ -1,10 +1,11 @@
 "use client";
 
-import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
-import { CheckCircle2, Circle, Moon, Paperclip, SendHorizontal, Sun } from "lucide-react";
+import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { CheckCircle2, Circle, MoreVertical, Moon, Paperclip, SendHorizontal, Sun, Trash2, LogIn, X, Mail, Lock, UserPlus, ArrowRight } from "lucide-react";
 import BlinkingEyes from "./components/BlinkingEyes";
 import ClassicUserAvatar from "./components/ClassicUserAvatar";
 import { ParticleWaveBackground } from "./components/ParticleWaveBackground";
+import qconMarketData from "./data/qcon-market-products.json";
 
 const RENDER_API_BASE_URL = "https://niraconchem-ai.onrender.com";
 const configuredApiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.trim();
@@ -94,6 +95,22 @@ type BeforeInstallPromptEvent = Event & {
   userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
 };
 
+type MarketProduct = {
+  id: string;
+  name: string;
+  company: string;
+  brand: string;
+  category: string;
+  url: string;
+  imageUrl: string;
+  localImage: string;
+  description: string;
+  price: string;
+  keywords: string[];
+};
+
+type ActiveMode = "nira" | "market";
+
 const examples = [
   "I need waterproofing",
   "Dubai basement concrete hydrostatic pressure",
@@ -121,6 +138,27 @@ const broadTerms = ["waterproofing", "flooring", "repair", "coating", "sealant",
 const areaTerms = ["roof", "rooftop", "basement", "bathroom", "wet", "parking", "floor", "joint", "tank", "pool", "wall", "slab", "villa"];
 const exposureTerms = ["uv", "heat", "traffic", "chemical", "chloride", "coastal", "water", "pressure", "potable", "external", "interior", "crack"];
 const substrateTerms = ["concrete", "screed", "tile", "metal", "block", "masonry", "plaster"];
+const constructionTerms = [
+  ...broadTerms,
+  ...areaTerms,
+  ...exposureTerms,
+  ...substrateTerms,
+  "construction",
+  "building",
+  "site",
+  "project",
+  "datasheet",
+  "specification",
+  "membrane",
+  "epoxy",
+  "polyurethane",
+  "cementitious",
+  "grout",
+  "anchor",
+  "adhesive",
+  "joint",
+  "waterproof",
+];
 
 function displayValue(value?: string | null) {
   return value && value.trim() ? value : "Not specified in retrieved datasheet";
@@ -128,6 +166,51 @@ function displayValue(value?: string | null) {
 
 function includesAny(text: string, terms: string[]) {
   return terms.some((term) => text.includes(term));
+}
+
+function isConstructionRelatedQuery(value: string) {
+  const normalized = value.toLowerCase().trim();
+  return includesAny(normalized, constructionTerms);
+}
+
+function tokenizeMarketText(value: string) {
+  const terms = value
+    .toLowerCase()
+    .split(/[^a-z0-9]+/)
+    .filter((term) => term.length > 2);
+
+  if (value.toLowerCase().includes("waterproof")) {
+    terms.push("waterproof", "waterproofing", "membrane", "sealant", "primer", "coating", "roof", "basement");
+  }
+  if (value.toLowerCase().includes("floor")) {
+    terms.push("flooring", "floor", "coating", "screed", "epoxy", "polyurethane");
+  }
+  if (value.toLowerCase().includes("tile")) {
+    terms.push("tile", "adhesive", "grout", "sealer");
+  }
+  if (value.toLowerCase().includes("repair")) {
+    terms.push("repair", "concrete", "mortar", "grout");
+  }
+
+  return [...new Set(terms)];
+}
+
+function scoreMarketProduct(product: MarketProduct, searchText: string) {
+  const terms = tokenizeMarketText(searchText);
+  const name = product.name.toLowerCase();
+  const category = product.category.toLowerCase();
+  const description = product.description.toLowerCase();
+  const keywordText = product.keywords.join(" ");
+  const brand = `${product.brand} ${product.company}`.toLowerCase();
+
+  return terms.reduce((score, term) => {
+    if (name.includes(term)) return score + 7;
+    if (category.includes(term)) return score + 5;
+    if (brand.includes(term)) return score + 3;
+    if (keywordText.includes(term)) return score + 3;
+    if (description.includes(term)) return score + 2;
+    return score;
+  }, 0);
 }
 
 function shouldAskClarifyingQuestions(value: string, hasFileContext: boolean) {
@@ -139,7 +222,7 @@ function shouldAskClarifyingQuestions(value: string, hasFileContext: boolean) {
   const missingSubstrate = !includesAny(normalized, substrateTerms);
   const missingCount = [missingArea, missingExposure, missingSubstrate].filter(Boolean).length;
 
-  return !hasFileContext && (isBroadCategory || words.length <= 3 || missingCount >= 2);
+  return isConstructionRelatedQuery(normalized) && !hasFileContext && (isBroadCategory || words.length <= 3 || missingCount >= 2);
 }
 
 function renderAssistantContent(content: string, showCursor: boolean) {
@@ -218,6 +301,8 @@ export default function Home() {
   const [isAnalyzingFile, setIsAnalyzingFile] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isAssistantTyping, setIsAssistantTyping] = useState(false);
+  const [isProjectQuery, setIsProjectQuery] = useState(false);
+  const [activeMode, setActiveMode] = useState<ActiveMode>("nira");
   const [isDarkTheme, setIsDarkTheme] = useState(false);
   const [error, setError] = useState("");
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
@@ -236,6 +321,86 @@ export default function Home() {
   const projectProgress = latestChat
     ? Math.round((capturedRequirements.length / Math.max(capturedRequirements.length + missingRequirements.length, 1)) * 100)
     : 0;
+  const latestUserMessage = [...chatMessages].reverse().find((message) => message.role === "user")?.content || query;
+  const marketSearchText = [
+    latestUserMessage,
+    latestChat?.reply || "",
+    latestChat ? Object.values(latestChat.requirements).filter(Boolean).join(" ") : "",
+  ].join(" ");
+  const marketProducts = useMemo(() => {
+    const products = (qconMarketData.products as MarketProduct[])
+      .map((product) => ({
+        product,
+        score: scoreMarketProduct(product, marketSearchText),
+      }))
+      .filter(({ score }) => score > 0)
+      .sort((a, b) => b.score - a.score || a.product.name.localeCompare(b.product.name))
+      .slice(0, 12)
+      .map(({ product }) => product);
+
+    return products.length ? products : (qconMarketData.products as MarketProduct[]).slice(0, 8);
+  }, [marketSearchText]);
+
+  const [showMoreMenu, setShowMoreMenu] = useState(false);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [loginMode, setLoginMode] = useState<"login" | "register">("login");
+  const [loginEmail, setLoginEmail] = useState("");
+  const [loginPassword, setLoginPassword] = useState("");
+  const [loginConfirmPassword, setLoginConfirmPassword] = useState("");
+
+  useEffect(() => {
+    if (!showMoreMenu) return;
+
+    function handleOutsideClick(event: MouseEvent) {
+      const target = event.target as HTMLElement;
+      if (!target.closest(".more-options-button") && !target.closest(".more-options-menu")) {
+        setShowMoreMenu(false);
+      }
+    }
+
+    document.addEventListener("click", handleOutsideClick);
+    return () => document.removeEventListener("click", handleOutsideClick);
+  }, [showMoreMenu]);
+
+  function handleClearChat() {
+    setChatMessages([]);
+    setSessionId(null);
+    setLatestChat(null);
+    setReportPayload(null);
+    setRecommendation(null);
+    setFileAnalysis(null);
+    setQuery("");
+    setError("");
+    setShowClarifier(false);
+    setShowMoreMenu(false);
+  }
+
+  function handleLoginClick() {
+    setShowMoreMenu(false);
+    setLoginMode("login");
+    setLoginEmail("");
+    setLoginPassword("");
+    setLoginConfirmPassword("");
+    setShowLoginModal(true);
+  }
+
+  function handleCloseLoginModal() {
+    setShowLoginModal(false);
+    setLoginEmail("");
+    setLoginPassword("");
+    setLoginConfirmPassword("");
+  }
+
+  function handleLoginSubmit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (loginMode === "register" && loginPassword !== loginConfirmPassword) {
+      alert("Passwords do not match!");
+      return;
+    }
+    // Placeholder — wire up real auth here
+    alert(`${loginMode === "login" ? "Login" : "Registration"} submitted for: ${loginEmail}`);
+    handleCloseLoginModal();
+  }
 
   useEffect(() => {
     setIsDarkTheme(localStorage.getItem("niraconchem-theme") === "dark");
@@ -389,6 +554,8 @@ export default function Home() {
     setIsAssistantTyping(true);
     setError("");
     setShowClarifier(false);
+    setActiveMode("nira");
+    setIsProjectQuery(isConstructionRelatedQuery(trimmedMessage) || Boolean(fileAnalysis));
     setChatMessages((current) => [...current, { role: "user", content: trimmedMessage }]);
     setQuery("");
 
@@ -588,6 +755,153 @@ export default function Home() {
           Install
         </button>
       ) : null}
+      <button
+        aria-label="More options"
+        className={`more-options-button${showMoreMenu ? " active" : ""}`}
+        onClick={() => setShowMoreMenu((prev) => !prev)}
+        title="More options"
+        type="button"
+      >
+        <MoreVertical size={24} strokeWidth={2.4} aria-hidden="true" />
+      </button>
+
+      {showMoreMenu ? (
+        <div className="more-options-menu" role="menu">
+          <button
+            className="menu-item"
+            onClick={handleClearChat}
+            role="menuitem"
+            type="button"
+          >
+            <Trash2 size={16} strokeWidth={2.2} />
+            <span>Clear Chat</span>
+          </button>
+          <button
+            className="menu-item"
+            onClick={handleLoginClick}
+            role="menuitem"
+            type="button"
+          >
+            <LogIn size={16} strokeWidth={2.2} />
+            <span>Log In</span>
+          </button>
+        </div>
+      ) : null}
+
+      {showLoginModal ? (
+        <div className="login-modal-overlay" role="dialog" aria-modal="true" aria-label={loginMode === "login" ? "Log in" : "Create account"} onClick={(e) => { if ((e.target as HTMLElement).classList.contains("login-modal-overlay")) handleCloseLoginModal(); }}>
+          <div className="login-modal-card">
+            <div className="login-modal-glow" />
+            <button className="login-modal-close" aria-label="Close" onClick={handleCloseLoginModal} type="button">
+              <X size={18} strokeWidth={2.2} />
+            </button>
+
+            <div className="login-modal-header">
+              <h2>{loginMode === "login" ? "Welcome back" : "Create account"}</h2>
+              <p>{loginMode === "login" ? "Sign in to your account" : "Sign up for an account"}</p>
+            </div>
+
+            <form className="login-modal-form" onSubmit={handleLoginSubmit}>
+              <div className="login-field-pill">
+                <span className="login-field-pill-label">Email</span>
+                <input
+                  id="login-email"
+                  type="email"
+                  autoComplete="email"
+                  placeholder="username@gmail.com"
+                  required
+                  value={loginEmail}
+                  onChange={(e) => setLoginEmail(e.target.value)}
+                />
+              </div>
+
+              <div className="login-field-pill">
+                <span className="login-field-pill-label">Password</span>
+                <input
+                  id="login-password"
+                  type="password"
+                  autoComplete={loginMode === "login" ? "current-password" : "new-password"}
+                  placeholder="••••••••"
+                  required
+                  value={loginPassword}
+                  onChange={(e) => setLoginPassword(e.target.value)}
+                />
+              </div>
+
+              {loginMode === "register" ? (
+                <div className="login-field-pill">
+                  <span className="login-field-pill-label">Confirm Password</span>
+                  <input
+                    id="login-confirm-password"
+                    type="password"
+                    autoComplete="new-password"
+                    placeholder="••••••••"
+                    required
+                    value={loginConfirmPassword}
+                    onChange={(e) => setLoginConfirmPassword(e.target.value)}
+                  />
+                </div>
+              ) : null}
+
+              <button className="login-submit-pill" type="submit">
+                <span>{loginMode === "login" ? "Continue" : "Register"}</span>
+                <ArrowRight size={18} strokeWidth={2.2} />
+              </button>
+            </form>
+
+            <div className="login-divider">
+              <span className="login-divider-line"></span>
+              <span className="login-divider-text">OR</span>
+              <span className="login-divider-line"></span>
+            </div>
+
+            <div className="social-login-group">
+              <button type="button" className="social-login-button" onClick={() => alert("Google Sign-In is not configured for this environment.")}>
+                <svg className="social-icon" viewBox="0 0 24 24" width="18" height="18">
+                  <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                  <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                  <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                  <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+                </svg>
+                <span>Continue with Google</span>
+                <ArrowRight size={16} className="social-arrow" />
+              </button>
+
+              <button type="button" className="social-login-button" onClick={() => alert("X Sign-In is not configured for this environment.")}>
+                <svg className="social-icon" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                  <path d="M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" />
+                </svg>
+                <span>Continue with X</span>
+                <ArrowRight size={16} className="social-arrow" />
+              </button>
+            </div>
+
+            <div className="login-modal-footer">
+              {loginMode === "login" ? (
+                <>
+                  <span>Don't have an account?</span>
+                  <button type="button" onClick={() => setLoginMode("register")}>Sign up</button>
+                </>
+              ) : (
+                <>
+                  <span>Already have an account?</span>
+                  <button type="button" onClick={() => setLoginMode("login")}>Sign in</button>
+                </>
+              )}
+            </div>
+          </div>
+        </div>
+      ) : null}
+      {hasChatStarted ? (
+        <nav className="mode-toolbar" aria-label="Platform mode">
+          <button className={activeMode === "nira" ? "active" : ""} onClick={() => setActiveMode("nira")} type="button">
+            NIRA AI
+          </button>
+          <button className={activeMode === "market" ? "active" : ""} onClick={() => setActiveMode("market")} type="button">
+            MARKET RESULT
+          </button>
+        </nav>
+      ) : null}
       <ParticleWaveBackground />
       <header className="topbar">
         <div className="logo-card" aria-label="NIRACONCHEM chemistry logo">
@@ -745,9 +1059,40 @@ export default function Home() {
         {hasChatStarted ? (
         <section className="chat-panel" aria-label="NIRACONCHEM AI chat">
           <div className="chat-header">
-            <span>NIRACONCHEM AI Consultant</span>
-            {latestChat?.report_ready ? <strong>Report ready</strong> : <strong>Collecting project data</strong>}
+            <span>{activeMode === "market" ? "NIRACONCHEM Market Results" : "NIRACONCHEM AI Consultant"}</span>
+            {activeMode === "market" ? (
+              <strong>{marketProducts.length} matches</strong>
+            ) : isProjectQuery ? (
+              latestChat?.report_ready ? <strong>Report ready</strong> : <strong>Collecting project data</strong>
+            ) : (
+              <strong>General answer</strong>
+            )}
           </div>
+          {activeMode === "market" ? (
+            <div className="market-results" aria-label="Market result products">
+              <div className="market-summary">
+                <strong>NIRACONCHEM market results and experts recommendation</strong>
+                <span>{isProjectQuery ? "Ranked from your query and AI project context" : "Enter a construction chemical query for tighter matching"}</span>
+              </div>
+              <div className="market-grid">
+                {marketProducts.map((product) => (
+                  <a className="market-card" href={product.url} key={product.url} rel="noreferrer" target="_blank">
+                    <span className="market-image">
+                      <img alt={product.name} src={product.localImage || product.imageUrl || "/assets/atom-logo-transparent.png.png"} />
+                    </span>
+                    <span className="market-card-body">
+                      <span className="market-brand">{product.company}</span>
+                      <strong>{product.name}</strong>
+                      <span>{product.category}</span>
+                      {product.description ? <p>{product.description}</p> : null}
+                      {product.price ? <em>{product.price}</em> : null}
+                    </span>
+                  </a>
+                ))}
+              </div>
+            </div>
+          ) : (
+            <>
             <div className="chat-messages">
               {chatMessages.map((message, index) => (
                 <div className={`chat-message ${message.role}`} key={`${message.role}-${index}`}>
@@ -777,7 +1122,7 @@ export default function Home() {
                 </div>
               ) : null}
             </div>
-          {latestChat ? (
+          {latestChat && isProjectQuery ? (
             <div className="chat-status">
               <div>
                 <strong>Captured</strong>
@@ -796,7 +1141,7 @@ export default function Home() {
               ) : null}
             </div>
           ) : null}
-          {latestChat ? (
+          {latestChat && isProjectQuery ? (
             <div className="project-progress" aria-label="Project recommendation progress">
               <div className="project-progress-header">
                 <strong>{latestChat.report_ready ? "Ready for report" : "Project details"}</strong>
@@ -821,11 +1166,13 @@ export default function Home() {
               </div>
             </div>
           ) : null}
-          {latestChat?.report_ready ? (
+          {latestChat?.report_ready && isProjectQuery ? (
             <button className="download-button" disabled={isDownloading} onClick={downloadReport} type="button">
               {isDownloading ? "Preparing PDF" : "Download PDF Report"}
             </button>
           ) : null}
+            </>
+          )}
         </section>
         ) : null}
 
