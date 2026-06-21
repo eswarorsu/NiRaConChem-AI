@@ -1,7 +1,7 @@
 "use client";
 
 import { ChangeEvent, FormEvent, useEffect, useRef, useState } from "react";
-import { Moon, Paperclip, Sun } from "lucide-react";
+import { CheckCircle2, Circle, Moon, Paperclip, SendHorizontal, Sun } from "lucide-react";
 import BlinkingEyes from "./components/BlinkingEyes";
 import ClassicUserAvatar from "./components/ClassicUserAvatar";
 import { ParticleWaveBackground } from "./components/ParticleWaveBackground";
@@ -97,8 +97,18 @@ type BeforeInstallPromptEvent = Event & {
 const examples = [
   "I need waterproofing",
   "Dubai basement concrete hydrostatic pressure",
-  "Who founded NIRACONCHEM AI?",
+  "Parking deck coating with vehicle traffic",
 ];
+
+const requirementLabels: Record<string, string> = {
+  area: "Area",
+  construction_area: "Area",
+  exposure: "Exposure",
+  exposure_condition: "Exposure",
+  substrate: "Substrate",
+  location: "Location",
+  project_location: "Location",
+};
 
 const clarificationOptions = {
   area: ["Roof", "Basement", "Wet area", "Parking floor", "Concrete repair", "Expansion joint"],
@@ -213,6 +223,19 @@ export default function Home() {
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const typingIntervalRef = useRef<number | null>(null);
   const hasChatStarted = chatMessages.some((message) => message.role === "user");
+  const capturedRequirements = latestChat
+    ? Object.entries(latestChat.requirements)
+        .filter(([, value]) => value)
+        .map(([key, value]) => ({
+          label: requirementLabels[key] || key.replaceAll("_", " "),
+          value,
+        }))
+    : [];
+  const missingRequirements =
+    latestChat?.missing_requirements.map((key) => requirementLabels[key] || key.replaceAll("_", " ")) || [];
+  const projectProgress = latestChat
+    ? Math.round((capturedRequirements.length / Math.max(capturedRequirements.length + missingRequirements.length, 1)) * 100)
+    : 0;
 
   useEffect(() => {
     setIsDarkTheme(localStorage.getItem("niraconchem-theme") === "dark");
@@ -421,6 +444,11 @@ export default function Home() {
       setError("Enter a construction chemical requirement first.");
       return;
     }
+    if (shouldAskClarifyingQuestions(trimmedQuery, Boolean(fileAnalysis))) {
+      setError("");
+      setShowClarifier(true);
+      return;
+    }
     void submitChat(trimmedQuery);
   }
 
@@ -431,11 +459,12 @@ export default function Home() {
   }
 
   function submitWithClarification() {
-    void submitRecommendation(buildClarifiedQuery());
+    void submitChat(buildClarifiedQuery());
   }
 
   function skipClarification() {
-    void submitRecommendation(query);
+    setShowClarifier(false);
+    void submitChat(query);
   }
 
   async function installApp() {
@@ -593,7 +622,8 @@ export default function Home() {
             value={query}
           />
           <button disabled={isLoading || isAssistantTyping} type="submit">
-            {isLoading ? "Thinking" : "Send"}
+            <span>{isLoading ? "Thinking" : "Send"}</span>
+            <SendHorizontal size={17} strokeWidth={2.4} aria-hidden="true" />
           </button>
         </form>
         <div className="quick-prompts" aria-label="Example searches">
@@ -758,12 +788,37 @@ export default function Home() {
                     .join(" â€¢ ") || "Waiting for project details"}
                 </span>
               </div>
-              {latestChat.missing_requirements.length ? (
+              {missingRequirements.length ? (
                 <div>
                   <strong>Needed</strong>
-                  <span>{latestChat.missing_requirements.join(", ")}</span>
+                  <span>{missingRequirements.join(", ")}</span>
                 </div>
               ) : null}
+            </div>
+          ) : null}
+          {latestChat ? (
+            <div className="project-progress" aria-label="Project recommendation progress">
+              <div className="project-progress-header">
+                <strong>{latestChat.report_ready ? "Ready for report" : "Project details"}</strong>
+                <span>{projectProgress}% complete</span>
+              </div>
+              <div className="project-progress-track" aria-hidden="true">
+                <span style={{ width: `${projectProgress}%` }} />
+              </div>
+              <div className="project-progress-list">
+                {capturedRequirements.map((item) => (
+                  <span className="complete" key={`${item.label}-${item.value}`}>
+                    <CheckCircle2 size={14} strokeWidth={2.4} aria-hidden="true" />
+                    {item.label}
+                  </span>
+                ))}
+                {missingRequirements.map((item) => (
+                  <span key={item}>
+                    <Circle size={14} strokeWidth={2.4} aria-hidden="true" />
+                    {item}
+                  </span>
+                ))}
+              </div>
             </div>
           ) : null}
           {latestChat?.report_ready ? (
