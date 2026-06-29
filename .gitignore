@@ -14,6 +14,7 @@ frontend/*.tsbuildinfo
 venv/
 data/vector_store/*
 !data/vector_store/.gitkeep
+!data/vector_store/product_profiles.json
 reports/*
 !reports/.gitkeep
 
