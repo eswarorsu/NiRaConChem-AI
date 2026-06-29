@@ -19,7 +19,7 @@ from reportlab.lib.units import mm
 from reportlab.platypus import Image, ListFlowable, ListItem, PageBreak, Paragraph, SimpleDocTemplate, Spacer, Table, TableStyle
 
 from app.agent_prompt import NIRACONCHEM_AGENT_SYSTEM_PROMPT
-from app.chat_agent import run_chat_agent
+from app.chat_agent_langgraph import run_chat_agent
 from app.chat_sessions import (
     append_message,
     get_or_create_session,
@@ -1133,6 +1133,7 @@ def chat(request: ChatRequest) -> ChatResponse:
         clean_message,
         history,
         build_recommendation,
+        thread_id=session["session_id"],
     )
     append_message(session, "assistant", str(result.get("reply", "")))
     update_session_from_chat_result(session, result)

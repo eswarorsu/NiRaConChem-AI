@@ -1,4 +1,4 @@
-:root {
+﻿:root {
   color-scheme: light;
   --text: #102033;
   --muted: #53677d;
@@ -610,51 +610,6 @@ h1 {
   border-color: rgba(255, 255, 255, 0.22);
 }
 
-.dark-theme .clarifier-panel {
-  background:
-    linear-gradient(145deg, rgba(18, 18, 18, 0.86), rgba(4, 4, 4, 0.76)),
-    rgba(8, 8, 8, 0.82);
-  border-color: rgba(255, 255, 255, 0.18);
-}
-
-.dark-theme .clarifier-header span,
-.dark-theme .clarifier-grid h3 {
-  color: #ffffff;
-}
-
-.dark-theme .clarifier-header p {
-  color: #d7dde6;
-}
-
-.dark-theme .clarifier-grid section {
-  background: rgba(18, 18, 18, 0.72);
-  border-color: rgba(255, 255, 255, 0.18);
-}
-
-.dark-theme .clarifier-options button,
-.dark-theme .clarifier-actions button {
-  color: #ffffff;
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
-.dark-theme .clarifier-options button.selected {
-  color: #050505;
-  background:
-    linear-gradient(145deg, #ffffff, #d9d9d9);
-  border-color: rgba(255, 255, 255, 0.58);
-}
-
-.dark-theme .clarifier-notes {
-  color: #ffffff;
-  background: rgba(0, 0, 0, 0.42);
-  border-color: rgba(255, 255, 255, 0.2);
-}
-
-.dark-theme .clarifier-notes::placeholder {
-  color: rgba(215, 221, 230, 0.66);
-}
-
 .query-input {
   width: 100%;
   min-width: 0;
@@ -750,8 +705,6 @@ h1 {
 .search-box button:focus-visible,
 .upload-icon-button:focus-visible,
 .quick-prompts button:focus-visible,
-.clarifier-options button:focus-visible,
-.clarifier-actions button:focus-visible,
 .download-button:focus-visible,
 .theme-toggle:focus-visible,
 .app-install-button:focus-visible,
@@ -809,145 +762,6 @@ h1 {
   cursor: pointer;
   position: relative;
   overflow: hidden;
-}
-
-.clarifier-panel {
-  margin: 18px auto 0;
-  width: min(900px, 100%);
-  padding: 18px;
-  text-align: left;
-  background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 22px;
-  box-shadow: var(--shadow);
-  backdrop-filter: blur(22px) saturate(150%);
-  animation: clarifier-in 320ms ease both;
-}
-
-@keyframes clarifier-in {
-  from {
-    opacity: 0;
-    transform: translateY(12px) scale(0.985);
-  }
-
-  to {
-    opacity: 1;
-    transform: translateY(0) scale(1);
-  }
-}
-
-.clarifier-header {
-  margin-bottom: 14px;
-}
-
-.clarifier-header span {
-  display: block;
-  color: var(--accent-strong);
-  font-size: 18px;
-  font-weight: 900;
-}
-
-.clarifier-header p {
-  margin: 5px 0 0;
-  color: var(--muted);
-  font-size: 14px;
-  font-weight: 700;
-  line-height: 1.45;
-}
-
-.clarifier-grid {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 14px;
-}
-
-.clarifier-grid section {
-  min-width: 0;
-  padding: 13px;
-  background: rgba(255, 255, 255, 0.42);
-  border: 1px solid rgba(255, 255, 255, 0.58);
-  border-radius: 14px;
-}
-
-.clarifier-grid h3 {
-  margin: 0 0 10px;
-  color: var(--accent-strong);
-  font-size: 13px;
-  text-transform: uppercase;
-}
-
-.clarifier-options {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.clarifier-options button,
-.clarifier-actions button {
-  border: 1px solid rgba(255, 255, 255, 0.7);
-  border-radius: 999px;
-  color: var(--accent-strong);
-  background: rgba(255, 255, 255, 0.5);
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.58);
-  font-weight: 800;
-  cursor: pointer;
-}
-
-.clarifier-options button {
-  padding: 8px 11px;
-  font-size: 13px;
-}
-
-.clarifier-options button.selected {
-  color: #ffffff;
-  background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.2), transparent 34%),
-    linear-gradient(145deg, #0f766e, #0b4f4a);
-  border-color: rgba(15, 118, 110, 0.26);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.3),
-    0 10px 22px rgba(15, 118, 110, 0.2);
-}
-
-.clarifier-notes {
-  width: 100%;
-  min-height: 78px;
-  margin-top: 14px;
-  resize: vertical;
-  border: 1px solid rgba(255, 255, 255, 0.62);
-  border-radius: 16px;
-  padding: 13px 14px;
-  color: var(--text);
-  background: rgba(255, 255, 255, 0.48);
-  outline: 0;
-  font-family: inherit;
-  font-size: 14px;
-  line-height: 1.5;
-}
-
-.clarifier-notes::placeholder {
-  color: rgba(80, 99, 93, 0.72);
-}
-
-.clarifier-actions {
-  display: flex;
-  justify-content: flex-end;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-top: 14px;
-}
-
-.clarifier-actions button {
-  min-height: 42px;
-  padding: 0 16px;
-  font-size: 14px;
-}
-
-.clarifier-actions button:first-child {
-  color: #ffffff;
-  background:
-    linear-gradient(135deg, rgba(255, 255, 255, 0.22), transparent 34%),
-    linear-gradient(145deg, #232a31 0%, #07090c 54%, #161b20 100%);
 }
 
 .file-summary {
@@ -1216,125 +1030,6 @@ h1 {
     transform: translateY(-4px);
     opacity: 0.9;
   }
-}
-
-.chat-status {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
-  margin-top: 16px;
-}
-
-.chat-status div {
-  min-width: 0;
-  padding: 11px 12px;
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.64), rgba(255, 255, 255, 0.34)),
-    rgba(255, 255, 255, 0.44);
-  border: 1px solid rgba(255, 255, 255, 0.62);
-  border-radius: 14px;
-  box-shadow:
-    0 14px 34px rgba(24, 45, 74, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.62);
-  backdrop-filter: blur(18px) saturate(150%);
-}
-
-.chat-status strong,
-.chat-status span {
-  display: block;
-}
-
-.chat-status strong {
-  margin-bottom: 5px;
-  color: var(--accent-strong);
-  font-size: 12px;
-  text-transform: uppercase;
-}
-
-.chat-status span {
-  color: var(--muted);
-  font-size: 13px;
-  line-height: 1.45;
-}
-
-.project-progress {
-  margin-top: 14px;
-  padding: 13px;
-  background:
-    linear-gradient(145deg, rgba(255, 255, 255, 0.64), rgba(255, 255, 255, 0.34)),
-    rgba(255, 255, 255, 0.44);
-  border: 1px solid rgba(255, 255, 255, 0.62);
-  border-radius: 14px;
-  box-shadow:
-    0 14px 34px rgba(24, 45, 74, 0.1),
-    inset 0 1px 0 rgba(255, 255, 255, 0.62);
-  backdrop-filter: blur(18px) saturate(150%);
-}
-
-.project-progress-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-bottom: 10px;
-}
-
-.project-progress-header strong {
-  color: var(--accent-strong);
-  font-size: 13px;
-  text-transform: uppercase;
-}
-
-.project-progress-header span {
-  flex: 0 0 auto;
-  color: var(--muted);
-  font-size: 13px;
-  font-weight: 800;
-}
-
-.project-progress-track {
-  height: 9px;
-  overflow: hidden;
-  background: rgba(255, 255, 255, 0.56);
-  border: 1px solid rgba(255, 255, 255, 0.68);
-  border-radius: 999px;
-}
-
-.project-progress-track span {
-  display: block;
-  height: 100%;
-  min-width: 8px;
-  background: linear-gradient(90deg, #0f766e, #34d399);
-  border-radius: inherit;
-  transition: width 360ms ease;
-}
-
-.project-progress-list {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-  margin-top: 11px;
-}
-
-.project-progress-list span {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  min-height: 30px;
-  padding: 6px 9px;
-  color: var(--muted);
-  background: rgba(255, 255, 255, 0.52);
-  border: 1px solid rgba(255, 255, 255, 0.62);
-  border-radius: 999px;
-  font-size: 12px;
-  font-weight: 800;
-  text-transform: capitalize;
-}
-
-.project-progress-list span.complete {
-  color: #0b4f4a;
-  background: rgba(209, 250, 229, 0.72);
-  border-color: rgba(15, 118, 110, 0.18);
 }
 
 .market-results {
@@ -1777,67 +1472,6 @@ h1 {
 
 .dark-theme .chat-header span,
 .dark-theme .chat-header strong,
-.dark-theme .chat-status strong {
-  color: #ffffff;
-}
-
-.dark-theme .chat-header strong,
-.dark-theme .chat-status div,
-.dark-theme .project-progress {
-  background:
-    linear-gradient(145deg, rgba(22, 22, 22, 0.82), rgba(4, 4, 4, 0.66)),
-    rgba(8, 8, 8, 0.72);
-  border-color: rgba(148, 163, 184, 0.28);
-  box-shadow:
-    0 18px 44px rgba(0, 0, 0, 0.34),
-    inset 0 1px 0 rgba(255, 255, 255, 0.08);
-}
-
-.dark-theme .chat-message p,
-.dark-theme .chat-status span,
-.dark-theme .project-progress-header span,
-.dark-theme .project-progress-list span {
-  color: #d8e8f6;
-}
-
-.dark-theme .chat-avatar {
-  background:
-    radial-gradient(circle at 30% 18%, rgba(255, 255, 255, 0.24), rgba(255, 255, 255, 0.08) 34%, transparent 62%),
-    linear-gradient(145deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.04)),
-    rgba(7, 8, 12, 0.68);
-  border-color: rgba(255, 255, 255, 0.18);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.2),
-    0 12px 24px rgba(0, 0, 0, 0.38);
-}
-
-.dark-theme .chat-message.user .chat-avatar {
-  background:
-    radial-gradient(circle at 30% 20%, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.08) 34%, transparent 62%),
-    linear-gradient(145deg, rgba(16, 185, 129, 0.28), rgba(6, 182, 212, 0.12)),
-    rgba(7, 8, 12, 0.72);
-}
-
-.dark-theme .project-progress-header strong {
-  color: #ffffff;
-}
-
-.dark-theme .project-progress-track {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.18);
-}
-
-.dark-theme .project-progress-list span {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.16);
-}
-
-.dark-theme .project-progress-list span.complete {
-  color: #b7ffe4;
-  background: rgba(15, 118, 110, 0.22);
-  border-color: rgba(110, 231, 183, 0.24);
-}
-
 .dark-theme .market-summary,
 .dark-theme .market-card {
   background:
@@ -2044,42 +1678,6 @@ h1 {
     font-size: 13px;
   }
 
-  .clarifier-panel {
-    padding: 13px;
-    border-radius: 18px;
-  }
-
-  .clarifier-header span {
-    font-size: 16px;
-  }
-
-  .clarifier-header p,
-  .clarifier-notes {
-    font-size: 13px;
-  }
-
-  .clarifier-grid h3 {
-    font-size: 12px;
-  }
-
-  .clarifier-options button,
-  .clarifier-actions button {
-    font-size: 12px;
-  }
-
-  .clarifier-grid {
-    grid-template-columns: 1fr;
-    gap: 10px;
-  }
-
-  .clarifier-actions {
-    justify-content: stretch;
-  }
-
-  .clarifier-actions button {
-    width: 100%;
-  }
-
   .file-summary div {
     flex-direction: column;
   }
@@ -2097,10 +1695,6 @@ h1 {
 
   .chat-message {
     max-width: 100%;
-  }
-
-  .chat-status {
-    grid-template-columns: 1fr;
   }
 
   .market-summary {
@@ -2406,7 +2000,7 @@ h1 {
   background: transparent;
 }
 
-/* ── Login Modal ─────────────────────────────────────────── */
+/* â”€â”€ Login Modal â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
 .login-modal-overlay {
   position: fixed;
   inset: 0;

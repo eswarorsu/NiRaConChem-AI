@@ -1,7 +1,7 @@
-"use client";
+﻿"use client";
 
 import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import { CheckCircle2, Circle, MoreVertical, Moon, Paperclip, SendHorizontal, Sun, Trash2, LogIn, X, Mail, Lock, UserPlus, ArrowRight, Download } from "lucide-react";
+import { MoreVertical, Moon, Paperclip, SendHorizontal, Sun, Trash2, LogIn, X, Mail, Lock, UserPlus, ArrowRight, Download } from "lucide-react";
 import BlinkingEyes from "./components/BlinkingEyes";
 import ClassicUserAvatar from "./components/ClassicUserAvatar";
 import { ParticleWaveBackground } from "./components/ParticleWaveBackground";
@@ -82,14 +82,6 @@ type ChatResponse = {
   } | null;
 };
 
-type ClarificationAnswers = {
-  area: string;
-  exposure: string;
-  substrate: string;
-  location: string;
-  notes: string;
-};
-
 type BeforeInstallPromptEvent = Event & {
   prompt: () => Promise<void>;
   userChoice: Promise<{ outcome: "accepted" | "dismissed"; platform: string }>;
@@ -116,23 +108,6 @@ const examples = [
   "Dubai basement concrete hydrostatic pressure",
   "Parking deck coating with vehicle traffic",
 ];
-
-const requirementLabels: Record<string, string> = {
-  area: "Area",
-  construction_area: "Area",
-  exposure: "Exposure",
-  exposure_condition: "Exposure",
-  substrate: "Substrate",
-  location: "Location",
-  project_location: "Location",
-};
-
-const clarificationOptions = {
-  area: ["Roof", "Basement", "Wet area", "Parking floor", "Concrete repair", "Expansion joint"],
-  exposure: ["UV and heat", "Water pressure", "Coastal chloride", "Vehicle traffic", "Chemical exposure", "Interior use"],
-  substrate: ["Concrete", "Screed", "Existing tiles", "Metal", "Blockwork", "Not sure"],
-  location: ["Dubai", "Abu Dhabi", "Sharjah", "Coastal UAE", "UAE general"],
-};
 
 const broadTerms = ["waterproofing", "flooring", "repair", "coating", "sealant", "tile adhesive", "chemical"];
 const areaTerms = ["roof", "rooftop", "basement", "bathroom", "wet", "parking", "floor", "joint", "tank", "pool", "wall", "slab", "villa"];
@@ -213,18 +188,6 @@ function scoreMarketProduct(product: MarketProduct, searchText: string) {
   }, 0);
 }
 
-function shouldAskClarifyingQuestions(value: string, hasFileContext: boolean) {
-  const normalized = value.toLowerCase().trim();
-  const words = normalized.split(/\s+/).filter(Boolean);
-  const isBroadCategory = broadTerms.some((term) => normalized === term || normalized === `${term} chemicals`);
-  const missingArea = !includesAny(normalized, areaTerms);
-  const missingExposure = !includesAny(normalized, exposureTerms);
-  const missingSubstrate = !includesAny(normalized, substrateTerms);
-  const missingCount = [missingArea, missingExposure, missingSubstrate].filter(Boolean).length;
-
-  return isConstructionRelatedQuery(normalized) && !hasFileContext && (isBroadCategory || words.length <= 3 || missingCount >= 2);
-}
-
 function renderAssistantContent(content: string, showCursor: boolean) {
   const blocks = content.split(/\n{2,}/).filter((block) => block.trim());
 
@@ -232,13 +195,13 @@ function renderAssistantContent(content: string, showCursor: boolean) {
     <div className="chat-answer">
       {blocks.map((block, blockIndex) => {
         const lines = block.split("\n").filter((line) => line.trim());
-        const isList = lines.every((line) => /^[-•]\s+/.test(line.trim()));
+        const isList = lines.every((line) => /^[-â€¢]\s+/.test(line.trim()));
 
         if (isList) {
           return (
             <ul className="chat-answer-list" key={`${block}-${blockIndex}`}>
               {lines.map((line, lineIndex) => (
-                <li key={`${line}-${lineIndex}`}>{line.replace(/^[-•]\s+/, "")}</li>
+                <li key={`${line}-${lineIndex}`}>{line.replace(/^[-â€¢]\s+/, "")}</li>
               ))}
             </ul>
           );
@@ -289,14 +252,6 @@ export default function Home() {
   const [reportPayload, setReportPayload] = useState<ChatResponse["report_payload"]>(null);
   const [recommendation, setRecommendation] = useState<Recommendation | null>(null);
   const [fileAnalysis, setFileAnalysis] = useState<FileAnalysis | null>(null);
-  const [showClarifier, setShowClarifier] = useState(false);
-  const [clarification, setClarification] = useState<ClarificationAnswers>({
-    area: "",
-    exposure: "",
-    substrate: "",
-    location: "",
-    notes: "",
-  });
   const [isLoading, setIsLoading] = useState(false);
   const [isAnalyzingFile, setIsAnalyzingFile] = useState(false);
   const [isDownloading, setIsDownloading] = useState(false);
@@ -308,19 +263,6 @@ export default function Home() {
   const [installPrompt, setInstallPrompt] = useState<BeforeInstallPromptEvent | null>(null);
   const typingIntervalRef = useRef<number | null>(null);
   const hasChatStarted = chatMessages.some((message) => message.role === "user");
-  const capturedRequirements = latestChat
-    ? Object.entries(latestChat.requirements)
-        .filter(([, value]) => value)
-        .map(([key, value]) => ({
-          label: requirementLabels[key] || key.replaceAll("_", " "),
-          value,
-        }))
-    : [];
-  const missingRequirements =
-    latestChat?.missing_requirements.map((key) => requirementLabels[key] || key.replaceAll("_", " ")) || [];
-  const projectProgress = latestChat
-    ? Math.round((capturedRequirements.length / Math.max(capturedRequirements.length + missingRequirements.length, 1)) * 100)
-    : 0;
   const latestUserMessage = [...chatMessages].reverse().find((message) => message.role === "user")?.content || query;
   const marketSearchText = [
     latestUserMessage,
@@ -371,7 +313,6 @@ export default function Home() {
     setFileAnalysis(null);
     setQuery("");
     setError("");
-    setShowClarifier(false);
     setShowMoreMenu(false);
   }
 
@@ -397,7 +338,7 @@ export default function Home() {
       alert("Passwords do not match!");
       return;
     }
-    // Placeholder — wire up real auth here
+    // Placeholder â€” wire up real auth here
     alert(`${loginMode === "login" ? "Login" : "Registration"} submitted for: ${loginEmail}`);
     handleCloseLoginModal();
   }
@@ -480,25 +421,6 @@ export default function Home() {
     });
   }
 
-  function updateClarification(key: keyof ClarificationAnswers, value: string) {
-    setClarification((current) => ({
-      ...current,
-      [key]: current[key] === value && key !== "notes" ? "" : value,
-    }));
-  }
-
-  function buildClarifiedQuery() {
-    const details = [
-      clarification.area ? `construction area: ${clarification.area}` : "",
-      clarification.exposure ? `exposure: ${clarification.exposure}` : "",
-      clarification.substrate ? `substrate: ${clarification.substrate}` : "",
-      clarification.location ? `location: ${clarification.location}` : "",
-      clarification.notes ? `additional details: ${clarification.notes}` : "",
-    ].filter(Boolean);
-
-    return details.length ? `${query.trim()}. ${details.join("; ")}.` : query.trim();
-  }
-
   async function submitRecommendation(nextQuery = query) {
     const trimmedQuery = nextQuery.trim();
     if (!trimmedQuery) {
@@ -508,7 +430,6 @@ export default function Home() {
 
     setIsLoading(true);
     setError("");
-    setShowClarifier(false);
 
     try {
       const response = await apiFetch("/recommend", {
@@ -553,7 +474,6 @@ export default function Home() {
     setIsLoading(true);
     setIsAssistantTyping(true);
     setError("");
-    setShowClarifier(false);
     setActiveMode("nira");
     setIsProjectQuery(isConstructionRelatedQuery(trimmedMessage) || Boolean(fileAnalysis));
     setChatMessages((current) => [...current, { role: "user", content: trimmedMessage }]);
@@ -579,11 +499,7 @@ export default function Home() {
       setSessionId(data.session_id);
       setLatestChat(data);
       setReportPayload(data.report_payload || null);
-      animateAssistantMessage(
-        [data.reply, ...data.questions.map((question) => `- ${question}`)].join(
-          data.questions.length ? "\n\n" : "",
-        ),
-      );
+      animateAssistantMessage(data.reply);
 
       const reportQuery = data.report_payload?.query?.trim();
       if (data.report_ready && reportQuery) {
@@ -611,27 +527,12 @@ export default function Home() {
       setError("Enter a construction chemical requirement first.");
       return;
     }
-    if (shouldAskClarifyingQuestions(trimmedQuery, Boolean(fileAnalysis))) {
-      setError("");
-      setShowClarifier(true);
-      return;
-    }
     void submitChat(trimmedQuery);
   }
 
   function handleExample(example: string) {
     setQuery(example);
-    setShowClarifier(false);
     void submitChat(example);
-  }
-
-  function submitWithClarification() {
-    void submitChat(buildClarifiedQuery());
-  }
-
-  function skipClarification() {
-    setShowClarifier(false);
-    void submitChat(query);
   }
 
   async function installApp() {
@@ -824,7 +725,7 @@ export default function Home() {
                   id="login-password"
                   type="password"
                   autoComplete={loginMode === "login" ? "current-password" : "new-password"}
-                  placeholder="••••••••"
+                  placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                   required
                   value={loginPassword}
                   onChange={(e) => setLoginPassword(e.target.value)}
@@ -838,7 +739,7 @@ export default function Home() {
                     id="login-confirm-password"
                     type="password"
                     autoComplete="new-password"
-                    placeholder="••••••••"
+                    placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
                     required
                     value={loginConfirmPassword}
                     onChange={(e) => setLoginConfirmPassword(e.target.value)}
@@ -951,92 +852,6 @@ export default function Home() {
           ))}
         </div>
 
-        {showClarifier ? (
-          <div className="clarifier-panel" aria-label="Project clarification questions">
-            <div className="clarifier-header">
-              <span>Project details</span>
-              <p>Add a few details so the agent can match the datasheets more accurately.</p>
-            </div>
-            <div className="clarifier-grid">
-              <section>
-                <h3>Construction area</h3>
-                <div className="clarifier-options">
-                  {clarificationOptions.area.map((option) => (
-                    <button
-                      className={clarification.area === option ? "selected" : ""}
-                      key={option}
-                      onClick={() => updateClarification("area", option)}
-                      type="button"
-                    >
-                      {option}
-                    </button>
-                  ))}
-                </div>
-              </section>
-              <section>
-                <h3>Exposure condition</h3>
-                <div className="clarifier-options">
-                  {clarificationOptions.exposure.map((option) => (
-                    <button
-                      className={clarification.exposure === option ? "selected" : ""}
-                      key={option}
-                      onClick={() => updateClarification("exposure", option)}
-                      type="button"
-                    >
-                      {option}
-                    </button>
-                  ))}
-                </div>
-              </section>
-              <section>
-                <h3>Substrate</h3>
-                <div className="clarifier-options">
-                  {clarificationOptions.substrate.map((option) => (
-                    <button
-                      className={clarification.substrate === option ? "selected" : ""}
-                      key={option}
-                      onClick={() => updateClarification("substrate", option)}
-                      type="button"
-                    >
-                      {option}
-                    </button>
-                  ))}
-                </div>
-              </section>
-              <section>
-                <h3>Project location</h3>
-                <div className="clarifier-options">
-                  {clarificationOptions.location.map((option) => (
-                    <button
-                      className={clarification.location === option ? "selected" : ""}
-                      key={option}
-                      onClick={() => updateClarification("location", option)}
-                      type="button"
-                    >
-                      {option}
-                    </button>
-                  ))}
-                </div>
-              </section>
-            </div>
-            <textarea
-              aria-label="Additional project notes"
-              className="clarifier-notes"
-              onChange={(event) => updateClarification("notes", event.target.value)}
-              placeholder="Optional: add thickness, crack width, new/old concrete, traffic level, water pressure, or specification requirement..."
-              value={clarification.notes}
-            />
-            <div className="clarifier-actions">
-              <button disabled={isLoading} onClick={submitWithClarification} type="button">
-                Recommend with details
-              </button>
-              <button disabled={isLoading} onClick={skipClarification} type="button">
-                Skip questions
-              </button>
-            </div>
-          </div>
-        ) : null}
-
         {fileAnalysis ? (
           <div className="file-summary">
             <div>
@@ -1125,50 +940,6 @@ export default function Home() {
                 </div>
               ) : null}
             </div>
-          {latestChat && isProjectQuery ? (
-            <div className="chat-status">
-              <div>
-                <strong>Captured</strong>
-                <span>
-                  {Object.entries(latestChat.requirements)
-                    .filter(([, value]) => value)
-                    .map(([key, value]) => `${key.replaceAll("_", " ")}: ${value}`)
-                    .join(" â€¢ ") || "Waiting for project details"}
-                </span>
-              </div>
-              {missingRequirements.length ? (
-                <div>
-                  <strong>Needed</strong>
-                  <span>{missingRequirements.join(", ")}</span>
-                </div>
-              ) : null}
-            </div>
-          ) : null}
-          {latestChat && isProjectQuery ? (
-            <div className="project-progress" aria-label="Project recommendation progress">
-              <div className="project-progress-header">
-                <strong>{latestChat.report_ready ? "Ready for report" : "Project details"}</strong>
-                <span>{projectProgress}% complete</span>
-              </div>
-              <div className="project-progress-track" aria-hidden="true">
-                <span style={{ width: `${projectProgress}%` }} />
-              </div>
-              <div className="project-progress-list">
-                {capturedRequirements.map((item) => (
-                  <span className="complete" key={`${item.label}-${item.value}`}>
-                    <CheckCircle2 size={14} strokeWidth={2.4} aria-hidden="true" />
-                    {item.label}
-                  </span>
-                ))}
-                {missingRequirements.map((item) => (
-                  <span key={item}>
-                    <Circle size={14} strokeWidth={2.4} aria-hidden="true" />
-                    {item}
-                  </span>
-                ))}
-              </div>
-            </div>
-          ) : null}
           {latestChat?.report_ready && isProjectQuery ? (
             <button className="download-button" disabled={isDownloading} onClick={downloadReport} type="button">
               {isDownloading ? "Preparing PDF" : "Download PDF Report"}
