@@ -964,6 +964,51 @@ h1 {
   white-space: pre-line;
 }
 
+.chat-answer {
+  min-width: 0;
+  color: var(--text);
+  font-size: 14px;
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.chat-answer p {
+  margin: 0 0 10px;
+  padding: 0;
+  white-space: normal;
+}
+
+.chat-answer p:last-child {
+  margin-bottom: 0;
+}
+
+.chat-answer-lead {
+  font-weight: 700;
+}
+
+.chat-answer-section {
+  margin: 0 0 12px;
+}
+
+.chat-answer-section:last-child {
+  margin-bottom: 0;
+}
+
+.chat-answer-section > strong {
+  display: block;
+  margin-bottom: 5px;
+  color: var(--accent-strong);
+}
+
+.chat-answer-list {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.chat-answer-list li + li {
+  margin-top: 4px;
+}
+
 .chat-message.user p {
   grid-column: 1;
   grid-row: 1;

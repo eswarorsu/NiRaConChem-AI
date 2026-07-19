@@ -332,24 +332,50 @@ def captured_slots_text(slots: Slots) -> str:
     return ", ".join(f"{labels[key]}: {value}" for key, value in slots.items() if value)
 
 
+def clarification_questions(missing: list[str]) -> list[str]:
+    question_map = {
+        "problem_requirement": "What problem or system do you need: waterproofing, tile fixing, flooring, concrete repair, sealant, or coating?",
+        "application_area": "Which application area is this for: roof, basement, bathroom, parking deck, floor, pool, tank, wall, or joint?",
+        "substrate": "What is the substrate: concrete, screed, existing tile, blockwork, plaster, metal, or stone?",
+        "exposure": "What exposure should it handle: water, UV/heat, hydrostatic pressure, traffic, chemical exposure, chloride/coastal, or interior use?",
+        "location": "Where is the project located: Dubai, Abu Dhabi, Sharjah, another UAE emirate, or another GCC location?",
+    }
+    return [question_map[key] for key in missing if key in question_map]
+
+
+def clarification_reply(slots: Slots, missing: list[str]) -> str:
+    captured = captured_slots_text(slots)
+    questions = clarification_questions(missing)
+    lines = [
+        "I can recommend the correct construction chemical system, but I need a few project details first.",
+    ]
+    if captured:
+        lines.append(f"I already captured: {captured}.")
+    lines.append("Please answer these so I can give the complete output:")
+    lines.extend(f"- {question}" for question in questions)
+    return "\n\n".join([lines[0], *(lines[1:2] if captured else []), "\n".join(lines[2:] if captured else lines[1:])])
+
+
+def marketplace_ready_reply(query: str, slots: Slots) -> str:
+    captured = captured_slots_text(slots)
+    guidance = infer_query_guidance(query)
+    categories = ", ".join(guidance["categories"])
+    return (
+        "I have the required inputs now.\n\n"
+        f"Project Summary\n{captured or 'Inputs captured from the conversation.'}\n\n"
+        f"Requirement Type\n{categories}\n\n"
+        "MARKET RESULT is ready. Open that tab to view the matched options.\n\n"
+        "The chat will only handle project inputs and guidance."
+    )
+
+
 def recommendation_summary(recommendation: Any) -> dict[str, Any]:
-    profile = getattr(recommendation, "selected_product_profile", None) or {}
     return {
         "project_summary": getattr(recommendation, "project_summary", None),
         "detected_location": getattr(recommendation, "detected_location", None),
         "climate_context": getattr(recommendation, "climate_context", None),
         "recommended_categories": getattr(recommendation, "recommended_categories", []),
-        "best_recommended_system": getattr(recommendation, "best_recommended_system", None),
-        "best_manufacturer": getattr(recommendation, "best_manufacturer", None),
-        "recommended_products": getattr(recommendation, "recommended_products", {}),
         "why_recommended": getattr(recommendation, "why_recommended", []),
-        "supporting_datasheet_references": getattr(recommendation, "supporting_datasheet_references", []),
-        "selected_product_profile": {
-            "product_name": profile.get("product_name"),
-            "category": profile.get("category"),
-            "application_areas": profile.get("application_areas", []),
-            "performance": profile.get("performance", {}),
-        },
     }
 
 
@@ -372,73 +398,81 @@ def profile_list(profile: dict[str, Any], *keys: str) -> list[str]:
     return list(dict.fromkeys(values))
 
 
+def infer_query_guidance(query: str) -> dict[str, list[str] | str]:
+    normalized = normalize_text(query)
+    category_rules = [
+        (
+            "Tile fixing / grouting",
+            ("tile", "tiles", "tiling", "adhesive", "grout", "ceramic", "porcelain"),
+            [
+                "clean the surface and remove dust, oil, paint, or laitance",
+                "use the correct installation method for the selected material",
+                "allow the installed system to cure as required by the datasheet",
+            ],
+        ),
+        (
+            "Waterproofing",
+            ("waterproof", "waterproofing", "water proof", "leak", "leakage", "damp", "bathroom", "roof", "basement", "tank", "pool"),
+            [
+                "identify whether the water pressure is positive, negative, or hydrostatic",
+                "treat cracks, pipe penetrations, corners, and construction joints before application",
+                "verify thickness, coverage, curing time, and testing requirements from the datasheet",
+            ],
+        ),
+        (
+            "Flooring / coating",
+            ("floor", "flooring", "epoxy", "pu", "polyurethane", "traffic", "parking", "warehouse", "deck"),
+            [
+                "check substrate moisture, surface strength, and contamination before application",
+                "select the system by traffic load, UV exposure, chemical exposure, and slip resistance",
+                "prepare the surface using the method required by the datasheet",
+            ],
+        ),
+        (
+            "Concrete repair",
+            ("repair", "spall", "honeycomb", "crack", "patch", "mortar", "rebar", "corrosion"),
+            [
+                "remove weak concrete and clean exposed reinforcement before repair",
+                "confirm whether cracks are active, dormant, structural, or non-structural",
+                "cure repair mortar correctly, especially in hot UAE/GCC conditions",
+            ],
+        ),
+        (
+            "Sealant / joints",
+            ("sealant", "joint", "expansion", "movement", "gap", "backer"),
+            [
+                "confirm joint width, depth, movement, exposure, and traffic condition",
+                "clean and prime joint faces before applying sealant",
+                "use backer rod to control sealant depth and avoid three-side adhesion",
+            ],
+        ),
+    ]
+
+    matched_categories = []
+    guidance = []
+    for category, keywords, steps in category_rules:
+        if any(keyword in normalized for keyword in keywords):
+            matched_categories.append(category)
+            guidance.extend(steps)
+
+    if not matched_categories:
+        matched_categories = ["Construction chemical selection"]
+        guidance = [
+            "confirm the application area, substrate, exposure, and project location",
+            "match the product category to the site condition before choosing a brand",
+            "verify the final selection against the datasheet",
+        ]
+
+    keywords = tokenize_query_keywords(normalized)
+    return {
+        "categories": list(dict.fromkeys(matched_categories)),
+        "guidance": list(dict.fromkeys(guidance))[:5],
+        "keywords": keywords[:8],
+    }
+
+
 def product_profile_reply(query: str, profiles: list[dict[str, Any]]) -> str:
-    if not profiles:
-        return (
-            "I could not find a matching product profile for that exact query. "
-            "Based on the keywords, use the relevant construction chemical category and verify the final choice against the manufacturer datasheet."
-        )
-
-    normalized_query = normalize_text(query)
-    wants_explanation = any(
-        phrase in normalized_query
-        for phrase in ("what is", "where", "why", "how", "explain", "use", "application", "data", "details")
-    )
-
-    lead = (
-        "From the product profiles, the closest match is:"
-        if len(profiles) == 1 or wants_explanation
-        else "From the product profiles, these are the closest matching chemicals:"
-    )
-    sections = [lead]
-
-    for index, profile in enumerate(profiles[:3], start=1):
-        name = profile_value(profile, "product_name") or "Unnamed product"
-        brand = profile_value(profile, "brand", "manufacturer")
-        category = profile_value(profile, "category", "system_type")
-        description = profile_value(profile, "description", "usage")
-        price = profile_value(profile, "price")
-        url = profile_value(profile, "product_url")
-        areas = profile_list(profile, "application_areas", "categories")
-        products = profile_list(profile, "products")
-        layers = profile.get("system_layers", {})
-        layer_values = [str(value).strip() for value in layers.values() if str(value).strip()] if isinstance(layers, dict) else []
-
-        lines = [f"{index}. {name}"]
-        if brand:
-            lines.append(f"Brand/company: {brand}")
-        if category:
-            lines.append(f"Category/system: {category}")
-        if products:
-            lines.append(f"Product roles: {', '.join(products[:5])}")
-        if layer_values:
-            lines.append(f"System components: {', '.join(layer_values[:5])}")
-        if description:
-            lines.append(f"Use: {description[:420]}")
-        elif areas:
-            lines.append(f"Use: suitable for {', '.join(areas[:4])}.")
-        if price:
-            lines.append(f"Listed price: {price}")
-        if url:
-            lines.append(f"Product page: {url}")
-
-        why = []
-        text = " ".join([name, brand, category, description, " ".join(areas), " ".join(products), " ".join(layer_values)]).lower()
-        for token in tokenize_query_keywords(normalized_query):
-            if token in text:
-                why.append(token)
-        if why:
-            lines.append(f"Why this matches: profile contains {', '.join(why[:6])}.")
-
-        if "tile adhesive" in normalized_query or "tiling" in normalized_query or "tiles" in normalized_query:
-            lines.append(
-                "How to use generally: clean the surface, remove dust/oil, prime glossy existing tiles if needed, "
-                "spread adhesive with the correct notched trowel, back-butter large tiles, fix within open time, and grout after curing."
-            )
-
-        sections.append("\n".join(lines))
-
-    return "\n\n".join(sections)
+    return marketplace_ready_reply(query, extract_slots(query))
 
 
 def profile_text(profile: dict[str, Any]) -> dict[str, str]:
@@ -677,46 +711,24 @@ def fallback_general_reply(message: str) -> str:
     if has_term(normalized, {"thank", "thanks"}):
         return "You are welcome. Ask me anything, or tell me a construction chemical requirement when you want a project recommendation."
     return (
-        "I can help with construction chemical selection, product data, usage guidance, and why/how explanations. "
-        "Ask the requirement or product name, and I will answer from the available product profiles."
+        "I can help collect the project requirement, area, substrate, exposure, and location. "
+        "Once those inputs are complete, MARKET RESULT will show the matched options."
     )
 
 
 def fallback_technical_reply(recommendation: Any) -> str:
-    system = recommendation.best_recommended_system or "the appropriate construction chemical system"
-    category_text = " ".join(recommendation.recommended_categories or []).lower()
-    if "polyurethane" in category_text and "waterproof" in category_text:
-        system = "Cold fluid-applied polyurethane waterproofing membrane system"
-    manufacturer = recommendation.best_manufacturer or "a verified manufacturer"
-    reasons = recommendation.why_recommended or ["matches the stated project requirement"]
-    sources = recommendation.supporting_datasheet_references or []
-    reply = [
-        f"Based on the project details, I would shortlist {system}.",
-        f"The matched manufacturer from the retrieved data is {manufacturer}.",
-        "Why this fits: " + " ".join(reasons[:3]),
-    ]
-    if sources:
-        reply.append("I found supporting datasheet references: " + ", ".join(sources[:3]) + ".")
-    reply.append(
-        "The PDF technical report is ready to generate. Final approval should still be checked against "
-        "the project specification, site condition, and manufacturer datasheet."
+    return (
+        "I have enough information to continue.\n\n"
+        "Open MARKET RESULT to view the matched options. "
+        "The chat will stay focused on project inputs and guidance."
     )
-    return "\n\n".join(reply)
 
 
 def tile_adhesive_reply(slots: Slots, recommendation: Any | None) -> str:
-    location = slots.get("location") or "your project location"
-    area = slots.get("application_area") or "the tiled area"
-    substrate = slots.get("substrate") or "the substrate"
-    sources = getattr(recommendation, "supporting_datasheet_references", []) if recommendation else []
-    source_line = f"\n\nSupporting datasheet references: {', '.join(sources[:3])}." if sources else ""
     return (
-        f"For fixing tiles stronger on {substrate} in {area} at {location}, use a polymer-modified cementitious tile adhesive. "
-        "For wet areas, heat, or slight movement, prefer a C2TE S1 grade adhesive; for heavy-duty or chemically exposed areas, "
-        "use a suitable epoxy adhesive/grout system.\n\n"
-        "Practical system: clean and roughen the surface, apply compatible primer if the existing tile is glossy, use the correct "
-        "notched trowel, back-butter large tiles, keep joint gaps, and grout only after the adhesive has cured as per the datasheet."
-        f"{source_line}\n\nThe PDF technical report is ready to generate."
+        "I have enough tile-fixing context to continue.\n\n"
+        "Open MARKET RESULT to view the matched options. "
+        "The chat will stay focused on project inputs and guidance."
     )
 
 
@@ -816,7 +828,7 @@ def node_knowledge(state: AgentState) -> dict[str, Any]:
     system = (
         f"You are {BRAND_NAME}, a senior construction chemicals expert. "
         "Answer clearly and factually. Explain product categories and practical application guidance. "
-        "Do not invent product names, standards, or datasheet values."
+        "Do not invent marketplace details, standards, or datasheet values."
     )
     reply = groq_reply(system, state.get("message", ""), temperature=0.35) or (
         "This is a construction chemicals knowledge question. I can explain the concept, but for project-specific "
@@ -832,26 +844,36 @@ def node_technical(state: AgentState) -> dict[str, Any]:
 
 def node_recommend(state: AgentState) -> dict[str, Any]:
     context = state.get("context", state.get("message", ""))
-    profiles = product_profiles_for_query(context, limit=5)
-    recommendation = None
-    rec_data = {"product_profiles": profiles[:5]} if profiles else None
     slots = state.get("slots", {})
     pdf_missing = missing_slot_keys(slots)
-    report_ready = bool(profiles) and not pdf_missing
 
-    reply = product_profile_reply(context, profiles)
-    if profiles and pdf_missing:
-        needed = ", ".join(MISSING_LABELS.get(key, key) for key in pdf_missing)
-        reply = f"{reply}\n\nFor a PDF technical report, also include: {needed}."
-    sources = [profile.get("product_name", "") for profile in profiles[:3] if profile.get("product_name")]
+    if pdf_missing:
+        questions = clarification_questions(pdf_missing)
+        return terminal_response(
+            state,
+            clarification_reply(slots, pdf_missing),
+            needs_clarification=True,
+            questions=questions,
+            recommendation=None,
+            report_ready=False,
+            report_payload={"query": context, "slots": dict(slots)},
+            sources=[],
+        ) | (
+            {"missing_slots": pdf_missing}
+        )
+
+    profiles_found = bool(product_profiles_for_query(context, limit=5))
+    report_ready = profiles_found and not pdf_missing
+
+    reply = marketplace_ready_reply(context, slots)
     return terminal_response(
         state,
         str(reply).strip(),
         questions=[],
-        recommendation=rec_data,
+        recommendation=None,
         report_ready=report_ready,
         report_payload={"query": context, "slots": dict(slots)},
-        sources=sources,
+        sources=[],
     ) | (
         {"missing_slots": pdf_missing}
     )

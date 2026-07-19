@@ -1121,6 +1121,97 @@ def recommend(request: RecommendationRequest) -> RecommendationResponse:
     )
 
 
+def natural_no_match_reply(query: str) -> str:
+    normalized = query.lower()
+    categories: list[str] = []
+    guidance: list[str] = []
+
+    def add(category: str, steps: list[str]) -> None:
+        categories.append(category)
+        guidance.extend(steps)
+
+    if any(term in normalized for term in ("tile", "tiles", "tiling", "adhesive", "grout", "fix")):
+        add(
+            "tile fixing / grouting",
+            [
+                "clean the substrate and remove dust, oil, weak plaster, or laitance",
+                "use the correct notched trowel and back-butter large-format tiles",
+                "allow adhesive to cure before grouting as per the datasheet",
+            ],
+        )
+    if any(term in normalized for term in ("water", "waterproof", "leak", "roof", "basement", "bathroom", "pool", "tank")):
+        add(
+            "waterproofing",
+            [
+                "confirm whether water pressure is positive, negative, or hydrostatic",
+                "treat cracks, corners, pipe penetrations, and construction joints first",
+                "check required thickness, coverage, curing, and flood-test requirements",
+            ],
+        )
+    if any(term in normalized for term in ("floor", "parking", "traffic", "warehouse", "epoxy", "polyurethane", "pu")):
+        add(
+            "flooring / coating",
+            [
+                "check concrete moisture, surface strength, and contamination before coating",
+                "select the system by traffic load, UV exposure, chemical exposure, and slip resistance",
+                "prepare concrete by grinding or shot blasting where required",
+            ],
+        )
+    if any(term in normalized for term in ("repair", "crack", "honeycomb", "spall", "rebar", "corrosion")):
+        add(
+            "concrete repair",
+            [
+                "remove loose concrete and clean reinforcement before repair",
+                "confirm whether cracks are active, dormant, structural, or non-structural",
+                "cure repair mortar correctly, especially in hot site conditions",
+            ],
+        )
+    if any(term in normalized for term in ("joint", "sealant", "expansion", "gap")):
+        add(
+            "sealant / joint treatment",
+            [
+                "confirm joint width, depth, movement, and exposure",
+                "clean and prime joint faces before sealant application",
+                "use backer rod to control sealant depth and avoid three-side adhesion",
+            ],
+        )
+
+    if not categories:
+        categories = ["construction chemical selection"]
+        guidance = [
+            "confirm the application area, substrate, exposure, and location",
+            "match the product category to the actual site condition",
+            "verify final product selection against the manufacturer datasheet",
+        ]
+
+    guidance = list(dict.fromkeys(guidance))[:4]
+    return (
+        f"Based on your query, this looks like a {' + '.join(list(dict.fromkeys(categories)))} requirement.\n\n"
+        "Next Details Needed\n"
+        "- application area\n"
+        "- substrate\n"
+        "- exposure condition\n"
+        "- project location\n\n"
+        "Application Notes\n"
+        + "\n".join(f"- {item}" for item in guidance)
+        + "\n\nMARKET RESULT is ready for matched options. The chat will only handle project inputs and guidance."
+    )
+
+
+def sanitize_chat_result(result: dict, query: str) -> dict:
+    result = dict(result)
+    reply = str(result.get("reply", ""))
+    looks_like_product_list = bool(re.search(r"\n\d+\.\s", reply)) or bool(re.search(r"\bAED\s+\d", reply, re.IGNORECASE)) or bool(re.search(r"https?://", reply, re.IGNORECASE))
+    looks_like_old_fallback = "matching product" in reply or "PDF technical report" in reply
+    if looks_like_product_list or looks_like_old_fallback:
+        result["reply"] = natural_no_match_reply(query)
+        result["needs_clarification"] = False
+        result["questions"] = []
+    result["recommendation"] = None
+    result["sources"] = []
+    return result
+
+
 @app.post("/chat", response_model=ChatResponse)
 def chat(request: ChatRequest) -> ChatResponse:
     session = get_or_create_session(request.session_id)
@@ -1135,6 +1226,7 @@ def chat(request: ChatRequest) -> ChatResponse:
         build_recommendation,
         thread_id=session["session_id"],
     )
+    result = sanitize_chat_result(result, clean_message)
     append_message(session, "assistant", str(result.get("reply", "")))
     update_session_from_chat_result(session, result)
     result["session_id"] = session["session_id"]

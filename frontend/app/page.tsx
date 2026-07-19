@@ -17,36 +17,6 @@ const API_BASE_URL =
       : RENDER_API_BASE_URL;
 const API_TIMEOUT_MS = 45000;
 
-type Recommendation = {
-  project_summary: string;
-  detected_location: string;
-  climate_context: string[];
-  recommended_categories: string[];
-  application_guidance: string[];
-  missing_information: string[];
-  ai_recommendation?: string | null;
-  ai_precautions?: string[];
-  ai_questions?: string[];
-  source: string;
-  document_name?: string | null;
-  document_preview?: string | null;
-  rag_sources: string[];
-  rag_context: string[];
-  best_recommended_system?: string | null;
-  best_manufacturer?: string | null;
-  recommended_products: Record<string, string>;
-  why_recommended: string[];
-  supporting_datasheet_references: string[];
-  selected_product_profile?: {
-    product_name?: string;
-    system_type?: string;
-    category?: string;
-    application_areas?: string[];
-    performance?: Record<string, string>;
-    score?: number;
-  } | null;
-};
-
 type FileAnalysis = {
   filename: string;
   file_type: string;
@@ -149,22 +119,32 @@ function isConstructionRelatedQuery(value: string) {
 }
 
 function tokenizeMarketText(value: string) {
-  const terms = value
+  const normalized = value
     .toLowerCase()
+    .replace(/\bwater\s+proof(?:ing)?\b/g, "waterproofing")
+    .replace(/\bfix(?:ing)?\s+tiles?\b/g, "tile adhesive")
+    .replace(/\btiles?\s+fix(?:ing)?\b/g, "tile adhesive")
+    .replace(/\btails?\b/g, "tiles")
+    .replace(/\bconcrate\b/g, "concrete");
+
+  const terms = normalized
     .split(/[^a-z0-9]+/)
     .filter((term) => term.length > 2);
 
-  if (value.toLowerCase().includes("waterproof")) {
-    terms.push("waterproof", "waterproofing", "membrane", "sealant", "primer", "coating", "roof", "basement");
+  if (normalized.includes("waterproof") || normalized.includes("leak") || normalized.includes("bathroom") || normalized.includes("basement") || normalized.includes("roof")) {
+    terms.push("waterproof", "waterproofing", "membrane", "sealant", "primer", "coating", "roof", "basement", "wet", "tank", "pool");
   }
-  if (value.toLowerCase().includes("floor")) {
-    terms.push("flooring", "floor", "coating", "screed", "epoxy", "polyurethane");
+  if (normalized.includes("floor") || normalized.includes("parking") || normalized.includes("traffic") || normalized.includes("warehouse")) {
+    terms.push("flooring", "floor", "coating", "screed", "epoxy", "polyurethane", "deck");
   }
-  if (value.toLowerCase().includes("tile")) {
-    terms.push("tile", "adhesive", "grout", "sealer");
+  if (normalized.includes("tile") || normalized.includes("adhesive") || normalized.includes("grout")) {
+    terms.push("tile", "tiles", "adhesive", "grout", "sealer", "primer", "porcelain", "ceramic");
   }
-  if (value.toLowerCase().includes("repair")) {
-    terms.push("repair", "concrete", "mortar", "grout");
+  if (normalized.includes("repair") || normalized.includes("crack") || normalized.includes("honeycomb") || normalized.includes("spall")) {
+    terms.push("repair", "concrete", "mortar", "grout", "crack", "epoxy");
+  }
+  if (normalized.includes("joint") || normalized.includes("sealant") || normalized.includes("expansion")) {
+    terms.push("joint", "sealant", "polyurethane", "backer", "primer");
   }
 
   return [...new Set(terms)];
@@ -188,6 +168,96 @@ function scoreMarketProduct(product: MarketProduct, searchText: string) {
   }, 0);
 }
 
+function inferNaturalChatReply(query: string) {
+  const normalized = query.toLowerCase();
+  const sections: { title: string; guidance: string[] }[] = [];
+
+  if (normalized.includes("tile") || normalized.includes("adhesive") || normalized.includes("grout") || normalized.includes("fix")) {
+    sections.push({
+      title: "Tile Fixing / Grouting",
+      guidance: [
+        "clean the surface and remove dust, oil, weak plaster, or laitance",
+        "use the correct installation method for the selected material",
+        "allow the installed system to cure as required by the datasheet",
+      ],
+    });
+  }
+
+  if (normalized.includes("water") || normalized.includes("leak") || normalized.includes("roof") || normalized.includes("basement") || normalized.includes("bathroom") || normalized.includes("pool") || normalized.includes("tank")) {
+    sections.push({
+      title: "Waterproofing",
+      guidance: [
+        "confirm whether the water pressure is positive, negative, or hydrostatic",
+        "treat cracks, corners, pipe penetrations, and construction joints first",
+        "check required thickness, coverage, curing, and test requirements",
+      ],
+    });
+  }
+
+  if (normalized.includes("floor") || normalized.includes("parking") || normalized.includes("traffic") || normalized.includes("warehouse") || normalized.includes("epoxy") || normalized.includes("pu")) {
+    sections.push({
+      title: "Flooring / Coating",
+      guidance: [
+        "check concrete moisture, surface strength, and contamination before coating",
+        "select the system by traffic load, UV, exposure, and slip resistance",
+        "prepare the surface as required by the datasheet",
+      ],
+    });
+  }
+
+  if (normalized.includes("repair") || normalized.includes("crack") || normalized.includes("honeycomb") || normalized.includes("spall")) {
+    sections.push({
+      title: "Concrete Repair",
+      guidance: [
+        "remove loose concrete and clean reinforcement before repair",
+        "confirm whether cracks are active, dormant, structural, or non-structural",
+        "cure repair mortar correctly, especially in hot site conditions",
+      ],
+    });
+  }
+
+  if (normalized.includes("joint") || normalized.includes("sealant") || normalized.includes("expansion")) {
+    sections.push({
+      title: "Sealant / Joint Treatment",
+      guidance: [
+        "confirm joint width, depth, movement, and exposure",
+        "clean and prime joint faces before sealant application",
+        "use backer rod to control sealant depth and avoid three-side adhesion",
+      ],
+    });
+  }
+
+  const selected = sections.length
+    ? sections
+    : [
+        {
+          title: "Construction Chemical Selection",
+          guidance: [
+            "confirm the application area, substrate, exposure, and location",
+            "match the product category to the actual site condition",
+            "verify the final selection against the datasheet",
+          ],
+        },
+      ];
+
+  const first = selected[0];
+  return [
+    `Based on your query, this looks like a ${selected.map((section) => section.title).join(" + ")} requirement.`,
+    "Next Details Needed\n- application area\n- substrate\n- exposure condition\n- project location",
+    `Application Notes\n${first.guidance.map((item) => `- ${item}`).join("\n")}`,
+    "MARKET RESULT is ready for matched options. The chat will only handle project inputs and guidance.",
+  ].join("\n\n");
+}
+
+function normalizeChatReply(reply: string, query: string) {
+  const looksLikeProductList = /\n\d+\.\s/.test(reply) || /\bAED\s+\d/i.test(reply) || /https?:\/\//i.test(reply);
+  const looksLikeOldFallback = reply.includes("matching product") || reply.includes("PDF technical report");
+  if (looksLikeProductList || looksLikeOldFallback) {
+    return inferNaturalChatReply(query);
+  }
+  return reply;
+}
+
 function renderAssistantContent(content: string, showCursor: boolean) {
   const blocks = content.split(/\n{2,}/).filter((block) => block.trim());
 
@@ -195,15 +265,30 @@ function renderAssistantContent(content: string, showCursor: boolean) {
     <div className="chat-answer">
       {blocks.map((block, blockIndex) => {
         const lines = block.split("\n").filter((line) => line.trim());
-        const isList = lines.every((line) => /^[-â€¢]\s+/.test(line.trim()));
+        const isList = lines.every((line) => /^[-*•]\s+/.test(line.trim()));
+        const hasHeadingWithList = lines.length > 1 && !/^[-*•]\s+/.test(lines[0].trim()) && lines.slice(1).every((line) => /^[-*•]\s+/.test(line.trim()));
 
         if (isList) {
           return (
             <ul className="chat-answer-list" key={`${block}-${blockIndex}`}>
               {lines.map((line, lineIndex) => (
-                <li key={`${line}-${lineIndex}`}>{line.replace(/^[-â€¢]\s+/, "")}</li>
+                <li key={`${line}-${lineIndex}`}>{line.replace(/^[-*•]\s+/, "")}</li>
               ))}
             </ul>
+          );
+        }
+
+        if (hasHeadingWithList) {
+          return (
+            <section className="chat-answer-section" key={`${block}-${blockIndex}`}>
+              <strong>{lines[0]}</strong>
+              <ul className="chat-answer-list">
+                {lines.slice(1).map((line, lineIndex) => (
+                  <li key={`${line}-${lineIndex}`}>{line.replace(/^[-*•]\s+/, "")}</li>
+                ))}
+              </ul>
+              {showCursor && blockIndex === blocks.length - 1 ? <span className="typing-cursor" aria-hidden="true" /> : null}
+            </section>
           );
         }
 
@@ -250,7 +335,6 @@ export default function Home() {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [latestChat, setLatestChat] = useState<ChatResponse | null>(null);
   const [reportPayload, setReportPayload] = useState<ChatResponse["report_payload"]>(null);
-  const [recommendation, setRecommendation] = useState<Recommendation | null>(null);
   const [fileAnalysis, setFileAnalysis] = useState<FileAnalysis | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [isAnalyzingFile, setIsAnalyzingFile] = useState(false);
@@ -309,7 +393,6 @@ export default function Home() {
     setSessionId(null);
     setLatestChat(null);
     setReportPayload(null);
-    setRecommendation(null);
     setFileAnalysis(null);
     setQuery("");
     setError("");
@@ -421,49 +504,6 @@ export default function Home() {
     });
   }
 
-  async function submitRecommendation(nextQuery = query) {
-    const trimmedQuery = nextQuery.trim();
-    if (!trimmedQuery) {
-      setError("Enter a construction chemical requirement first.");
-      return;
-    }
-
-    setIsLoading(true);
-    setError("");
-
-    try {
-      const response = await apiFetch("/recommend", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          query: trimmedQuery,
-          document_context: fileAnalysis?.preview,
-          document_name: fileAnalysis?.filename,
-        }),
-      });
-
-      if (!response.ok) {
-        throw new Error("Recommendation request failed.");
-      }
-
-      const data = (await response.json()) as Recommendation;
-      setRecommendation(data);
-      if (nextQuery !== query) {
-        setQuery(nextQuery);
-      }
-    } catch (error) {
-      setError(
-        error instanceof DOMException && error.name === "AbortError"
-          ? "Backend took too long to respond. Check that the deployed API is awake and the Vercel backend URL is correct."
-          : "Backend is not reachable. Check NEXT_PUBLIC_API_BASE_URL, backend deployment, and CORS settings.",
-      );
-    } finally {
-      setIsLoading(false);
-    }
-  }
-
   async function submitChat(nextMessage = query) {
     const trimmedMessage = nextMessage.trim();
     if (!trimmedMessage) {
@@ -496,13 +536,20 @@ export default function Home() {
       }
 
       const data = (await response.json()) as ChatResponse;
-      setSessionId(data.session_id);
-      setLatestChat(data);
-      setReportPayload(data.report_payload || null);
-      animateAssistantMessage(data.reply);
+      const normalizedData = {
+        ...data,
+        reply: normalizeChatReply(data.reply, trimmedMessage),
+      };
+      setSessionId(normalizedData.session_id);
+      setLatestChat(normalizedData);
+      setReportPayload(normalizedData.report_payload || null);
+      animateAssistantMessage(normalizedData.reply);
 
-      const reportQuery = data.report_payload?.query?.trim();
-      if (data.report_ready && reportQuery) {
+      const reportQuery = normalizedData.report_payload?.query?.trim();
+      if (normalizedData.intent === "technical_consultation" && !normalizedData.needs_clarification) {
+        setActiveMode("market");
+      }
+      if (normalizedData.report_ready && reportQuery) {
         setQuery("");
       }
     } catch (error) {
@@ -917,14 +964,14 @@ export default function Home() {
                   <span className="chat-avatar" aria-hidden="true">
                     {message.role === "assistant" ? <BlinkingEyes /> : <ClassicUserAvatar />}
                   </span>
-                  <p>
-                    {message.visibleContent ?? message.content}
-                    {message.role === "assistant" &&
-                    message.visibleContent !== undefined &&
-                    message.visibleContent.length < message.content.length ? (
-                      <span className="typing-cursor" aria-hidden="true" />
-                    ) : null}
-                  </p>
+                  {message.role === "assistant" ? (
+                    renderAssistantContent(
+                      message.visibleContent ?? message.content,
+                      message.visibleContent !== undefined && message.visibleContent.length < message.content.length,
+                    )
+                  ) : (
+                    <p>{message.content}</p>
+                  )}
                 </div>
               ))}
               {isAssistantTyping && chatMessages.at(-1)?.role === "user" ? (
@@ -954,4 +1001,3 @@ export default function Home() {
     </main>
   );
 }
-

@@ -2,13 +2,10 @@
 
 Web interface for the NIRACONCHEM AI construction chemicals recommendation agent.
 
-Planned first screen:
+Current first screen:
 
-- Construction type selector
-- UAE location selector
-- Construction area selector
-- Requirement/problem input
-- Exposure condition selector
+- Chat input for construction chemical requirements
 - Optional file upload
-- Recommendation result
-- PDF download button
+- NIRACONCHEM AI chat response
+- Market result tab for related product cards
+- PDF download when report inputs are complete

@@ -361,46 +361,25 @@ def needs_clarification(message: str) -> bool:
 
 
 def recommendation_summary(recommendation: Any) -> dict[str, Any]:
-    profile = recommendation.selected_product_profile or {}
     return {
         "project_summary": recommendation.project_summary,
         "detected_location": recommendation.detected_location,
         "climate_context": recommendation.climate_context,
         "recommended_categories": recommendation.recommended_categories,
-        "best_recommended_system": recommendation.best_recommended_system,
-        "best_manufacturer": recommendation.best_manufacturer,
-        "recommended_products": recommendation.recommended_products,
-        "why_recommended": recommendation.why_recommended,
         "missing_information": recommendation.missing_information,
-        "supporting_datasheet_references": recommendation.supporting_datasheet_references,
-        "selected_product_profile": {
-            "product_name": profile.get("product_name"),
-            "category": profile.get("category"),
-            "application_areas": profile.get("application_areas", []),
-            "performance": profile.get("performance", {}),
-        },
     }
 
 
 def fallback_technical_reply(recommendation: Any) -> str:
-    system = recommendation.best_recommended_system or "the appropriate construction chemical system"
-    manufacturer = recommendation.best_manufacturer or "a verified manufacturer"
-    reasons = recommendation.why_recommended or ["matches the stated project requirement"]
     missing = recommendation.missing_information or []
-    sources = recommendation.supporting_datasheet_references or []
-
     reply = [
-        f"Based on the project details, I would shortlist {system}.",
-        f"The matched manufacturer from the retrieved data is {manufacturer}.",
-        "Why this fits: " + " ".join(reasons[:3]),
+        "I have enough project context to continue.",
+        "Open MARKET RESULT to view the matched options. The chat will stay focused on project inputs and guidance.",
     ]
-    if sources:
-        reply.append("I found supporting datasheet references: " + ", ".join(sources[:3]) + ".")
     if missing:
         reply.append("Before final selection, please confirm: " + "; ".join(missing[:3]) + ".")
     reply.append(
-        "I have enough information to prepare the PDF report draft now. Final approval should still be "
-        "checked against the project specification, site condition, and manufacturer datasheet."
+        "The PDF report draft can be prepared once the required project inputs are complete."
     )
     return "\n\n".join(reply)
 
@@ -472,8 +451,8 @@ def get_llm_chat_reply(message: str, history: list[dict[str, str]], recommendati
                 "content": (
                     NIRACONCHEM_AGENT_SYSTEM_PROMPT
                     + "\nReturn strict JSON with one key: reply. The reply must be conversational, concise, "
-                    "technically careful, and must not invent products or specifications beyond the supplied "
-                    "recommendation context. The minimum report inputs are already confirmed, so do not say "
+                    "technically careful, and limited to project inputs and guidance. Marketplace details must not appear in chat. "
+                    "The minimum report inputs are already confirmed, so do not say "
                     "that a PDF report cannot be prepared or that details are required before preparing it. "
                     "If useful, mention that extra site details can refine the final specification."
                 ),
@@ -594,8 +573,8 @@ def run_chat_agent(
         "intent": intent,
         "needs_clarification": False,
         "questions": recommendation.ai_questions or [],
-        "sources": recommendation.supporting_datasheet_references,
-        "recommendation": recommendation_summary(recommendation),
+        "sources": [],
+        "recommendation": None,
         "requirements": requirements,
         "missing_requirements": missing,
         "report_ready": True,
