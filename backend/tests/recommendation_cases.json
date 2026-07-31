@@ -1,0 +1,82 @@
+[
+  {
+    "query": "Rooftop heat exposure waterproofing",
+    "expected_category": "waterproofing",
+    "expected_area": "roof",
+    "expected_system_any": ["PVC roofing membrane", "Acrylic/PU hybrid roofing"],
+    "expected_products_any": ["Saveto Cool Top", "PVC roofing membrane"],
+    "must_not_system_any": []
+  },
+  {
+    "query": "Basement waterproofing retaining wall",
+    "expected_category": "waterproofing",
+    "expected_area": "basement",
+    "expected_system_any": ["polyurethane waterproofing", "fluid-applied"],
+    "expected_products_any": ["Vetoproof UM766", "Vetoproof UM765"],
+    "must_not_system_any": ["PVC roofing"]
+  },
+  {
+    "query": "Industrial parking floor epoxy coating",
+    "expected_category": "flooring",
+    "expected_area": "parking",
+    "expected_system_any": ["flooring", "epoxy", "polyurethane"],
+    "expected_products_any": ["Vetotop UC363", "Vetoprime EP490"],
+    "must_not_system_any": ["PVC roofing"]
+  },
+  {
+    "query": "Concrete repair mortar for honeycomb",
+    "expected_category": "repair",
+    "expected_area": "concrete repair",
+    "expected_system_any": ["repair mortar"],
+    "expected_products_any": ["Vetorep CR523"],
+    "must_not_system_any": ["PVC roofing"]
+  },
+  {
+    "query": "Expansion joint sealant exterior",
+    "expected_category": "sealant",
+    "expected_area": "joint",
+    "expected_system_any": ["sealant"],
+    "expected_products_any": ["Vetoflex PU780", "Vetoflex PS782"],
+    "must_not_system_any": ["PVC roofing"]
+  },
+  {
+    "query": "Potable water tank protective coating",
+    "expected_category": "coating",
+    "expected_area": "water tank",
+    "expected_system_any": ["coating", "epoxy"],
+    "expected_products_any": ["VETOPROOF EC722", "Vetoproof EP722"],
+    "must_not_system_any": ["PVC roofing"]
+  },
+  {
+    "query": "Wet area bathroom waterproofing",
+    "expected_category": "waterproofing",
+    "expected_area": "wet area",
+    "expected_system_any": ["waterproofing", "cementitious", "polyurethane"],
+    "expected_products_any": ["Vetoproof UM766", "Vetoproof CM745", "Vetoproof CM744"],
+    "must_not_system_any": ["PVC roofing"]
+  },
+  {
+    "query": "Concrete tank waterproof liner",
+    "expected_category": "coating",
+    "expected_area": "water tank",
+    "expected_system_any": ["coating", "waterproof"],
+    "expected_products_any": ["VETOPROOF EC722", "Vetoproof EP722"],
+    "must_not_system_any": ["PVC roofing"]
+  },
+  {
+    "query": "Balcony waterproofing membrane",
+    "expected_category": "waterproofing",
+    "expected_area": "balcony",
+    "expected_system_any": ["waterproofing", "polyurethane"],
+    "expected_products_any": ["Vetoproof UM766", "Vetoproof UM765"],
+    "must_not_system_any": ["PVC roofing"]
+  },
+  {
+    "query": "Traffic deck coating for parking",
+    "expected_category": "flooring",
+    "expected_area": "parking",
+    "expected_system_any": ["flooring", "coating"],
+    "expected_products_any": ["Vetotop UC363", "Vetotop UC371"],
+    "must_not_system_any": ["PVC roofing"]
+  }
+]

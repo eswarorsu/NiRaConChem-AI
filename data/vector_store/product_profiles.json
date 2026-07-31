@@ -1,0 +1,969 @@
+[
+  {
+    "manufacturer": "Saveto",
+    "country": "Saudi Arabia",
+    "product_name": "Saveto Cool Top",
+    "products": [
+      "Saveto Cool Top",
+      "Vetoprime AP443"
+    ],
+    "system_type": "Acrylic/PU hybrid roofing waterproofing system",
+    "category": "waterproofing",
+    "categories": [
+      "waterproofing",
+      "repair mortar",
+      "sealant"
+    ],
+    "application_areas": [
+      "roof"
+    ],
+    "climate_strengths": [
+      "roof waterproofing",
+      "UAE/GCC climate",
+      "local availability"
+    ],
+    "system_layers": {
+      "primer": "Vetoprime AP443",
+      "main_membrane": "Saveto Cool Top",
+      "reinforcement": "Non-woven polyester fleece reinforcement",
+      "top_coat": "Saveto Cool Top"
+    },
+    "performance": {
+      "bond_strength": "> 0.35 MPa",
+      "tensile_strength": ">",
+      "elongation": "> 300 %",
+      "water_pressure": "> 1.5 bar",
+      "solar_reflective_index": "> 100"
+    },
+    "documents_available": [
+      "specification",
+      "method statement"
+    ],
+    "source_documents": [
+      "conchem doc1.docx"
+    ],
+    "score": 10
+  },
+  {
+    "manufacturer": "Saveto",
+    "country": "Saudi Arabia",
+    "product_name": "Saveto Cool Top",
+    "products": [
+      "Saveto Cool Top",
+      "Vetoprime AP443"
+    ],
+    "system_type": "Acrylic/PU hybrid roofing waterproofing system",
+    "category": "waterproofing",
+    "categories": [
+      "waterproofing",
+      "repair mortar",
+      "sealant"
+    ],
+    "application_areas": [
+      "roof"
+    ],
+    "climate_strengths": [
+      "roof waterproofing",
+      "UAE/GCC climate",
+      "local availability"
+    ],
+    "system_layers": {
+      "primer": "Vetoprime AP443",
+      "main_membrane": "Saveto Cool Top",
+      "reinforcement": "Non-woven polyester fleece reinforcement",
+      "top_coat": "Saveto Cool Top"
+    },
+    "performance": {
+      "bond_strength": "> 0.35 MPa",
+      "tensile_strength": ">",
+      "elongation": "> 200 %",
+      "water_pressure": "> 1.5 bar",
+      "solar_reflective_index": "> 100"
+    },
+    "documents_available": [
+      "specification",
+      "method statement"
+    ],
+    "source_documents": [
+      "conchem doc10.docx"
+    ],
+    "score": 10
+  },
+  {
+    "manufacturer": "Unknown",
+    "country": "Saudi Arabia",
+    "product_name": "Epoxy protective coating system for concrete tanks",
+    "products": [],
+    "system_type": "Epoxy protective coating system for concrete tanks",
+    "category": "coating",
+    "categories": [
+      "waterproofing",
+      "sealant"
+    ],
+    "application_areas": [
+      "roof",
+      "water tank"
+    ],
+    "climate_strengths": [
+      "roof waterproofing",
+      "UAE/GCC climate",
+      "local availability"
+    ],
+    "system_layers": {
+      "primer": "",
+      "main_membrane": "",
+      "reinforcement": "",
+      "top_coat": ""
+    },
+    "performance": {
+      "tensile_strength": "(ASTM D 412 Method A): 15 KN/m Tenile strength @100%"
+    },
+    "documents_available": [
+      "specification",
+      "method statement"
+    ],
+    "source_documents": [
+      "conchem doc11.docx"
+    ],
+    "score": 8.2
+  },
+  {
+    "manufacturer": "Unknown",
+    "country": "Unknown",
+    "product_name": "Vetoproof CM745",
+    "products": [
+      "Vetoproof CM745"
+    ],
+    "system_type": "Concrete repair mortar system",
+    "category": "repair",
+    "categories": [
+      "waterproofing",
+      "repair mortar"
+    ],
+    "application_areas": [
+      "roof",
+      "concrete repair"
+    ],
+    "climate_strengths": [
+      "roof waterproofing"
+    ],
+    "system_layers": {
+      "primer": "",
+      "main_membrane": "Vetoproof CM745",
+      "reinforcement": "",
+      "top_coat": ""
+    },
+    "performance": {
+      "bond_strength": "of Chemical-Resistant Mortars",
+      "abrasion_resistance": "ASTM D4060: Equivalent to 40 N/mm2concrete"
+    },
+    "documents_available": [
+      "specification",
+      "method statement"
+    ],
+    "source_documents": [
+      "conchem doc12.docx"
+    ],
+    "score": 8.1
+  },
+  {
+    "manufacturer": "Unknown",
+    "country": "Saudi Arabia",
+    "product_name": "Vetoflex PU780",
+    "products": [
+      "Vetoflex PU780",
+      "Vetoflex PS782"
+    ],
+    "system_type": "Joint sealant system",
+    "category": "sealant",
+    "categories": [
+      "waterproofing",
+      "sealant"
+    ],
+    "application_areas": [
+      "joint"
+    ],
+    "climate_strengths": [
+      "roof waterproofing",
+      "UAE/GCC climate",
+      "local availability"
+    ],
+    "system_layers": {
+      "primer": "Non-staining type, recommended by sealant manufacturer to suit application",
+      "main_membrane": "",
+      "reinforcement": "",
+      "top_coat": ""
+    },
+    "performance": {
+      "tensile_strength": "(ASTM D-412): \u226550 Shore A Hardness (ASTM D-2240): P:15-25 NS:20-30"
+    },
+    "documents_available": [
+      "specification",
+      "method statement"
+    ],
+    "source_documents": [
+      "conchem doc13.docx"
+    ],
+    "score": 10
+  },
+  {
+    "manufacturer": "Unknown",
+    "country": "Unknown",
+    "product_name": "Joint sealant system",
+    "products": [],
+    "system_type": "Joint sealant system",
+    "category": "sealant",
+    "categories": [
+      "waterproofing",
+      "flooring",
+      "repair mortar",
+      "sealant"
+    ],
+    "application_areas": [
+      "roof",
+      "joint"
+    ],
+    "climate_strengths": [
+      "roof waterproofing",
+      "UAE/GCC climate",
+      "flooring"
+    ],
+    "system_layers": {
+      "primer": "",
+      "main_membrane": "",
+      "reinforcement": "",
+      "top_coat": ""
+    },
+    "performance": {
+      "tensile_strength": "at Break: \u2265 15 kN/m",
+      "elongation": "\u2265 250 %"
+    },
+    "documents_available": [
+      "specification",
+      "method statement"
+    ],
+    "source_documents": [
+      "conchem doc2.docx"
+    ],
+    "score": 8.8
+  },
+  {
+    "manufacturer": "Unknown",
+    "country": "Unknown",
+    "product_name": "Joint sealant system",
+    "products": [],
+    "system_type": "Joint sealant system",
+    "category": "sealant",
+    "categories": [
+      "waterproofing",
+      "flooring",
+      "repair mortar",
+      "sealant"
+    ],
+    "application_areas": [
+      "roof",
+      "joint"
+    ],
+    "climate_strengths": [
+      "roof waterproofing",
+      "UAE/GCC climate",
+      "flooring"
+    ],
+    "system_layers": {
+      "primer": "",
+      "main_membrane": "",
+      "reinforcement": "",
+      "top_coat": ""
+    },
+    "performance": {
+      "tensile_strength": "at Break: \u2265 15 kN/m",
+      "elongation": "\u2265 260 %"
+    },
+    "documents_available": [
+      "specification",
+      "method statement"
+    ],
+    "source_documents": [
+      "conchem doc3.docx"
+    ],
+    "score": 8.8
+  },
+  {
+    "manufacturer": "Saveto",
+    "country": "Saudi Arabia",
+    "product_name": "Vetoproof UM766",
+    "products": [
+      "Vetoproof UM766"
+    ],
+    "system_type": "Cold fluid-applied polyurethane waterproofing system",
+    "category": "waterproofing",
+    "categories": [
+      "waterproofing",
+      "repair mortar",
+      "sealant"
+    ],
+    "application_areas": [
+      "roof",
+      "basement",
+      "balcony",
+      "wet area"
+    ],
+    "climate_strengths": [
+      "roof waterproofing",
+      "basement waterproofing",
+      "UAE/GCC climate",
+      "local availability"
+    ],
+    "system_layers": {
+      "primer": "",
+      "main_membrane": "Vetoproof UM766",
+      "reinforcement": "",
+      "top_coat": ""
+    },
+    "performance": {
+      "tensile_strength": "2 MPa; ASTM D412",
+      "elongation": "> 250 %; ASTM D412"
+    },
+    "documents_available": [
+      "specification",
+      "method statement"
+    ],
+    "source_documents": [
+      "conchem doc4.docx"
+    ],
+    "score": 10
+  },
+  {
+    "manufacturer": "Saveto",
+    "country": "Saudi Arabia",
+    "product_name": "Vetoproof CM745",
+    "products": [
+      "Vetoproof CM745"
+    ],
+    "system_type": "Concrete repair mortar system",
+    "category": "repair",
+    "categories": [
+      "waterproofing",
+      "flooring",
+      "repair mortar"
+    ],
+    "application_areas": [
+      "roof",
+      "concrete repair"
+    ],
+    "climate_strengths": [
+      "roof waterproofing",
+      "UAE/GCC climate",
+      "flooring",
+      "local availability"
+    ],
+    "system_layers": {
+      "primer": "",
+      "main_membrane": "Vetoproof CM745",
+      "reinforcement": "",
+      "top_coat": ""
+    },
+    "performance": {
+      "bond_strength": "> 1 MPa after 28 days",
+      "elongation": "> 45% Toxicity (BS 6920-1): Suitable for use with hot (up to 60\u00b0C) and cold water",
+      "water_pressure": "> 8 bar",
+      "abrasion_resistance": "Equivalent to 40 N/mm\u00b2"
+    },
+    "documents_available": [
+      "specification",
+      "method statement"
+    ],
+    "source_documents": [
+      "conchem doc5.docx"
+    ],
+    "score": 10
+  },
+  {
+    "manufacturer": "Unknown",
+    "country": "Saudi Arabia",
+    "product_name": "Cold fluid-applied polyurethane waterproofing system",
+    "products": [],
+    "system_type": "Cold fluid-applied polyurethane waterproofing system",
+    "category": "waterproofing",
+    "categories": [
+      "waterproofing",
+      "flooring",
+      "sealant"
+    ],
+    "application_areas": [
+      "roof",
+      "parking"
+    ],
+    "climate_strengths": [
+      "roof waterproofing",
+      "UAE/GCC climate",
+      "flooring",
+      "local availability"
+    ],
+    "system_layers": {
+      "primer": "solvent-free epoxy-based with dry film thickness (DFT) 100 -200 microns (\u00b5m)",
+      "main_membrane": "",
+      "reinforcement": "",
+      "top_coat": ""
+    },
+    "performance": {
+      "tensile_strength": "\u2265 8 N/mm\u00b2"
+    },
+    "documents_available": [
+      "specification",
+      "method statement"
+    ],
+    "source_documents": [
+      "conchem doc6.docx"
+    ],
+    "score": 9.0
+  },
+  {
+    "manufacturer": "Unknown",
+    "country": "Saudi Arabia",
+    "product_name": "Waterproofing system",
+    "products": [],
+    "system_type": "Waterproofing system",
+    "category": "waterproofing",
+    "categories": [
+      "waterproofing",
+      "flooring"
+    ],
+    "application_areas": [
+      "roof"
+    ],
+    "climate_strengths": [
+      "roof waterproofing",
+      "UAE/GCC climate",
+      "flooring",
+      "local availability"
+    ],
+    "system_layers": {
+      "primer": "",
+      "main_membrane": "",
+      "reinforcement": "",
+      "top_coat": ""
+    },
+    "performance": {},
+    "documents_available": [
+      "specification",
+      "method statement"
+    ],
+    "source_documents": [
+      "conchem doc7.docx"
+    ],
+    "score": 7.8
+  },
+  {
+    "manufacturer": "Unknown",
+    "country": "Saudi Arabia",
+    "product_name": "PVC roofing membrane system",
+    "products": [],
+    "system_type": "PVC roofing membrane system",
+    "category": "waterproofing",
+    "categories": [
+      "waterproofing",
+      "repair mortar",
+      "sealant"
+    ],
+    "application_areas": [
+      "roof"
+    ],
+    "climate_strengths": [
+      "roof waterproofing",
+      "UAE/GCC climate",
+      "local availability"
+    ],
+    "system_layers": {
+      "primer": "",
+      "main_membrane": "PVC roofing membrane",
+      "reinforcement": "",
+      "top_coat": ""
+    },
+    "performance": {
+      "tensile_strength": "> 90 %",
+      "elongation": ">300% in machine direction, and > 300 % in cross-machine direction; ASTM D751"
+    },
+    "documents_available": [
+      "specification",
+      "method statement"
+    ],
+    "source_documents": [
+      "conchem doc8.docx"
+    ],
+    "score": 9.0
+  },
+  {
+    "manufacturer": "Unknown",
+    "country": "Saudi Arabia",
+    "product_name": "PVC roofing membrane system",
+    "products": [],
+    "system_type": "PVC roofing membrane system",
+    "category": "waterproofing",
+    "categories": [
+      "waterproofing",
+      "flooring",
+      "repair mortar",
+      "sealant"
+    ],
+    "application_areas": [
+      "roof"
+    ],
+    "climate_strengths": [
+      "roof waterproofing",
+      "UAE/GCC climate",
+      "flooring",
+      "local availability"
+    ],
+    "system_layers": {
+      "primer": "",
+      "main_membrane": "PVC roofing membrane",
+      "reinforcement": "",
+      "top_coat": ""
+    },
+    "performance": {
+      "tensile_strength": "> 92 %",
+      "elongation": "> 260 % in machine direction, and > 230 % in cross-machine direction; ASTM D638"
+    },
+    "documents_available": [
+      "specification",
+      "method statement"
+    ],
+    "source_documents": [
+      "conchem doc9.docx"
+    ],
+    "score": 9.5
+  },
+  {
+    "manufacturer": "Saveto",
+    "country": "Saudi Arabia",
+    "product_name": "Flexible cementitious waterproofing system",
+    "products": [],
+    "system_type": "Flexible cementitious waterproofing system",
+    "category": "waterproofing",
+    "categories": [
+      "sealant"
+    ],
+    "application_areas": [
+      "roof"
+    ],
+    "climate_strengths": [
+      "local availability"
+    ],
+    "system_layers": {
+      "primer": "",
+      "main_membrane": "",
+      "reinforcement": "",
+      "top_coat": ""
+    },
+    "performance": {},
+    "documents_available": [
+      "TDS",
+      "specification",
+      "method statement"
+    ],
+    "source_documents": [
+      "conchem pdf1.pdf"
+    ],
+    "score": 7.3
+  },
+  {
+    "manufacturer": "Saveto",
+    "country": "Saudi Arabia",
+    "product_name": "Vetorep CR523",
+    "products": [
+      "Vetoprime AP443",
+      "Vetotop AC441",
+      "Vetorep CR523"
+    ],
+    "system_type": "Concrete repair mortar system",
+    "category": "repair",
+    "categories": [
+      "flooring",
+      "repair mortar",
+      "coating"
+    ],
+    "application_areas": [
+      "concrete repair"
+    ],
+    "climate_strengths": [
+      "UAE/GCC climate",
+      "local availability"
+    ],
+    "system_layers": {
+      "primer": "Vetoprime AP443",
+      "main_membrane": "Vetorep CR523",
+      "reinforcement": "",
+      "top_coat": "Vetotop AC441"
+    },
+    "performance": {
+      "elongation": "(ASTM D412): > 300%"
+    },
+    "documents_available": [
+      "TDS",
+      "specification",
+      "method statement"
+    ],
+    "source_documents": [
+      "conchem pdf10.pdf"
+    ],
+    "score": 10
+  },
+  {
+    "manufacturer": "Saveto",
+    "country": "Saudi Arabia",
+    "product_name": "Vetotop UC363",
+    "products": [
+      "Vetoprime EP490",
+      "Vetotop UC363",
+      "Vetotop UC371"
+    ],
+    "system_type": "Epoxy / polyurethane flooring system",
+    "category": "flooring",
+    "categories": [
+      "waterproofing",
+      "flooring"
+    ],
+    "application_areas": [
+      "parking"
+    ],
+    "climate_strengths": [
+      "roof waterproofing",
+      "UAE/GCC climate",
+      "flooring",
+      "local availability"
+    ],
+    "system_layers": {
+      "primer": "Vetoprime EP490",
+      "main_membrane": "Vetotop UC363",
+      "reinforcement": "",
+      "top_coat": "Vetotop UC363"
+    },
+    "performance": {
+      "bond_strength": "to Concrete ASTM D4541: >1.5 MPa. 3",
+      "tensile_strength": "(ASTM D638-14: 8 MPa",
+      "elongation": "(ASTM D522/D522M-13): 80%"
+    },
+    "documents_available": [
+      "TDS",
+      "specification",
+      "method statement"
+    ],
+    "source_documents": [
+      "conchem pdf11.pdf"
+    ],
+    "score": 10
+  },
+  {
+    "manufacturer": "Saveto",
+    "country": "Saudi Arabia",
+    "product_name": "Flexible cementitious waterproofing system",
+    "products": [],
+    "system_type": "Flexible cementitious waterproofing system",
+    "category": "waterproofing",
+    "categories": [
+      "sealant"
+    ],
+    "application_areas": [
+      "roof"
+    ],
+    "climate_strengths": [
+      "local availability"
+    ],
+    "system_layers": {
+      "primer": "",
+      "main_membrane": "",
+      "reinforcement": "",
+      "top_coat": ""
+    },
+    "performance": {},
+    "documents_available": [
+      "TDS",
+      "specification",
+      "method statement"
+    ],
+    "source_documents": [
+      "conchem pdf2.pdf"
+    ],
+    "score": 7.3
+  },
+  {
+    "manufacturer": "Saveto",
+    "country": "Saudi Arabia",
+    "product_name": "Vetoprime PB433",
+    "products": [
+      "Vetoprime PB433",
+      "Vetotop CL530"
+    ],
+    "system_type": "Epoxy protective coating system for concrete tanks",
+    "category": "coating",
+    "categories": [
+      "waterproofing",
+      "flooring",
+      "repair mortar"
+    ],
+    "application_areas": [],
+    "climate_strengths": [
+      "roof waterproofing",
+      "UAE/GCC climate",
+      "flooring",
+      "local availability"
+    ],
+    "system_layers": {
+      "primer": "Vetoprime PB433",
+      "main_membrane": "Vetotop CL530",
+      "reinforcement": "",
+      "top_coat": "Vetotop CL530"
+    },
+    "performance": {},
+    "documents_available": [
+      "TDS",
+      "specification",
+      "method statement"
+    ],
+    "source_documents": [
+      "conchem pdf3.pdf"
+    ],
+    "score": 10
+  },
+  {
+    "manufacturer": "Saveto",
+    "country": "Saudi Arabia",
+    "product_name": "Vetoproof CM744",
+    "products": [
+      "Vetoproof CM744"
+    ],
+    "system_type": "Concrete repair mortar system",
+    "category": "repair",
+    "categories": [
+      "waterproofing",
+      "repair mortar"
+    ],
+    "application_areas": [
+      "roof",
+      "concrete repair"
+    ],
+    "climate_strengths": [
+      "roof waterproofing",
+      "local availability"
+    ],
+    "system_layers": {
+      "primer": "",
+      "main_membrane": "Vetoproof CM744",
+      "reinforcement": "",
+      "top_coat": ""
+    },
+    "performance": {
+      "bond_strength": "of Chemical-Resistant Mortars",
+      "tensile_strength": "ASTM C1583/1583M-13",
+      "abrasion_resistance": "ASTM D4060: Equivalent to 40 N/mm2 concrete"
+    },
+    "documents_available": [
+      "TDS",
+      "specification",
+      "method statement"
+    ],
+    "source_documents": [
+      "conchem pdf4.pdf"
+    ],
+    "score": 9.7
+  },
+  {
+    "manufacturer": "Saveto",
+    "country": "Saudi Arabia",
+    "product_name": "Epoxy protective coating system for concrete tanks",
+    "products": [],
+    "system_type": "Epoxy protective coating system for concrete tanks",
+    "category": "coating",
+    "categories": [
+      "general construction chemicals"
+    ],
+    "application_areas": [],
+    "climate_strengths": [
+      "roof waterproofing",
+      "UAE/GCC climate",
+      "local availability"
+    ],
+    "system_layers": {
+      "primer": "",
+      "main_membrane": "",
+      "reinforcement": "",
+      "top_coat": ""
+    },
+    "performance": {},
+    "documents_available": [
+      "TDS",
+      "specification",
+      "method statement"
+    ],
+    "source_documents": [
+      "conchem pdf5.pdf"
+    ],
+    "score": 7.4
+  },
+  {
+    "manufacturer": "Saveto",
+    "country": "Saudi Arabia",
+    "product_name": "Vetoproof UM765",
+    "products": [
+      "Vetoproof UM765"
+    ],
+    "system_type": "Cold fluid-applied polyurethane waterproofing system",
+    "category": "waterproofing",
+    "categories": [
+      "waterproofing",
+      "repair mortar",
+      "sealant"
+    ],
+    "application_areas": [
+      "roof"
+    ],
+    "climate_strengths": [
+      "roof waterproofing",
+      "UAE/GCC climate",
+      "local availability"
+    ],
+    "system_layers": {
+      "primer": "",
+      "main_membrane": "Vetoproof UM765",
+      "reinforcement": "",
+      "top_coat": ""
+    },
+    "performance": {
+      "tensile_strength": "ASTM D412-06a (2013): 2MPa c",
+      "elongation": "> 600 % b"
+    },
+    "documents_available": [
+      "TDS",
+      "specification",
+      "method statement"
+    ],
+    "source_documents": [
+      "conchem pdf6.pdf"
+    ],
+    "score": 10
+  },
+  {
+    "manufacturer": "Saveto",
+    "country": "Saudi Arabia",
+    "product_name": "Vetorep CR523",
+    "products": [
+      "Vetorep CR523"
+    ],
+    "system_type": "Concrete repair mortar system",
+    "category": "repair",
+    "categories": [
+      "repair mortar"
+    ],
+    "application_areas": [
+      "concrete repair"
+    ],
+    "climate_strengths": [
+      "UAE/GCC climate",
+      "local availability"
+    ],
+    "system_layers": {
+      "primer": "",
+      "main_membrane": "Vetorep CR523",
+      "reinforcement": "",
+      "top_coat": ""
+    },
+    "performance": {
+      "tensile_strength": ">"
+    },
+    "documents_available": [
+      "TDS",
+      "specification",
+      "method statement"
+    ],
+    "source_documents": [
+      "conchem pdf7.pdf"
+    ],
+    "score": 9.2
+  },
+  {
+    "manufacturer": "Saveto",
+    "country": "Saudi Arabia",
+    "product_name": "VETOPROOF EC722",
+    "products": [
+      "VETOPROOF EC722",
+      "Vetoproof EP722",
+      "Vetorep ER350"
+    ],
+    "system_type": "Epoxy protective coating system for concrete tanks",
+    "category": "coating",
+    "categories": [
+      "waterproofing",
+      "repair mortar",
+      "coating"
+    ],
+    "application_areas": [
+      "roof",
+      "water tank"
+    ],
+    "climate_strengths": [
+      "roof waterproofing",
+      "local availability"
+    ],
+    "system_layers": {
+      "primer": "Vetoproof EP722: A two component solvent free flexible epoxy primer",
+      "main_membrane": "VETOPROOF EC722",
+      "reinforcement": "",
+      "top_coat": ""
+    },
+    "performance": {
+      "tensile_strength": "5,690 psi",
+      "elongation": "%65"
+    },
+    "documents_available": [
+      "TDS",
+      "specification",
+      "method statement"
+    ],
+    "source_documents": [
+      "conchem pdf8.pdf"
+    ],
+    "score": 10
+  },
+  {
+    "manufacturer": "Saveto",
+    "country": "Saudi Arabia",
+    "product_name": "Vetoproof CM745",
+    "products": [
+      "Vetoproof CM745"
+    ],
+    "system_type": "Concrete repair mortar system",
+    "category": "repair",
+    "categories": [
+      "waterproofing",
+      "repair mortar"
+    ],
+    "application_areas": [
+      "roof",
+      "concrete repair"
+    ],
+    "climate_strengths": [
+      "roof waterproofing",
+      "local availability"
+    ],
+    "system_layers": {
+      "primer": "",
+      "main_membrane": "Vetoproof CM745",
+      "reinforcement": "",
+      "top_coat": ""
+    },
+    "performance": {
+      "bond_strength": "of Chemical-Resistant Mortars",
+      "abrasion_resistance": "ASTM D4060: Equivalent to 40 N/mm2 concrete"
+    },
+    "documents_available": [
+      "TDS",
+      "specification",
+      "method statement"
+    ],
+    "source_documents": [
+      "conchem pdf9.pdf"
+    ],
+    "score": 9.7
+  }
+]
