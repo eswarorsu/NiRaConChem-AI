@@ -174,6 +174,18 @@ def retrieve_product_profiles(query: str, document_context: str | None = None, l
                 score -= 0.35
         if has_any_term(query_text, ("joint", "sealant")) and ("sealant" in profile.get("categories", []) or category == "sealant"):
             score += 0.55
+        # Category-affinity boosts: align query intent with product category so the
+        # correct system type wins even when token overlap with other categories is high.
+        if has_any_term(query_text, ("crack", "injection", "inject", "resin", "structural crack")) and category == "repair":
+            score += 0.7
+        if has_any_term(query_text, ("tile adhesive", "tile fix", "tiling", "fix tiles", "ceramic adhesive")) and category == "adhesive":
+            score += 0.7
+        if has_any_term(query_text, ("grout", "tile joint", "jointing")) and category == "grout":
+            score += 0.6
+        if has_any_term(query_text, ("admixture", "plasticiser", "superplasticiser", "water reducer", "concrete additive")) and category == "admixture":
+            score += 0.6
+        if has_any_term(query_text, ("anchor", "anchoring", "rebar fixation", "chemical anchor")) and category == "anchor":
+            score += 0.6
 
         if has_any_term(query_text, ("tank", "reservoir", "potable", "liner")):
             if "water tank" in areas:
