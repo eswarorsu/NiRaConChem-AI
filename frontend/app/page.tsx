@@ -5,6 +5,7 @@ import { MoreVertical, Moon, Paperclip, SendHorizontal, Sun, Trash2, LogIn, X, M
 import BlinkingEyes from "./components/BlinkingEyes";
 import ClassicUserAvatar from "./components/ClassicUserAvatar";
 import { ParticleWaveBackground } from "./components/ParticleWaveBackground";
+import BrandScroller from "./components/BrandScroller";
 import qconMarketData from "./data/qcon-market-products.json";
 
 const RENDER_API_BASE_URL = "https://niraconchem-ai.onrender.com";
@@ -752,6 +753,10 @@ export default function Home() {
             </button>
 
             <div className="login-modal-header">
+              <div className="login-brand-mark" aria-hidden="true">
+                <span className="login-brand-orbit" />
+                <LogIn size={18} strokeWidth={2.2} />
+              </div>
               <h2>{loginMode === "login" ? "Welcome back" : "Create account"}</h2>
               <p>{loginMode === "login" ? "Sign in to your account" : "Sign up for an account"}</p>
             </div>
@@ -759,42 +764,51 @@ export default function Home() {
             <form className="login-modal-form" onSubmit={handleLoginSubmit}>
               <div className="login-field-pill">
                 <span className="login-field-pill-label">Email</span>
-                <input
-                  id="login-email"
-                  type="email"
-                  autoComplete="email"
-                  placeholder="username@gmail.com"
-                  required
-                  value={loginEmail}
-                  onChange={(e) => setLoginEmail(e.target.value)}
-                />
+                <div className="login-field-row">
+                  <Mail size={18} className="login-field-icon" strokeWidth={2} />
+                  <input
+                    id="login-email"
+                    type="email"
+                    autoComplete="email"
+                    placeholder="username@gmail.com"
+                    required
+                    value={loginEmail}
+                    onChange={(e) => setLoginEmail(e.target.value)}
+                  />
+                </div>
               </div>
 
               <div className="login-field-pill">
                 <span className="login-field-pill-label">Password</span>
-                <input
-                  id="login-password"
-                  type="password"
-                  autoComplete={loginMode === "login" ? "current-password" : "new-password"}
-                  placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
-                  required
-                  value={loginPassword}
-                  onChange={(e) => setLoginPassword(e.target.value)}
-                />
+                <div className="login-field-row">
+                  <Lock size={18} className="login-field-icon" strokeWidth={2} />
+                  <input
+                    id="login-password"
+                    type="password"
+                    autoComplete={loginMode === "login" ? "current-password" : "new-password"}
+                    placeholder="••••••••"
+                    required
+                    value={loginPassword}
+                    onChange={(e) => setLoginPassword(e.target.value)}
+                  />
+                </div>
               </div>
 
               {loginMode === "register" ? (
                 <div className="login-field-pill">
                   <span className="login-field-pill-label">Confirm Password</span>
-                  <input
-                    id="login-confirm-password"
-                    type="password"
-                    autoComplete="new-password"
-                    placeholder="â€¢â€¢â€¢â€¢â€¢â€¢â€¢â€¢"
-                    required
-                    value={loginConfirmPassword}
-                    onChange={(e) => setLoginConfirmPassword(e.target.value)}
-                  />
+                  <div className="login-field-row">
+                    <Lock size={18} className="login-field-icon" strokeWidth={2} />
+                    <input
+                      id="login-confirm-password"
+                      type="password"
+                      autoComplete="new-password"
+                      placeholder="••••••••"
+                      required
+                      value={loginConfirmPassword}
+                      onChange={(e) => setLoginConfirmPassword(e.target.value)}
+                    />
+                  </div>
                 </div>
               ) : null}
 
@@ -902,6 +916,10 @@ export default function Home() {
             </button>
           ))}
         </div>
+
+        {/* 3D brand marquee — visible until the user starts a search, then disappears */}
+        <BrandScroller visible={!hasChatStarted} />
+
 
         {fileAnalysis ? (
           <div className="file-summary">

@@ -2069,14 +2069,29 @@ h1 {
   position: relative;
   width: min(440px, 100%);
   padding: 40px 32px 32px;
-  background: #121318;
-  border: 1px solid rgba(255, 255, 255, 0.05);
-  border-radius: 36px;
+  background: linear-gradient(160deg, #15171d 0%, #111319 100%);
+  border: 1px solid rgba(255, 255, 255, 0.06);
+  border-radius: 28px;
   box-shadow:
     0 40px 100px rgba(0, 0, 0, 0.6),
     0 12px 36px rgba(0, 0, 0, 0.3);
   overflow: hidden;
   animation: card-in 340ms cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+
+/* gradient glow ring behind the card */
+.login-modal-card::before {
+  content: "";
+  position: absolute;
+  inset: -1px;
+  border-radius: 28px;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(45, 212, 191, 0.6), rgba(16, 185, 129, 0.15) 40%, transparent 70%);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+  z-index: 2;
 }
 
 @keyframes card-in {
@@ -2148,6 +2163,47 @@ h1 {
   color: rgba(255, 255, 255, 0.5);
 }
 
+.login-brand-mark {
+  position: relative;
+  width: 46px;
+  height: 46px;
+  margin: 0 auto 16px;
+  display: grid;
+  place-items: center;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
+  color: #ffffff;
+  box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4);
+}
+.login-brand-orbit {
+  position: absolute;
+  inset: -5px;
+  border-radius: 18px;
+  border: 1.5px solid rgba(45, 212, 191, 0.5);
+  animation: brand-orbit 3.4s ease-in-out infinite;
+}
+@keyframes brand-orbit {
+  0%, 100% { transform: scale(1); opacity: 0.5; }
+  50% { transform: scale(1.08); opacity: 0.9; }
+}
+
+.login-field-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+.login-field-icon {
+  color: rgba(255, 255, 255, 0.4);
+  flex-shrink: 0;
+  transition: color 200ms ease;
+}
+.login-field-pill:focus-within .login-field-icon {
+  color: #2dd4bf;
+}
+.login-field-row input {
+  flex: 1;
+}
+
 .login-modal-form {
   display: flex;
   flex-direction: column;
@@ -2160,16 +2216,17 @@ h1 {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  background: #1a1b20;
-  border: 1px solid rgba(255, 255, 255, 0.07);
-  border-radius: 20px;
-  padding: 10px 24px;
+  background: rgba(255, 255, 255, 0.03);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 16px;
+  padding: 10px 18px;
   min-height: 64px;
-  transition: border-color 200ms ease, box-shadow 200ms ease;
+  transition: border-color 200ms ease, box-shadow 200ms ease, background 200ms ease;
 }
 
 .login-field-pill:hover {
-  border-color: rgba(255, 255, 255, 0.15);
+  border-color: rgba(255, 255, 255, 0.16);
+  background: rgba(255, 255, 255, 0.05);
 }
 
 .login-field-pill:focus-within {
@@ -2201,22 +2258,38 @@ h1 {
 
 .login-submit-pill {
   width: 100%;
-  height: 50px;
-  margin-top: 8px;
+  height: 52px;
+  margin-top: 10px;
   display: flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
   border: none;
-  border-radius: 999px;
+  border-radius: 16px;
   color: #ffffff;
   font-size: 15px;
   font-weight: 700;
   font-family: inherit;
   cursor: pointer;
-  box-shadow: 0 8px 24px rgba(16, 185, 129, 0.25);
+  box-shadow: 0 10px 28px rgba(16, 185, 129, 0.3);
   transition: all 200ms ease;
+  position: relative;
+  overflow: hidden;
+}
+.login-submit-pill::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: -120%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.35), transparent);
+  transform: skewX(-20deg);
+  transition: left 600ms ease;
+}
+.login-submit-pill:hover::after {
+  left: 130%;
 }
 
 .login-submit-pill:hover {
@@ -2261,15 +2334,15 @@ h1 {
   display: flex;
   align-items: center;
   width: 100%;
-  height: 50px;
-  border-radius: 999px;
-  border: 1px solid rgba(255, 255, 255, 0.08);
+  height: 52px;
+  border-radius: 16px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.03);
-  color: rgba(255, 255, 255, 0.7);
+  color: rgba(255, 255, 255, 0.8);
   font-size: 14px;
   font-weight: 600;
   font-family: inherit;
-  padding: 0 24px;
+  padding: 0 22px;
   cursor: pointer;
   transition: all 200ms ease;
 }
@@ -2430,4 +2503,78 @@ h1 {
 
 :not(.dark-theme) .login-modal-footer button:hover {
   color: #0f766e;
+}
+
+/* ===== Brand Scroller (flat horizontal logo marquee below search bar) ===== */
+.brand-scroller {
+  width: 100%;
+  margin: 34px auto 8px;
+  overflow: hidden;
+  transition: opacity 0.5s ease, transform 0.5s ease, max-height 0.5s ease;
+  opacity: 0;
+  transform: translateY(8px);
+  max-height: 0;
+  pointer-events: none;
+}
+.brand-scroller.is-visible {
+  opacity: 1;
+  transform: translateY(0);
+  max-height: 160px;
+  pointer-events: auto;
+}
+.brand-scroller.is-hidden {
+  opacity: 0;
+  transform: translateY(8px) scale(0.98);
+  max-height: 0;
+}
+.brand-scroller-viewport {
+  width: 100vw;
+  position: relative;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
+  padding: 18px 0;
+  overflow: hidden;
+  mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+  -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
+}
+.brand-track {
+  --scroll-duration: 45s;
+  display: flex;
+  align-items: center;
+  gap: 36px;
+  width: max-content;
+  animation: brand-scroll var(--scroll-duration) linear infinite;
+}
+@keyframes brand-scroll {
+  from { transform: translate3d(0, 0, 0); }
+  to   { transform: translate3d(-50%, 0, 0); }
+}
+.brand-item {
+  flex: 0 0 auto;
+}
+.brand-logo-card {
+  height: 88px;
+  min-width: 150px;
+  padding: 0 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #ffffff;                       /* solid light tile so any logo color is visible */
+  border: 1px solid rgba(148, 178, 204, 0.25);
+  border-radius: 12px;
+  box-shadow: 0 6px 18px rgba(0, 0, 0, 0.35);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+.brand-logo-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 28px rgba(34, 211, 238, 0.35);
+}
+.brand-logo-img {
+  max-height: 60px;
+  max-width: 130px;
+  width: auto;
+  object-fit: contain;
+  /* no filter — show logo in true colors on the white tile */
 }
