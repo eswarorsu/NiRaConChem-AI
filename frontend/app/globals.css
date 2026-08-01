@@ -2507,8 +2507,15 @@ h1 {
 
 /* ===== Brand Scroller (flat horizontal logo marquee below search bar) ===== */
 .brand-scroller {
-  width: 100%;
-  margin: 34px auto 8px;
+  /* full screen width — break out of the centered search-stage container */
+  width: 100vw;
+  position: relative;
+  left: 50%;
+  right: 50%;
+  margin-left: -50vw;
+  margin-right: -50vw;
+  margin-top: 34px;
+  margin-bottom: 8px;
   overflow: hidden;
   transition: opacity 0.5s ease, transform 0.5s ease, max-height 0.5s ease;
   opacity: 0;
@@ -2528,12 +2535,7 @@ h1 {
   max-height: 0;
 }
 .brand-scroller-viewport {
-  width: 100vw;
-  position: relative;
-  left: 50%;
-  right: 50%;
-  margin-left: -50vw;
-  margin-right: -50vw;
+  width: 100%;
   padding: 18px 0;
   overflow: hidden;
   mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
