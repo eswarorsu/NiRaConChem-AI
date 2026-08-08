@@ -2973,8 +2973,25 @@ h1 {
   animation: heroHandIn 900ms cubic-bezier(.22,.61,.36,1) both;
 }
 @media (max-width: 760px) {
+  /* Keep the desktop pinned scroll animation + cross-fading panels exactly as
+     on desktop, just with a smaller hand and mobile-comfortable font sizes
+     (body 14-16px, headings 18px). */
   .hero-track { height: 200vh; }
-  .hero-figure-img { height: 70vh; opacity: 0.5; }
+  .hero-figure-img { width: 60vw; max-width: 60vw; height: auto; opacity: 0.85; }
+  .hero-figure-headline { font-size: 18px; line-height: 1.2; }
+  .hero-figure-sub { font-size: 15px; }
+  .hero-accuracy-title { font-size: 18px; }
+  .hero-accuracy-diff { font-size: 15px; }
+  .hero-accuracy-col h3 { font-size: 16px; }
+  .hero-accuracy-col li { font-size: 14px; }
+  .hero-roles-title { font-size: 18px; }
+  .hero-roles-sub { font-size: 15px; }
+  .hero-roles-list li { font-size: 14px; }
+  /* Mobile: keep only the search + company-logo scroller; hide everything below
+     it (hero panels, role carousel, and later sections) — desktop untouched. */
+  .hero-track, .role-carousel, .community-faq { display: none !important; }
+  /* Lift the company-logo scroller a little higher on mobile. */
+  .brand-scroller { margin-top: 28px; }
 }
 
 /* ===== Hero figure text: sits on the right, opposite the robot hand ===== */
@@ -3024,25 +3041,9 @@ h1 {
   font-weight: 600;
   font-size: clamp(0.95rem, 1.4vw, 1.25rem);
   line-height: 1.3;
-  color: #4a4a4a;
-}
-@media (max-width: 760px) {
-  .hero-figure-text {
-    position: static;
-    transform: rotateX(0deg);
-    transform-origin: top center;
-    max-width: 100%;
-    text-align: center;
-    right: auto;
-    margin: 18px auto 0;
-    padding: 0;
   }
-  .hero-figure-headline { text-shadow: none; }
-  .hero-figure-text.is-hidden { transform: rotateX(90deg); opacity: 0; }
-  .hero-figure-text.is-visible { transform: rotateX(0deg); opacity: 1; }
-}
 
-/* ===== Hero accuracy panel: replaces the hero text (right side, opposite hand) on scroll-down ===== */
+  /* ===== Hero accuracy panel: replaces the hero text (right side, opposite hand) on scroll-down ===== */
 .hero-accuracy {
   position: absolute;
   top: 50%;
@@ -3115,20 +3116,19 @@ h1 {
   background: rgba(16, 32, 51, 0.18);
 }
 @media (max-width: 760px) {
+  /* Keep desktop pinned cross-fade; just shrink for mobile comfort. */
   .hero-accuracy {
-    position: static;
-    width: 100%;
-    max-width: 100%;
-    text-align: center;
-    right: auto;
-    transform: rotateX(90deg);
-    margin: 18px auto 0;
-    padding: 0 18px;
+    max-width: min(46vw, calc(100% - 50vw));
+    text-align: right;
+    right: 0;
+    transform: translateY(-50%) rotateX(90deg);
+    padding: 0 3vw 0 0;
   }
-  .hero-accuracy.is-visible { transform: rotateX(0deg); }
-  .hero-accuracy-cols { flex-direction: column; justify-content: center; gap: 18px; }
-  .hero-accuracy-divider { width: 100%; height: 1px; align-self: auto; }
-  .hero-accuracy-col { padding: 0; }
+  .hero-accuracy.is-visible { transform: translateY(-50%) rotateX(0deg); }
+  .hero-accuracy.is-hidden { transform: translateY(-50%) rotateX(90deg); }
+  .hero-accuracy-cols { gap: 0; }
+  .hero-accuracy-col { padding: 0 16px; }
+  .hero-accuracy-col li { padding: 5px 0; }
 }
 
 /* ===== Hero panel 3: who Nira is for (right side, opposite hand) on scroll-down ===== */
@@ -3199,20 +3199,33 @@ h1 {
   background: #111;
 }
 @media (max-width: 760px) {
+  /* Keep desktop pinned cross-fade; just shrink for mobile comfort. */
   .hero-roles {
-    position: static;
-    width: 100%;
-    max-width: 100%;
-    text-align: center;
-    right: auto;
-    transform: rotateX(90deg);
-    margin: 18px auto 0;
-    padding: 0 18px;
+    max-width: min(46vw, calc(100% - 50vw));
+    text-align: right;
+    right: 0;
+    transform: translateY(-50%) rotateX(90deg);
+    padding: 0 3vw 0 0;
   }
-  .hero-roles.is-visible { transform: rotateX(0deg); }
+  .hero-roles.is-visible { transform: translateY(-50%) rotateX(0deg); }
+  .hero-roles.is-hidden { transform: translateY(-50%) rotateX(90deg); }
+  .hero-roles-title, .hero-roles-sub { text-align: right; }
   .hero-roles-list, .hero-roles-list li { text-align: left; }
-  .hero-roles-list li { padding-right: 0; padding-left: 30px; }
-  .hero-roles-list li::before { display: block; }
+  .hero-roles-list li { padding-right: 0; padding-left: 26px; }
+  .hero-roles-list li::before { display: block; left: 0; }
+  /* Shrink the role semicircle (same JS animation geometry, just scaled down
+     so it fits mobile comfortably) — uses transform scale to preserve the arc. */
+  .role-radial { right: 10px; width: 520px; height: 520px; transform: translateY(-50%) scale(0.72); transform-origin: right center; }
+  .role-radial-center { width: 220px; height: 220px; }
+  .role-node { width: 56px; height: 56px; margin: -28px 0 0 -28px; }
+  .role-node svg { width: 20px; height: 20px; }
+  .role-node-tip { font-size: 14px; right: 102%; }
+  /* Role detail type on mobile: body 14-16px, heading 18px (same look as desktop). */
+  .role-detail-head h3 { font-size: 18px; }
+  .role-detail-intro { font-size: 15px; line-height: 1.55; }
+  .role-detail-helps-title { font-size: 16px; margin: 20px 0 12px; }
+  .role-detail-item h4 { font-size: 15px; }
+  .role-detail-item p { font-size: 14px; }
 }
 
 /* ===== Role radial menu: scroll-driven semicircle, full-bleed (like hero track) ===== */
