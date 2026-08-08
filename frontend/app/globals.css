@@ -2992,6 +2992,10 @@ h1 {
   .hero-track, .role-carousel, .community-faq { display: none !important; }
   /* Lift the company-logo scroller a little higher on mobile. */
   .brand-scroller { margin-top: 28px; }
+  /* Mobile: hide the chat header title/status and the assistant's typed answer
+     text inside the chatbox (user messages stay visible). */
+  .chat-header { display: none !important; }
+  .chat-message.assistant { display: none !important; }
 }
 
 /* ===== Hero figure text: sits on the right, opposite the robot hand ===== */
