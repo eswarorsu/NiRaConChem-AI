@@ -2992,11 +2992,9 @@ h1 {
   .hero-track, .role-carousel, .community-faq { display: none !important; }
   /* Lift the company-logo scroller a little higher on mobile. */
   .brand-scroller { margin-top: 28px; }
-  /* Mobile: hide the chat header title/status and the assistant's typed answer
-     text inside the chatbox (user messages stay visible). */
+  /* Mobile: hide only the chat header title/status. The bot icon, typing
+     animation, and the answer text below it all stay visible. */
   .chat-header { display: none !important; }
-  .chat-message.assistant { display: none !important; }
-  /* Keep the "AI is typing" indicator visible on mobile (it's an .assistant msg). */
   .chat-message.assistant.typing-preview { display: flex !important; }
 }
 
