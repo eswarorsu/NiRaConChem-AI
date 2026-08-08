@@ -6,7 +6,8 @@ import BlinkingEyes from "./components/BlinkingEyes";
 import ClassicUserAvatar from "./components/ClassicUserAvatar";
 import { ParticleWaveBackground } from "./components/ParticleWaveBackground";
 import BrandScroller from "./components/BrandScroller";
-import LandingSections from "./components/LandingSections";
+import RoleCarousel from "./components/RoleCarousel";
+import CommunityFAQ from "./components/CommunityFAQ";
 import qconMarketData from "./data/qcon-market-products.json";
 
 const RENDER_API_BASE_URL = "https://niraconchem-ai.onrender.com";
@@ -384,6 +385,12 @@ export default function Home() {
   const [loginPassword, setLoginPassword] = useState("");
   const [loginConfirmPassword, setLoginConfirmPassword] = useState("");
 
+  // Hero stage driven by scroll position:
+  //   0 = nothing (search bar in view, hand not yet on screen)
+  //   1 = hero text panel ("No more random guesses…")
+  //   2 = accuracy panel (replaces hero text once hand has scrolled in)
+  const [heroStage, setHeroStage] = useState(0);
+
   useEffect(() => {
     if (!showMoreMenu) return;
 
@@ -454,6 +461,33 @@ export default function Home() {
     window.addEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
     return () => window.removeEventListener("beforeinstallprompt", handleBeforeInstallPrompt);
   }, []);
+
+  // The hero is a tall "scroll track" with a sticky pin holding the hand at
+  // center. As the user scrolls THROUGH that track, the hand stays put and the
+  // panel stage advances (0 none -> 1 text -> 2 accuracy -> 3 roles). Stage is
+  // derived from scroll progress within the track, not the absolute page position.
+  useEffect(() => {
+    const STAGES = 3; // number of panel transitions inside the track
+    function onScroll() {
+      const track = document.querySelector<HTMLElement>(".hero-track");
+      if (!track) {
+        const y = window.scrollY;
+        setHeroStage(y > 140 ? 2 : y > 40 ? 1 : 0);
+        return;
+      }
+      const rect = track.getBoundingClientRect();
+      const vh = window.innerHeight;
+      const total = rect.height - vh;
+      // progress 0 at track top, 1 once the track bottom reaches viewport bottom
+      let p = total > 0 ? (Math.min(Math.max(-rect.top, 0), total) / total) : 0;
+      const stage = Math.min(STAGES, Math.floor(p * (STAGES + 1)));
+      setHeroStage(stage);
+    }
+    onScroll();
+    window.addEventListener("scroll", onScroll, { passive: true });
+    return () => window.removeEventListener("scroll", onScroll);
+  }, []);
+
 
   useEffect(() => {
     return () => {
@@ -1051,18 +1085,22 @@ export default function Home() {
           </button>
         </nav>
       ) : null}
-      <ParticleWaveBackground />
-      <header className="topbar">
-        <div className="logo-card" aria-label="NIRACONCHEM chemistry logo">
-          <img
-            className="atom-logo"
-            src="/assets/atom-logo-transparent.png.png"
-            alt="NIRACONCHEM chemistry logo"
-          />
-        </div>
-        <h1 className="consultant-title">NIRACONCHEM AI</h1>
-        <p className="assistant-label">Ask for UAE-ready construction chemical guidance</p>
-      </header>
+      {!hasChatStarted ? (
+        <>
+          <ParticleWaveBackground />
+          <header className="topbar">
+            <div className="logo-card" aria-label="NIRACONCHEM chemistry logo">
+              <img
+                className="atom-logo"
+                src="/assets/atom-logo-transparent.png.png"
+                alt="NIRACONCHEM chemistry logo"
+              />
+            </div>
+            <h1 className="consultant-title">NIRACONCHEM AI</h1>
+            <p className="assistant-label">Ask for UAE-ready construction chemical guidance</p>
+          </header>
+        </>
+      ) : null}
 
       <section className={`search-stage${hasChatStarted ? " has-result" : ""}`} aria-label="Construction chemicals search">
         <form className="search-box" onSubmit={handleSubmit}>
@@ -1089,6 +1127,7 @@ export default function Home() {
             <SendHorizontal size={17} strokeWidth={2.4} aria-hidden="true" />
           </button>
         </form>
+        {!hasChatStarted ? (
         <div className="quick-prompts" aria-label="Example searches">
           {examples.map((example) => (
             <button key={example} onClick={() => handleExample(example)} type="button">
@@ -1096,10 +1135,67 @@ export default function Home() {
             </button>
           ))}
         </div>
+        ) : null}
 
         {/* 3D brand marquee — visible until the user starts a search, then disappears */}
-        <BrandScroller visible={!hasChatStarted} />
+        {!hasChatStarted ? <BrandScroller visible={!hasChatStarted} /> : null}
 
+      </section>
+
+      {!hasChatStarted ? (
+          <div className="hero-track" aria-hidden="true">
+            <div className="hero-pin">
+              <img className="hero-figure-img" src="/assets/hero-hand-bond.png" alt="" />
+              <div className={`hero-figure-text${heroStage === 1 ? " is-visible" : " is-hidden"}`}>
+                <p className="hero-figure-headline">
+                  No more random guesses — AI comes into the <span className="hero-figure-game">GAME</span>
+                </p>
+                <p className="hero-figure-sub">get your instant reports</p>
+              </div>
+
+              {/* Accuracy comparison panel — replaces the hero text when scrolling down */}
+              <div className={`hero-accuracy${heroStage === 2 ? " is-visible" : " is-hidden"}`}>
+                <p className="hero-accuracy-title">Why real accuracy matters</p>
+                <div className="hero-accuracy-cols">
+                  <div className="hero-accuracy-col hero-accuracy-random">
+                    <h3>Random guess</h3>
+                    <ul>
+                      <li>Wrong product, wasted budget</li>
+                      <li>Rework &amp; site delays</li>
+                      <li>No traceable reasoning</li>
+                      <li>Risk of failure in the field</li>
+                    </ul>
+                  </div>
+                  <div className="hero-accuracy-divider" aria-hidden="true" />
+                  <div className="hero-accuracy-col hero-accuracy-nira">
+                    <h3>Nira AI report</h3>
+                    <ul>
+                      <li>Matched to your exact spec</li>
+                      <li>Fewer change orders</li>
+                      <li>Cited, explainable logic</li>
+                      <li>UAE-ready recommendations</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              {/* Panel 3 — who Nira is for */}
+              <div className={`hero-roles${heroStage === 3 ? " is-visible" : " is-hidden"}`}>
+                <p className="hero-roles-title">Do you think Nira is only for one role?</p>
+                <p className="hero-roles-sub">Solutions for every construction professional</p>
+                <ul className="hero-roles-list">
+                  <li>Clients / end users</li>
+                  <li>Contractors</li>
+                  <li>Consultants</li>
+                  <li>Manufacturers and suppliers</li>
+                  <li>Subcontractors</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        {!hasChatStarted ? <RoleCarousel /> : null}
 
         {fileAnalysis ? (
           <div className="file-summary">
@@ -1199,9 +1295,8 @@ export default function Home() {
         </section>
       ) : null}
 
-      {!hasChatStarted && <LandingSections />}
+      <CommunityFAQ />
 
-      </section>
-    </main>
-  );
-}
+      </main>
+    );
+  }

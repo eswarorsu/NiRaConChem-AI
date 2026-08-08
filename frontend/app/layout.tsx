@@ -1,6 +1,21 @@
 import type { Metadata } from "next";
+import { Caveat, Plus_Jakarta_Sans } from "next/font/google";
 import { ServiceWorkerRegistration } from "./components/ServiceWorkerRegistration";
 import "./globals.css";
+
+const handFont = Caveat({
+  subsets: ["latin"],
+  weight: ["500", "600", "700"],
+  variable: "--font-hand",
+  display: "swap",
+});
+
+const jakarta = Plus_Jakarta_Sans({
+  subsets: ["latin"],
+  weight: ["400", "500", "600", "700", "800"],
+  variable: "--font-jakarta",
+  display: "swap",
+});
 
 export const metadata: Metadata = {
   applicationName: "NIRACONCHEM AI",
@@ -36,7 +51,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" className={`${handFont.variable} ${jakarta.variable}`}>
       <body>
         {children}
         <ServiceWorkerRegistration />

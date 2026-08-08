@@ -44,7 +44,7 @@ body.theme-dark-body {
   display: flex;
   flex-direction: column;
   position: relative;
-  overflow-x: hidden;
+  overflow-x: clip;
   transition:
     background 420ms ease,
     color 320ms ease;
@@ -452,7 +452,14 @@ h1 {
 
 .search-stage.has-result {
   margin-top: 0;
-  padding-bottom: 132px;
+  padding: 0;
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 0;
+  overflow: visible;
+  z-index: 20;
 }
 
 .search-stage.has-result .result-panel {
@@ -516,7 +523,7 @@ h1 {
 }
 
 .home.has-result {
-  padding-top: 24px;
+  padding-top: 16px;
 }
 
 .home.has-result .topbar {
@@ -850,9 +857,9 @@ h1 {
 }
 
 .chat-panel {
-  margin: 18px auto 0;
+  margin: 8px auto 0;
   width: min(900px, 100%);
-  padding: 0;
+  padding: 0 0 120px;   /* clearance above the docked search box at the bottom */
   text-align: left;
   background: transparent;
   border: 0;
@@ -2545,7 +2552,7 @@ h1 {
   right: 50%;
   margin-left: -50vw;
   margin-right: -50vw;
-  margin-top: 34px;
+  margin-top: 64px;
   margin-bottom: 8px;
   overflow: hidden;
   transition: opacity 0.5s ease, transform 0.5s ease, max-height 0.5s ease;
@@ -2928,3 +2935,539 @@ h1 {
   .landing-stats { grid-template-columns: repeat(2, 1fr); }
   .landing { gap: 64px; }
 }
+
+/* ===== Hero: tall scroll track that pins the hand at center while panels change ===== */
+.hero-track {
+  position: relative;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);   /* break out of .home's 28px padding => true screen edges */
+  height: 220vh;            /* scroll distance that drives the panel stages */
+}
+.hero-pin {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  width: 100%;
+  overflow: hidden;
+  pointer-events: none;
+}
+/* Robot hand: anchored to the far LEFT edge, sized by width so it reads big */
+.hero-figure-img {
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 80vw;             /* 1.5x the previous 55vw width => hand noticeably bigger */
+  max-width: 80vw;
+  height: auto;
+  object-fit: contain;
+  object-position: left center;
+  display: block;
+  filter: drop-shadow(0 20px 50px rgba(15, 118, 110, 0.18));
+}
+@keyframes heroHandIn {
+  from { transform: translate(-12vw, -50%); opacity: 0; }
+  to   { transform: translate(0, -50%); opacity: 1; }
+}
+.hero-pin .hero-figure-img {
+  animation: heroHandIn 900ms cubic-bezier(.22,.61,.36,1) both;
+}
+@media (max-width: 760px) {
+  .hero-track { height: 200vh; }
+  .hero-figure-img { height: 70vh; opacity: 0.5; }
+}
+
+/* ===== Hero figure text: sits on the right, opposite the robot hand ===== */
+.hero-figure-text {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  /* clear of the hand (hand visual right edge ~48vw): occupy only the far right */
+  max-width: min(48vw, calc(100% - 50vw));
+  text-align: right;
+  z-index: 2;
+  pointer-events: none;
+  padding: 0 3vw 0 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  backdrop-filter: none;
+  perspective: 800px;
+  transform-style: preserve-3d;
+  transition: transform 600ms ease, opacity 600ms ease;
+}
+.hero-figure-text.is-visible {
+  opacity: 1;
+  transform: translateY(-50%) rotateX(0deg);
+  pointer-events: auto;
+}
+.hero-figure-text.is-hidden {
+  opacity: 0;
+  transform: translateY(-50%) rotateX(90deg);
+  pointer-events: none;
+}
+.hero-figure-headline {
+  margin: 0;
+  font-weight: 800;
+  font-size: clamp(1.4rem, 3.2vw, 3rem);
+  line-height: 1.12;
+  letter-spacing: -0.01em;
+  color: var(--text);
+  text-shadow: 0 2px 18px rgba(220, 238, 255, 0.9);
+}
+.hero-figure-game {
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+}
+.hero-figure-sub {
+  margin: 14px 0 0;
+  font-weight: 600;
+  font-size: clamp(0.95rem, 1.4vw, 1.25rem);
+  line-height: 1.3;
+  color: #4a4a4a;
+}
+@media (max-width: 760px) {
+  .hero-figure-text {
+    position: static;
+    transform: rotateX(0deg);
+    transform-origin: top center;
+    max-width: 100%;
+    text-align: center;
+    right: auto;
+    margin: 18px auto 0;
+    padding: 0;
+  }
+  .hero-figure-headline { text-shadow: none; }
+  .hero-figure-text.is-hidden { transform: rotateX(90deg); opacity: 0; }
+  .hero-figure-text.is-visible { transform: rotateX(0deg); opacity: 1; }
+}
+
+/* ===== Hero accuracy panel: replaces the hero text (right side, opposite hand) on scroll-down ===== */
+.hero-accuracy {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  max-width: min(48vw, calc(100% - 50vw));
+  transform: translateY(-50%) rotateX(90deg);
+  transform-origin: top center;
+  opacity: 0;
+  text-align: right;
+  z-index: 2;
+  pointer-events: none;
+  padding: 0 3vw 0 0;
+  perspective: 800px;
+  transform-style: preserve-3d;
+  transition: transform 500ms ease, opacity 500ms ease;
+}
+.hero-accuracy.is-visible {
+  opacity: 1;
+  transform: translateY(-50%) rotateX(0deg);
+  pointer-events: auto;
+}
+.hero-accuracy.is-hidden {
+  opacity: 0;
+  transform: translateY(-50%) rotateX(90deg);
+  pointer-events: none;
+}
+.hero-accuracy-title {
+  margin: 0;
+  font-weight: 800;
+  font-size: clamp(1.4rem, 3vw, 2.6rem);
+  line-height: 1.12;
+  letter-spacing: -0.01em;
+  color: var(--text);
+}
+.hero-accuracy-cols {
+  display: flex;
+  align-items: stretch;
+  justify-content: flex-end;
+  gap: 0;
+  text-align: left;
+  margin-top: 22px;
+}
+.hero-accuracy-col {
+  flex: 1 1 0;
+  padding: 0 28px;
+  text-align: left;
+}
+.hero-accuracy-col h3 {
+  margin: 0 0 12px;
+  font-size: clamp(1.05rem, 1.8vw, 1.4rem);
+  font-weight: 700;
+}
+.hero-accuracy-random h3 { color: #111; }
+.hero-accuracy-nira h3 { color: #111; }
+.hero-accuracy-col ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.hero-accuracy-col li {
+  font-size: clamp(0.92rem, 1.3vw, 1.1rem);
+  line-height: 1.5;
+  color: var(--text);
+  padding: 7px 0;
+  border-top: 1px solid rgba(16, 32, 51, 0.1);
+}
+.hero-accuracy-divider {
+  width: 1px;
+  align-self: stretch;
+  background: rgba(16, 32, 51, 0.18);
+}
+@media (max-width: 760px) {
+  .hero-accuracy {
+    position: static;
+    width: 100%;
+    max-width: 100%;
+    text-align: center;
+    right: auto;
+    transform: rotateX(90deg);
+    margin: 18px auto 0;
+    padding: 0 18px;
+  }
+  .hero-accuracy.is-visible { transform: rotateX(0deg); }
+  .hero-accuracy-cols { flex-direction: column; justify-content: center; gap: 18px; }
+  .hero-accuracy-divider { width: 100%; height: 1px; align-self: auto; }
+  .hero-accuracy-col { padding: 0; }
+}
+
+/* ===== Hero panel 3: who Nira is for (right side, opposite hand) on scroll-down ===== */
+.hero-roles {
+  position: absolute;
+  top: 50%;
+  right: 0;
+  max-width: min(38vw, calc(100% - 50vw));
+  transform: translateY(-50%) rotateX(90deg);
+  transform-origin: top center;
+  opacity: 0;
+  text-align: right;
+  z-index: 2;
+  pointer-events: none;
+  padding: 0 3vw 0 0;
+  perspective: 800px;
+  transform-style: preserve-3d;
+  transition: transform 500ms ease, opacity 500ms ease;
+}
+.hero-roles.is-visible {
+  opacity: 1;
+  transform: translateY(-50%) rotateX(0deg);
+  pointer-events: auto;
+}
+.hero-roles.is-hidden {
+  opacity: 0;
+  transform: translateY(-50%) rotateX(90deg);
+  pointer-events: none;
+}
+.hero-roles-title {
+  margin: 0;
+  font-weight: 800;
+  font-size: clamp(1.4rem, 3vw, 2.6rem);
+  line-height: 1.12;
+  letter-spacing: -0.01em;
+  color: #111;
+  text-align: left;
+}
+.hero-roles-sub {
+  margin: 10px 0 20px;
+  font-weight: 600;
+  font-size: clamp(1rem, 1.6vw, 1.35rem);
+  color: #4a4a4a;
+  text-align: left;
+}
+.hero-roles-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  text-align: left;
+}
+.hero-roles-list li {
+  font-size: clamp(0.95rem, 1.5vw, 1.2rem);
+  line-height: 1.7;
+  color: #111;
+  padding: 6px 0 6px 30px;
+  position: relative;
+}
+.hero-roles-list li::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #111;
+}
+@media (max-width: 760px) {
+  .hero-roles {
+    position: static;
+    width: 100%;
+    max-width: 100%;
+    text-align: center;
+    right: auto;
+    transform: rotateX(90deg);
+    margin: 18px auto 0;
+    padding: 0 18px;
+  }
+  .hero-roles.is-visible { transform: rotateX(0deg); }
+  .hero-roles-list, .hero-roles-list li { text-align: left; }
+  .hero-roles-list li { padding-right: 0; padding-left: 30px; }
+  .hero-roles-list li::before { display: block; }
+}
+
+/* ===== Role radial menu: scroll-driven semicircle, full-bleed (like hero track) ===== */
+.role-carousel {
+  position: relative;
+  width: 100vw;
+  margin-left: calc(50% - 50vw);   /* break out of any centered column => full screen width */
+  margin-right: 0;
+  height: 300vh;            /* scroll distance that drives the active icon */
+}
+.role-pin {
+  position: sticky;
+  top: 0;
+  height: 100vh;            /* pin stays full-screen while the track scrolls */
+  display: flex;
+  align-items: center;
+  padding: 0 0 0 6vw;       /* data sits toward the left of the screen */
+  overflow: visible;        /* do NOT clip the semicircle that extends to the edge */
+}
+
+/* LEFT: selected category data */
+.role-detail {
+  width: min(46%, 560px);
+  text-align: left;
+  animation: roleDetailIn 420ms ease both;
+  font-family: var(--font-jakarta), "Inter", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  letter-spacing: -0.01em;
+}
+@keyframes roleDetailIn {
+  from { opacity: 0; transform: translateX(-16px); }
+  to   { opacity: 1; transform: translateX(0); }
+}
+.role-detail-head {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: #0f766e;
+}
+.role-detail-head h3 {
+  margin: 0;
+  font-size: clamp(1.2rem, 2.6vw, 1.8rem);
+  font-weight: 800;
+  color: #111;
+}
+.role-detail-intro {
+  margin: 14px 0 0;
+  font-size: clamp(0.95rem, 1.4vw, 1.1rem);
+  line-height: 1.6;
+  color: #4a4a4a;
+}
+.role-detail-helps-title {
+  margin: 26px 0 14px;
+  font-weight: 700;
+  color: #111;
+  font-size: 1.05rem;
+}
+.role-detail-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  text-align: left;
+}
+.role-detail-item {
+  background: rgba(15, 118, 110, 0.05);
+  border-radius: 12px;
+  padding: 14px 16px;
+}
+.role-detail-item h4 {
+  margin: 0 0 6px;
+  font-size: 0.98rem;
+  font-weight: 700;
+  color: #0f766e;
+}
+.role-detail-item p {
+  margin: 0;
+  font-size: 0.9rem;
+  line-height: 1.5;
+  color: #4a4a4a;
+}
+
+/* RIGHT: semicircle menu, shifted left so the full arc (including end icons
+   at the screen edge) is clearly visible inside the viewport. */
+.role-radial {
+  position: absolute;
+  right: 140px;            /* pull the arc further inward from the screen edge */
+  top: 50%;
+  transform: translateY(-50%);
+  width: 520px;          /* 2 * RADIUS(260) */
+  height: 520px;
+}
+.role-radial-center {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 320px;             /* bigger */
+  height: 320px;
+  /* shift right a bit, toward the screen edge, full house visible */
+  transform: translate(22%, -50%);
+  object-fit: contain;
+  pointer-events: none;
+  filter: drop-shadow(0 12px 26px rgba(15, 118, 110, 0.22));
+  z-index: 0;
+}
+.role-node {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 68px;
+  height: 68px;
+  margin: -34px 0 0 -34px;
+  border: none;
+  border-radius: 50%;
+  background: linear-gradient(160deg, #ffffff, #eaf4f2);
+  box-shadow: 0 10px 24px rgba(15, 118, 110, 0.2);
+  color: #0f766e;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transform-origin: 0 34px; /* pivot at ring center so rotate spreads them */
+  transition: transform 500ms cubic-bezier(.22,.61,.36,1), background 250ms ease, box-shadow 250ms ease;
+}
+.role-node.is-active {
+  background: linear-gradient(160deg, #ffffff, #d6efea);
+  box-shadow: 0 18px 44px rgba(15, 118, 110, 0.4);
+  color: #0b5e57;
+}
+.role-node-tip {
+  position: absolute;
+  right: 105%;              /* sit to the LEFT of the icon */
+  top: 50%;
+  transform: translateY(-50%);
+  white-space: nowrap;
+  font-size: 0.74rem;
+  font-weight: 700;
+  color: #1d2b33;
+  background: rgba(255, 255, 255, 0.92);
+  padding: 4px 10px;
+  border-radius: 8px;
+  opacity: 0;              /* hidden until active or hover */
+  pointer-events: none;
+  transition: opacity 200ms ease;
+}
+.role-node:hover .role-node-tip,
+.role-node.is-active .role-node-tip {
+  opacity: 1;
+}
+.role-node-tip.is-open {
+  opacity: 1;
+  color: #0f766e;
+}
+@keyframes faqSlide {
+  from { opacity: 0; transform: translateY(-6px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.community-faq {
+  width: 100%;
+  margin: 80px 0 60px;
+  padding: 0 6vw;
+  text-align: left;
+}
+.community-faq-title {
+  margin: 64px 0 30px;
+  font-size: clamp(1.3rem, 3vw, 1.9rem);
+  font-weight: 800;
+  color: #111;
+}
+.community-faq-hero {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  align-items: center;
+  gap: 48px;
+  max-width: 1100px;
+  margin: 0 auto;
+}
+.community-faq-hero .community-faq-media {
+  max-width: 100%;
+  width: 100%;
+}
+.faq-list {
+  display: grid;
+  gap: 10px;
+  text-align: left;
+}
+.faq-item {
+  background: transparent;
+  border: 0;
+  border-bottom: 1px solid rgba(15, 118, 110, 0.18);
+  border-radius: 0;
+  box-shadow: none;
+  overflow: hidden;
+  transition: border-color 220ms ease;
+}
+.faq-item.is-open {
+  border-color: rgba(15, 118, 110, 0.45);
+}
+.faq-question {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  padding: 16px 4px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+  color: #111;
+  font-size: 1.02rem;
+  font-weight: 700;
+  text-align: left;
+  line-height: 1.4;
+}
+.faq-chevron {
+  flex: 0 0 auto;
+  color: #0f766e;
+  transition: transform 320ms cubic-bezier(.22,.61,.36,1);
+}
+.faq-item.is-open .faq-chevron {
+  transform: rotate(180deg);
+}
+.faq-answer {
+  padding: 0 4px 16px;
+  color: #4a4a4a;
+  font-size: 0.95rem;
+  line-height: 1.6;
+  animation: faqSlide 280ms ease both;
+}
+.faq-answer p {
+  margin: 0;
+}
+.community-faq-media {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+.community-faq-img {
+  width: 100%;
+  max-width: 520px;
+  height: auto;
+  border-radius: 18px;
+  filter: drop-shadow(0 24px 60px rgba(24, 45, 74, 0.18));
+}
+.community-faq-tagline {
+  margin: 0;
+  max-width: 520px;
+  text-align: left;
+  font-family: var(--font-hand), "Comic Sans MS", cursive;
+  font-size: clamp(1.8rem, 3.4vw, 2.6rem);
+  font-weight: 700;
+  color: #0b1437;            /* royal black */
+  line-height: 1.25;
+}
+@media (max-width: 860px) {
+  .community-faq { margin: 56px 0 48px; }
+  .community-faq-title { margin: 48px 0 24px; }
+  .community-faq-hero { grid-template-columns: 1fr; gap: 28px; }
+}
+
