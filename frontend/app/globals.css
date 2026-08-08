@@ -2996,6 +2996,8 @@ h1 {
      text inside the chatbox (user messages stay visible). */
   .chat-header { display: none !important; }
   .chat-message.assistant { display: none !important; }
+  /* Keep the "AI is typing" indicator visible on mobile (it's an .assistant msg). */
+  .chat-message.assistant.typing-preview { display: flex !important; }
 }
 
 /* ===== Hero figure text: sits on the right, opposite the robot hand ===== */
