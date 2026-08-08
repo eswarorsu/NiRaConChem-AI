@@ -1,11 +1,12 @@
 ﻿"use client";
 
 import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import { MoreVertical, Moon, Paperclip, SendHorizontal, Sun, Trash2, LogIn, X, Mail, Lock, UserPlus, ArrowRight, Download } from "lucide-react";
+import { MoreVertical, Moon, Paperclip, SendHorizontal, Sun, Trash2, LogIn, X, Mail, Lock, UserPlus, ArrowRight, Download, Store, Bot, User, FileText, CreditCard } from "lucide-react";
 import BlinkingEyes from "./components/BlinkingEyes";
 import ClassicUserAvatar from "./components/ClassicUserAvatar";
 import { ParticleWaveBackground } from "./components/ParticleWaveBackground";
 import BrandScroller from "./components/BrandScroller";
+import LandingSections from "./components/LandingSections";
 import qconMarketData from "./data/qcon-market-products.json";
 
 const RENDER_API_BASE_URL = "https://niraconchem-ai.onrender.com";
@@ -32,6 +33,7 @@ type ChatMessage = {
   role: "user" | "assistant";
   content: string;
   visibleContent?: string;
+  report_ready?: boolean;
 };
 
 type ChatResponse = {
@@ -374,6 +376,9 @@ export default function Home() {
 
   const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showReportsModal, setShowReportsModal] = useState(false);
+  const [showSubModal, setShowSubModal] = useState(false);
   const [loginMode, setLoginMode] = useState<"login" | "register">("login");
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
@@ -549,6 +554,18 @@ export default function Home() {
       setLatestChat(normalizedData);
       setReportPayload(normalizedData.report_payload || null);
       animateAssistantMessage(normalizedData.reply);
+
+      // Tag the assistant message so Reports History can list it.
+      if (normalizedData.report_ready) {
+        setChatMessages((current) => {
+          const next = [...current];
+          const lastIndex = next.length - 1;
+          if (lastIndex >= 0 && next[lastIndex].role === "assistant") {
+            next[lastIndex] = { ...next[lastIndex], report_ready: true };
+          }
+          return next;
+        });
+      }
 
       const reportQuery = normalizedData.report_payload?.query?.trim();
       if (normalizedData.intent === "technical_consultation" && !normalizedData.needs_clarification) {
@@ -741,6 +758,69 @@ export default function Home() {
             <LogIn size={16} strokeWidth={2.2} />
             <span>Log In</span>
           </button>
+          <button
+            className="menu-item"
+            onClick={() => {
+              setShowProfileModal(true);
+              setShowMoreMenu(false);
+            }}
+            role="menuitem"
+            type="button"
+          >
+            <User size={16} strokeWidth={2.2} />
+            <span>Profile</span>
+          </button>
+          <button
+            className="menu-item"
+            onClick={() => {
+              setShowReportsModal(true);
+              setShowMoreMenu(false);
+            }}
+            role="menuitem"
+            type="button"
+          >
+            <FileText size={16} strokeWidth={2.2} />
+            <span>Reports History</span>
+          </button>
+          <button
+            className="menu-item"
+            onClick={() => {
+              setShowSubModal(true);
+              setShowMoreMenu(false);
+            }}
+            role="menuitem"
+            type="button"
+          >
+            <CreditCard size={16} strokeWidth={2.2} />
+            <span>Subscription</span>
+          </button>
+          {activeMode !== "market" ? (
+            <button
+              className="menu-item"
+              onClick={() => {
+                setActiveMode("market");
+                setShowMoreMenu(false);
+              }}
+              role="menuitem"
+              type="button"
+            >
+              <Store size={16} strokeWidth={2.2} />
+              <span>Market Result</span>
+            </button>
+          ) : (
+            <button
+              className="menu-item"
+              onClick={() => {
+                setActiveMode("nira");
+                setShowMoreMenu(false);
+              }}
+              role="menuitem"
+              type="button"
+            >
+              <Bot size={16} strokeWidth={2.2} />
+              <span>NIRA AI</span>
+            </button>
+          )}
         </div>
       ) : null}
 
@@ -861,8 +941,108 @@ export default function Home() {
           </div>
         </div>
       ) : null}
+
+      {showProfileModal ? (
+        <div className="login-modal-overlay" role="dialog" aria-modal="true" aria-label="Profile" onClick={(e) => { if ((e.target as HTMLElement).classList.contains("login-modal-overlay")) setShowProfileModal(false); }}>
+          <div className="login-modal-card">
+            <button className="login-modal-close" aria-label="Close" onClick={() => setShowProfileModal(false)} type="button">
+              <X size={18} strokeWidth={2.2} />
+            </button>
+            <div className="login-modal-header">
+              <div className="login-brand-mark" aria-hidden="true">
+                <span className="login-brand-orbit" />
+                <User size={26} strokeWidth={2.2} />
+              </div>
+              <h2>Profile</h2>
+              <p>{loginEmail ? loginEmail : "Signed in as guest"}</p>
+            </div>
+            <div className="info-card">
+              <div className="info-row"><span>Account</span><strong>{loginEmail ? "Registered" : "Guest"}</strong></div>
+              <div className="info-row"><span>Plan</span><strong>Free</strong></div>
+              <div className="info-row"><span>Reports generated</span><strong>{chatMessages.filter((m) => m.role === "assistant" && m.report_ready).length}</strong></div>
+            </div>
+            <button className="login-submit-pill" type="button" onClick={() => { setShowProfileModal(false); handleLoginClick(); }}>
+              <span>{loginEmail ? "Manage account" : "Log in"}</span>
+              <ArrowRight size={18} strokeWidth={2.2} />
+            </button>
+          </div>
+        </div>
+      ) : null}
+
+      {showReportsModal ? (
+        <div className="login-modal-overlay" role="dialog" aria-modal="true" aria-label="Reports history" onClick={(e) => { if ((e.target as HTMLElement).classList.contains("login-modal-overlay")) setShowReportsModal(false); }}>
+          <div className="login-modal-card">
+            <button className="login-modal-close" aria-label="Close" onClick={() => setShowReportsModal(false)} type="button">
+              <X size={18} strokeWidth={2.2} />
+            </button>
+            <div className="login-modal-header">
+              <div className="login-brand-mark" aria-hidden="true">
+                <span className="login-brand-orbit" />
+                <FileText size={26} strokeWidth={2.2} />
+              </div>
+              <h2>Reports History</h2>
+              <p>Recommendation reports from this session</p>
+            </div>
+            <div className="reports-list">
+              {chatMessages.filter((m) => m.role === "assistant" && m.report_ready).length === 0 ? (
+                <p className="empty-note">No reports generated yet. Ask for a project recommendation to generate one.</p>
+              ) : (
+                chatMessages.filter((m) => m.role === "assistant" && m.report_ready).map((m, i) => (
+                  <div className="report-item" key={i}>
+                    <FileText size={16} className="report-icon" />
+                    <div>
+                      <strong>Project recommendation</strong>
+                      <span>{m.content?.slice(0, 80) || "Report ready"}</span>
+                    </div>
+                    <button className="report-dl" type="button" onClick={() => { setShowReportsModal(false); downloadReport(); }}>Download</button>
+                  </div>
+                ))
+              )}
+            </div>
+          </div>
+        </div>
+      ) : null}
+
+      {showSubModal ? (
+        <div className="login-modal-overlay" role="dialog" aria-modal="true" aria-label="Subscription" onClick={(e) => { if ((e.target as HTMLElement).classList.contains("login-modal-overlay")) setShowSubModal(false); }}>
+          <div className="login-modal-card">
+            <button className="login-modal-close" aria-label="Close" onClick={() => setShowSubModal(false)} type="button">
+              <X size={18} strokeWidth={2.2} />
+            </button>
+            <div className="login-modal-header">
+              <div className="login-brand-mark" aria-hidden="true">
+                <span className="login-brand-orbit" />
+                <CreditCard size={26} strokeWidth={2.2} />
+              </div>
+              <h2>Subscription</h2>
+              <p>Choose the plan that fits your workflow</p>
+            </div>
+            <div className="plans">
+              <div className="plan-card">
+                <h3>Free</h3>
+                <p className="plan-price">$0<span>/mo</span></p>
+                <ul>
+                  <li>Basic recommendations</li>
+                  <li>Up to 5 reports</li>
+                </ul>
+                <button className="plan-btn current" type="button" disabled>Current plan</button>
+              </div>
+              <div className="plan-card featured">
+                <h3>Pro</h3>
+                <p className="plan-price">$29<span>/mo</span></p>
+                <ul>
+                  <li>Unlimited recommendations</li>
+                  <li>Priority AI tuning</li>
+                  <li>PDF reports + export</li>
+                </ul>
+                <button className="plan-btn" type="button" onClick={() => alert("Subscription checkout is not configured in this environment.")}>Upgrade</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      ) : null}
       {hasChatStarted ? (
-        <nav className="mode-toolbar" aria-label="Platform mode">
+        <nav className="mode-toolbar" aria-label="Platform mode" style={{ display: "none" }}>
           <button className={activeMode === "nira" ? "active" : ""} onClick={() => setActiveMode("nira")} type="button">
             NIRA AI
           </button>
@@ -1017,7 +1197,9 @@ export default function Home() {
             </>
           )}
         </section>
-        ) : null}
+      ) : null}
+
+      {!hasChatStarted && <LandingSections />}
 
       </section>
     </main>
