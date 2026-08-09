@@ -480,6 +480,8 @@ export default function Home() {
       const total = rect.height - vh;
       // progress 0 at track top, 1 once the track bottom reaches viewport bottom
       let p = total > 0 ? (Math.min(Math.max(-rect.top, 0), total) / total) : 0;
+      // expose scroll progress as a CSS var so the hero figure can parallax-move
+      track.style.setProperty("--p", p.toFixed(4));
       const stage = Math.min(STAGES, Math.floor(p * (STAGES + 1)));
       setHeroStage(stage);
     }
@@ -1145,7 +1147,7 @@ export default function Home() {
       {!hasChatStarted ? (
           <div className="hero-track" aria-hidden="true">
             <div className="hero-pin">
-              <img className="hero-figure-img" src="/assets/hero-hand-bond.png" alt="" />
+              <img className="hero-figure-img" src="/assets/jcb-000_bgfree.png" alt="" />
               <div className={`hero-figure-text${heroStage === 1 ? " is-visible" : " is-hidden"}`}>
                 <p className="hero-figure-headline">
                   No more random guesses — AI comes into the <span className="hero-figure-game">GAME</span>
@@ -1295,7 +1297,7 @@ export default function Home() {
         </section>
       ) : null}
 
-      <CommunityFAQ />
+      {!hasChatStarted ? <CommunityFAQ /> : null}
 
       </main>
     );

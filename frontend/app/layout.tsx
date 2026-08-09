@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Caveat, Plus_Jakarta_Sans } from "next/font/google";
+import { Anton, Caveat, Plus_Jakarta_Sans } from "next/font/google";
 import { ServiceWorkerRegistration } from "./components/ServiceWorkerRegistration";
 import "./globals.css";
 
@@ -14,6 +14,13 @@ const jakarta = Plus_Jakarta_Sans({
   subsets: ["latin"],
   weight: ["400", "500", "600", "700", "800"],
   variable: "--font-jakarta",
+  display: "swap",
+});
+
+const displayFont = Anton({
+  subsets: ["latin"],
+  weight: ["400"],
+  variable: "--font-display",
   display: "swap",
 });
 
@@ -51,7 +58,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${handFont.variable} ${jakarta.variable}`}>
+    <html lang="en" className={`${handFont.variable} ${jakarta.variable} ${displayFont.variable}`}>
       <body>
         {children}
         <ServiceWorkerRegistration />

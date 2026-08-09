@@ -19,4 +19,8 @@ data/vector_store/*
 reports/*
 !reports/.gitkeep
 
+# local dev server logs / temp files
+*-live.log
+frontend/app/.hermes-tmp*
+
 repo-inspect-climatic-AI/
