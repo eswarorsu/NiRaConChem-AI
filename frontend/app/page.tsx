@@ -1,4 +1,4 @@
-﻿"use client";
+"use client";
 
 import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
 import { MoreVertical, Moon, Paperclip, SendHorizontal, Sun, Trash2, LogIn, X, Mail, Lock, UserPlus, ArrowRight, Download, Store, Bot, User, FileText, CreditCard } from "lucide-react";
@@ -12,12 +12,15 @@ import qconMarketData from "./data/qcon-market-products.json";
 
 const RENDER_API_BASE_URL = "https://niraconchem-ai.onrender.com";
 const configuredApiBaseUrl = process.env.NEXT_PUBLIC_API_BASE_URL?.trim();
+// An explicitly configured URL always wins, in every mode. Previously a
+// production build silently discarded NEXT_PUBLIC_API_BASE_URL unless it
+// contained "onrender.com", so `npm start` against a local backend would
+// quietly call the deployed Render API instead.
 const API_BASE_URL =
-  process.env.NODE_ENV === "development"
-    ? configuredApiBaseUrl || "http://localhost:8000"
-    : configuredApiBaseUrl?.includes("onrender.com")
-      ? configuredApiBaseUrl
-      : RENDER_API_BASE_URL;
+  configuredApiBaseUrl ||
+  (process.env.NODE_ENV === "development"
+    ? "http://localhost:8000"
+    : RENDER_API_BASE_URL);
 const API_TIMEOUT_MS = 45000;
 
 type FileAnalysis = {
@@ -1147,7 +1150,24 @@ export default function Home() {
       {!hasChatStarted ? (
           <div className="hero-track" aria-hidden="true">
             <div className="hero-pin">
-              <img className="hero-figure-img" src="/assets/jcb-000_bgfree.png" alt="" />
+              {/*
+                WebP first with a PNG fallback — same pixels, ~4x smaller.
+                When a higher-resolution original is available, regenerate the
+                assets with scripts/process-hero-image.py and add the @2x files
+                to a srcset here; the markup is already shaped for it.
+              */}
+              <picture>
+                <source srcSet="/assets/jcb-hero.webp" type="image/webp" />
+                <img
+                  className="hero-figure-img"
+                  src="/assets/jcb-hero.png"
+                  alt=""
+                  width={748}
+                  height={484}
+                  decoding="async"
+                  fetchPriority="high"
+                />
+              </picture>
               <div className={`hero-figure-text${heroStage === 1 ? " is-visible" : " is-hidden"}`}>
                 <p className="hero-figure-headline">
                   No more random guesses — AI comes into the <span className="hero-figure-game">GAME</span>

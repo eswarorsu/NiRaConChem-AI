@@ -1,12 +1,91 @@
-﻿:root {
+:root {
   color-scheme: light;
-  --text: #102033;
-  --muted: #53677d;
+
+  /* ---- Brand ramp: teal (primary) ---- */
+  --teal-900: #0b4f4a;
+  --teal-700: #0f766e;
+  --teal-500: #14b8a6;
+  --teal-400: #2dd4bf;
+  --teal-100: #d9fbf5;
+
+  /* ---- Brand ramp: clay (secondary / warm accent) ---- */
+  --clay-700: #8f3520;
+  --clay-600: #c8482a;
+  --clay-400: #e07a52;
+  --clay-100: #fbe7de;
+
+  /* ---- Semantic status ---- */
+  --success: #10b981;
+  --info: #06b6d4;
+  --info-bright: #56e4ff;
+  --warning: #f59e0b;
+  --danger: #dc2626;
+
+  /* ---- Ink (neutral) ramp — one slate-leaning family, replaces mismatched grays ---- */
+  --ink-950: #05070a;
+  --ink-900: #102033;
+  --ink-700: #23384a;
+  --ink-500: #53677d;
+  --ink-400: #718698;
+  --ink-300: #94a7ba;
+  --ink-200: #cfe0ee;
+  --ink-100: #e7f0f8;
+  --ink-050: #f4f9fc;
+  --white: #ffffff;
+  --black: #000000;
+
+  /* ---- Semantic aliases (what components should reference) ---- */
+  --text: var(--ink-900);
+  --muted: var(--ink-500);
   --panel: rgba(255, 255, 255, 0.56);
-  --accent: #0f766e;
-  --accent-strong: #102033;
+  --accent: var(--teal-700);
+  --accent-strong: var(--ink-900);
   --line: rgba(255, 255, 255, 0.58);
   --shadow: 0 24px 70px rgba(24, 45, 74, 0.18);
+  --shadow-sm: 0 8px 20px rgba(24, 45, 74, 0.14);
+  --focus-ring: rgba(15, 118, 110, 0.32);
+
+  /* Visible field borders. --line is a translucent white highlight meant for
+     glass edges; on a near-white panel it reads as no border at all, so inputs
+     get their own defined border tokens. */
+  --field-border: rgba(16, 32, 51, 0.16);
+  --field-border-hover: rgba(16, 32, 51, 0.28);
+  --field-border-focus: var(--teal-700);
+
+  /* ---- Reusable decorative gradients (graphite CTA + user chat bubble) ---- */
+  --grad-ink: linear-gradient(145deg, #232a31 0%, #07090c 54%, #161b20 100%);
+  --grad-ink-hover: linear-gradient(145deg, #2c343c 0%, #07090c 54%, #1c2228 100%);
+
+  /* ---- Type scale (base font-size 16px; line-heights unitless) ---- */
+  --fs-display-2xl: 56px;
+  --fs-display-xl: 40px;
+  --fs-heading-lg: 28px;
+  --fs-heading-md: 22px;
+  --fs-heading-sm: 18px;
+  --fs-body-lg: 16px;
+  --fs-body-md: 14.5px;
+  --fs-body-sm: 13px;
+  --fs-caption: 12px;
+  --lh-tight: 1.15;
+  --lh-snug: 1.3;
+  --lh-normal: 1.55;
+
+  /* ---- Spacing scale (4px base) ---- */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+
+  /* ---- Radius scale (matches dominant existing values) ---- */
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 18px;
+  --radius-xl: 28px;
+  --radius-pill: 999px;
 }
 
 * {
@@ -24,8 +103,27 @@ body {
   margin: 0;
   background: #dceeff;
   color: var(--text);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-jakarta), Arial, Helvetica, sans-serif;
+  font-size: var(--fs-body-md);
   overscroll-behavior-y: none;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin: 0;
+  font-family: var(--font-jakarta), Arial, Helvetica, sans-serif;
+  font-weight: 700;
+  line-height: var(--lh-tight);
+  color: var(--accent-strong);
+}
+
+p {
+  margin: 0;
+  line-height: var(--lh-normal);
 }
 
 html.theme-dark-body,
@@ -51,13 +149,19 @@ body.theme-dark-body {
 }
 
 .dark-theme {
+  color-scheme: dark;
   --text: #f7fbff;
   --muted: #d7dde6;
   --panel: rgba(12, 12, 12, 0.68);
-  --accent: #ffffff;
+  --accent: var(--teal-400);
   --accent-strong: #ffffff;
   --line: rgba(255, 255, 255, 0.16);
   --shadow: 0 28px 82px rgba(0, 0, 0, 0.46);
+  --shadow-sm: 0 10px 26px rgba(0, 0, 0, 0.4);
+  --focus-ring: rgba(45, 212, 191, 0.45);
+  --field-border: rgba(255, 255, 255, 0.24);
+  --field-border-hover: rgba(255, 255, 255, 0.4);
+  --field-border-focus: var(--teal-400);
   background:
     radial-gradient(circle at 52% 42%, rgba(236, 72, 153, 0.08), transparent 34%),
     radial-gradient(circle at 62% 62%, rgba(6, 182, 212, 0.07), transparent 30%),
@@ -123,12 +227,12 @@ body.theme-dark-body {
 }
 
 .theme-toggle-sun {
-  color: #0b4f4a;
+  color: var(--teal-900);
   opacity: 1;
 }
 
 .theme-toggle-moon {
-  color: #53677d;
+  color: var(--ink-500);
   opacity: 0.58;
   font-size: 20px;
 }
@@ -169,7 +273,7 @@ body.theme-dark-body {
 }
 
 .dark-theme .theme-toggle-moon {
-  color: #ffffff;
+  color: var(--white);
   opacity: 1;
   transform: translateX(-1px);
 }
@@ -215,7 +319,7 @@ body.theme-dark-body {
 }
 
 .dark-theme .app-install-button {
-  color: #ffffff;
+  color: var(--white);
   border-color: rgba(255, 255, 255, 0.18);
   background:
     linear-gradient(135deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0.04)),
@@ -263,7 +367,7 @@ body.theme-dark-body {
 }
 
 .mode-toolbar button.active {
-  color: #ffffff;
+  color: var(--white);
   background:
     linear-gradient(135deg, rgba(255, 255, 255, 0.2), transparent 38%),
     linear-gradient(145deg, #0f766e, #0b4f4a);
@@ -567,11 +671,27 @@ h1 {
   align-items: center;
   gap: 10px;
   background: var(--panel);
-  border: 1px solid var(--line);
-  border-radius: 999px;
+  border: 1.5px solid var(--field-border);
+  border-radius: var(--radius-pill);
   padding: 9px;
   box-shadow: var(--shadow);
   backdrop-filter: blur(22px) saturate(150%);
+  transition:
+    border-color 200ms ease,
+    box-shadow 200ms ease;
+}
+
+.search-box:hover {
+  border-color: var(--field-border-hover);
+}
+
+/* Focus lives on the wrapper, not the bare input — the input has no border of
+   its own, so this is what tells the user the field is active. */
+.search-box:focus-within {
+  border-color: var(--field-border-focus);
+  box-shadow:
+    var(--shadow),
+    0 0 0 3px var(--focus-ring);
 }
 
 .search-box input[type="file"] {
@@ -602,17 +722,17 @@ h1 {
 }
 
 .dark-theme .consultant-title {
-  color: #ffffff;
+  color: var(--white);
   text-shadow: 0 0 24px rgba(255, 255, 255, 0.35);
 }
 
 .dark-theme .assistant-label {
-  color: #ffffff;
+  color: var(--white);
   text-shadow: 0 0 18px rgba(255, 255, 255, 0.22);
 }
 
 .dark-theme .upload-icon-button {
-  color: #ffffff;
+  color: var(--white);
   background: rgba(255, 255, 255, 0.08);
   border-color: rgba(255, 255, 255, 0.22);
 }
@@ -629,7 +749,8 @@ h1 {
 }
 
 .query-input::placeholder {
-  color: rgba(80, 99, 93, 0.78);
+  color: var(--ink-500);
+  opacity: 0.78;
 }
 
 .search-box button {
@@ -640,12 +761,12 @@ h1 {
   justify-content: center;
   gap: 8px;
   border: 0;
-  border-radius: 999px;
+  border-radius: var(--radius-lg);
   padding: 0 24px;
-  color: white;
+  color: var(--white);
   background:
     linear-gradient(135deg, rgba(255, 255, 255, 0.22), transparent 34%),
-    linear-gradient(145deg, #232a31 0%, #07090c 54%, #161b20 100%);
+    var(--grad-ink);
   border: 1px solid rgba(255, 255, 255, 0.22);
   font-size: 15px;
   font-weight: 800;
@@ -655,7 +776,18 @@ h1 {
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.26),
     inset 0 -1px 0 rgba(0, 0, 0, 0.72),
-    0 18px 36px rgba(10, 14, 18, 0.28);
+    0 18px 36px rgba(10, 14, 18, 0.28),
+    0 0 0 0 rgba(15, 118, 110, 0);
+  transition: box-shadow 220ms ease, transform 160ms ease;
+}
+
+.search-box button:not(:disabled):hover {
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.26),
+    inset 0 -1px 0 rgba(0, 0, 0, 0.72),
+    0 18px 36px rgba(10, 14, 18, 0.28),
+    0 0 0 4px rgba(15, 118, 110, 0.22);
+  transform: translateY(-1px);
 }
 
 .search-box button:disabled {
@@ -697,7 +829,7 @@ h1 {
 }
 
 .dark-theme .more-options-button {
-  color: #ffffff;
+  color: var(--white);
   background: transparent;
   border: 0;
   box-shadow: none;
@@ -723,7 +855,7 @@ h1 {
 .search-box button:hover {
   background:
     linear-gradient(135deg, rgba(255, 255, 255, 0.28), transparent 34%),
-    linear-gradient(145deg, #2c343c 0%, #07090c 54%, #1c2228 100%);
+    var(--grad-ink-hover);
 }
 
 .search-box button::before,
@@ -965,8 +1097,8 @@ h1 {
   border-radius: 0;
   box-shadow: none;
   backdrop-filter: none;
-  font-size: 14px;
-  line-height: 1.55;
+  font-size: var(--fs-body-md);
+  line-height: var(--lh-normal);
   overflow-wrap: anywhere;
   white-space: pre-line;
 }
@@ -974,8 +1106,8 @@ h1 {
 .chat-answer {
   min-width: 0;
   color: var(--text);
-  font-size: 14px;
-  line-height: 1.55;
+  font-size: var(--fs-body-md);
+  line-height: var(--lh-normal);
   overflow-wrap: anywhere;
 }
 
@@ -1019,11 +1151,13 @@ h1 {
 .chat-message.user p {
   grid-column: 1;
   grid-row: 1;
-  padding: 12px 14px;
-  color: #ffffff;
-  background: linear-gradient(145deg, #232a31, #07090c);
+  padding: var(--space-3) var(--space-4);
+  color: var(--white);
+  background: var(--grad-ink);
   border: 1px solid rgba(255, 255, 255, 0.18);
-  border-radius: 18px;
+  border-radius: var(--radius-lg);
+  font-size: var(--fs-body-md);
+  line-height: var(--lh-normal);
   box-shadow:
     0 16px 38px rgba(24, 45, 74, 0.12),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
@@ -1185,7 +1319,7 @@ h1 {
   max-width: 100%;
   padding: 5px 8px;
   overflow: hidden;
-  color: #0b4f4a;
+  color: var(--teal-900);
   background: rgba(209, 250, 229, 0.72);
   border: 1px solid rgba(15, 118, 110, 0.18);
   border-radius: 999px;
@@ -1466,7 +1600,7 @@ h1 {
 .dark-theme .result-grid h3,
 .dark-theme .report-table strong,
 .dark-theme .product-preview strong {
-  color: #ffffff;
+  color: var(--white);
 }
 
 .dark-theme .result-header span {
@@ -1509,7 +1643,7 @@ h1 {
 }
 
 .dark-theme .download-button {
-  color: #ffffff;
+  color: var(--white);
   border-color: rgba(255, 255, 255, 0.34);
   box-shadow:
     inset 0 1px 0 rgba(255, 255, 255, 0.28),
@@ -1538,7 +1672,7 @@ h1 {
 .dark-theme .market-summary strong,
 .dark-theme .market-card strong,
 .dark-theme .market-card em {
-  color: #ffffff;
+  color: var(--white);
 }
 
 .dark-theme .market-summary span,
@@ -1558,12 +1692,20 @@ h1 {
 }
 
 .dark-theme .chat-message.user p {
-  color: #ffffff;
-  background: linear-gradient(145deg, #232a31, #07090c);
+  color: var(--white);
+  background: var(--grad-ink);
   border-color: rgba(255, 255, 255, 0.18);
   box-shadow:
     0 16px 38px rgba(0, 0, 0, 0.26),
     inset 0 1px 0 rgba(255, 255, 255, 0.1);
+}
+
+/* Tablet tier: give the market grid a 2-column layout instead of jumping
+   straight from 3 columns to 1 at the phone breakpoint. */
+@media (max-width: 900px) and (min-width: 761px) {
+  .market-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 720px) {
@@ -1742,7 +1884,7 @@ h1 {
     min-width: 72px;
     height: 42px;
     padding: 0 13px;
-    border-radius: 999px;
+    border-radius: var(--radius-md);
     font-size: 13px;
   }
 
@@ -1897,6 +2039,7 @@ h1 {
     min-width: 64px;
     height: 36px;
     padding: 0 10px;
+    border-radius: var(--radius-sm);
     font-size: 12px;
   }
 }
@@ -2076,7 +2219,7 @@ h1 {
 
 .dark-theme .more-options-menu .menu-item:hover {
   background: transparent;
-  color: #ffffff;
+  color: var(--white);
 }
 
 .dark-theme .more-options-menu .menu-item:active {
@@ -2175,7 +2318,7 @@ h1 {
 
 .login-modal-close:hover {
   background: rgba(255, 255, 255, 0.12);
-  color: #ffffff;
+  color: var(--white);
   transform: scale(1.08);
 }
 
@@ -2191,7 +2334,7 @@ h1 {
   font-size: 32px;
   font-weight: 700;
   letter-spacing: -0.03em;
-  color: #ffffff;
+  color: var(--white);
 }
 
 .login-modal-header p {
@@ -2210,7 +2353,7 @@ h1 {
   place-items: center;
   border-radius: 14px;
   background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
-  color: #ffffff;
+  color: var(--white);
   box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4);
 }
 .login-brand-orbit {
@@ -2236,7 +2379,7 @@ h1 {
   transition: color 200ms ease;
 }
 .login-field-pill:focus-within .login-field-icon {
-  color: #2dd4bf;
+  color: var(--teal-400);
 }
 .login-field-row input {
   flex: 1;
@@ -2283,7 +2426,7 @@ h1 {
   width: 100%;
   border: none;
   background: transparent;
-  color: #ffffff;
+  color: var(--white);
   font-size: 16px;
   font-family: inherit;
   outline: none;
@@ -2305,7 +2448,7 @@ h1 {
   background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
   border: none;
   border-radius: 16px;
-  color: #ffffff;
+  color: var(--white);
   font-size: 15px;
   font-weight: 700;
   font-family: inherit;
@@ -2403,7 +2546,7 @@ h1 {
 .social-login-button:hover {
   background: rgba(255, 255, 255, 0.06);
   border-color: rgba(255, 255, 255, 0.15);
-  color: #ffffff;
+  color: var(--white);
 }
 
 .social-login-button:hover .social-arrow {
@@ -2430,7 +2573,7 @@ h1 {
 .login-modal-footer button {
   background: transparent;
   border: 0;
-  color: #2dd4bf;
+  color: var(--teal-400);
   font-size: 14px;
   font-weight: 700;
   font-family: inherit;
@@ -2440,14 +2583,14 @@ h1 {
 }
 
 .login-modal-footer button:hover {
-  color: #06b6d4;
+  color: var(--info);
   text-decoration: underline;
 }
 
 /* Light theme overrides for login modal */
 :not(.dark-theme) .login-modal-card {
   background: #ffffff;
-  border-color: #cbd5e1;
+  border-color: var(--ink-200);
   box-shadow:
     0 32px 80px rgba(24, 45, 74, 0.16),
     0 8px 24px rgba(24, 45, 74, 0.08);
@@ -2460,47 +2603,47 @@ h1 {
 :not(.dark-theme) .login-modal-close {
   background: rgba(0, 0, 0, 0.04);
   border-color: rgba(0, 0, 0, 0.08);
-  color: #4b5563;
+  color: var(--ink-700);
 }
 
 :not(.dark-theme) .login-modal-close:hover {
   background: rgba(0, 0, 0, 0.08);
-  color: #111827;
+  color: var(--ink-900);
 }
 
 :not(.dark-theme) .login-modal-header h2 {
-  color: #111827;
+  color: var(--ink-900);
   text-shadow: none;
 }
 
 :not(.dark-theme) .login-modal-header p {
-  color: #6b7280;
+  color: var(--ink-400);
 }
 
 :not(.dark-theme) .login-field-pill {
   background: #f9fafb;
-  border-color: #e5e7eb;
+  border-color: var(--ink-100);
 }
 
 :not(.dark-theme) .login-field-pill:hover {
-  border-color: #cbd5e1;
+  border-color: var(--ink-200);
 }
 
 :not(.dark-theme) .login-field-pill:focus-within {
-  border-color: #10b981;
+  border-color: var(--success);
   box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
 }
 
 :not(.dark-theme) .login-field-pill-label {
-  color: #6b7280;
+  color: var(--ink-400);
 }
 
 :not(.dark-theme) .login-field-pill input {
-  color: #111827;
+  color: var(--ink-900);
 }
 
 :not(.dark-theme) .login-field-pill input::placeholder {
-  color: #9ca3af;
+  color: var(--ink-300);
 }
 
 :not(.dark-theme) .login-divider-line {
@@ -2508,31 +2651,31 @@ h1 {
 }
 
 :not(.dark-theme) .login-divider-text {
-  color: #9ca3af;
+  color: var(--ink-300);
 }
 
 :not(.dark-theme) .social-login-button {
   background: #f9fafb;
-  border-color: #e5e7eb;
+  border-color: var(--ink-100);
   color: #374151;
 }
 
 :not(.dark-theme) .social-login-button:hover {
   background: #f3f4f6;
-  border-color: #d1d5db;
-  color: #111827;
+  border-color: var(--ink-200);
+  color: var(--ink-900);
 }
 
 :not(.dark-theme) .social-arrow {
-  color: #9ca3af;
+  color: var(--ink-300);
 }
 
 :not(.dark-theme) .social-login-button:hover .social-arrow {
-  color: #4b5563;
+  color: var(--ink-700);
 }
 
 :not(.dark-theme) .login-modal-footer span {
-  color: #6b7280;
+  color: var(--ink-400);
 }
 
 :not(.dark-theme) .login-modal-footer button {
@@ -2540,7 +2683,7 @@ h1 {
 }
 
 :not(.dark-theme) .login-modal-footer button:hover {
-  color: #0f766e;
+  color: var(--teal-700);
 }
 
 /* ===== Brand Scroller (flat horizontal logo marquee below search bar) ===== */
@@ -2637,7 +2780,7 @@ h1 {
   font-size: 14px;
 }
 .info-row span { color: rgba(255, 255, 255, 0.55); }
-.info-row strong { color: #fff; font-weight: 700; }
+.info-row strong { color: var(--white); font-weight: 700; }
 
 .reports-list {
   display: flex;
@@ -2662,9 +2805,9 @@ h1 {
   border: 1px solid rgba(255, 255, 255, 0.08);
   border-radius: 12px;
 }
-.report-icon { color: #2dd4bf; flex-shrink: 0; }
+.report-icon { color: var(--teal-400); flex-shrink: 0; }
 .report-item div { flex: 1; min-width: 0; display: flex; flex-direction: column; }
-.report-item strong { color: #fff; font-size: 14px; }
+.report-item strong { color: var(--white); font-size: 14px; }
 .report-item span {
   color: rgba(255, 255, 255, 0.5);
   font-size: 12px;
@@ -2676,7 +2819,7 @@ h1 {
   flex-shrink: 0;
   background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
   border: none;
-  color: #fff;
+  color: var(--white);
   font-size: 12px;
   font-weight: 700;
   padding: 8px 12px;
@@ -2703,8 +2846,8 @@ h1 {
   border-color: rgba(45, 212, 191, 0.5);
   box-shadow: 0 10px 30px rgba(16, 185, 129, 0.15);
 }
-.plan-card h3 { margin: 0; font-size: 18px; color: #fff; }
-.plan-price { margin: 0; font-size: 26px; font-weight: 800; color: #2dd4bf; }
+.plan-card h3 { margin: 0; font-size: 18px; color: var(--white); }
+.plan-price { margin: 0; font-size: 26px; font-weight: 800; color: var(--teal-400); }
 .plan-price span { font-size: 13px; color: rgba(255, 255, 255, 0.5); font-weight: 500; }
 .plan-card ul { margin: 4px 0 8px; padding-left: 18px; color: rgba(255, 255, 255, 0.7); font-size: 13px; }
 .plan-card li { margin: 4px 0; }
@@ -2713,7 +2856,7 @@ h1 {
   height: 42px;
   border: 1px solid rgba(255, 255, 255, 0.15);
   background: rgba(255, 255, 255, 0.05);
-  color: #fff;
+  color: var(--white);
   font-weight: 700;
   font-size: 14px;
   border-radius: 12px;
@@ -2723,7 +2866,7 @@ h1 {
 .plan-btn:hover:not(:disabled) { background: rgba(255, 255, 255, 0.1); }
 .plan-btn.current { background: rgba(255, 255, 255, 0.08); color: rgba(255, 255, 255, 0.6); cursor: default; }
 .plan-card.featured .plan-btn {
-  background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
+  background: linear-gradient(135deg, var(--success) 0%, var(--info) 100%);
   border: none;
 }
 
@@ -2753,7 +2896,7 @@ h1 {
   font-size: 13px;
   font-weight: 700;
   letter-spacing: 0.04em;
-  color: #0f766e;
+  color: var(--teal-700);
   background: rgba(15, 118, 110, 0.1);
   border: 1px solid rgba(15, 118, 110, 0.25);
   padding: 7px 14px;
@@ -2788,13 +2931,15 @@ h1 {
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
 .landing-btn.primary {
-  background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
-  color: #fff;
+  background: linear-gradient(135deg, var(--success) 0%, var(--info) 100%);
+  color: var(--white);
   box-shadow: 0 10px 28px rgba(16, 185, 129, 0.3);
 }
+/* --line is a translucent white glass edge; on the light landing background it
+   renders as no border at all. Use the real field border token. */
 .landing-btn.ghost {
   background: rgba(255, 255, 255, 0.06);
-  border: 1px solid var(--line);
+  border: 1px solid var(--field-border);
   color: var(--text);
 }
 .landing-btn:hover { transform: translateY(-2px); }
@@ -2803,12 +2948,22 @@ h1 {
   font-size: clamp(24px, 3.4vw, 34px);
   font-weight: 800;
   letter-spacing: -0.02em;
+  line-height: 1.15;
+  text-wrap: balance;
   margin: 0 0 8px;
   color: var(--text);
 }
-.landing-lead { font-size: 16px; color: var(--muted); margin: 0 0 28px; }
-.landing-lead.light { color: rgba(255, 255, 255, 0.75); }
-.landing-h3.light { color: #fff; }
+/* Slightly larger and looser than body copy — a lead paragraph should read as
+   a distinct tier, not just muted body text. */
+.landing-lead {
+  font-size: 17px;
+  line-height: 1.65;
+  max-width: 62ch;
+  color: var(--muted);
+  margin: 0 0 28px;
+}
+.landing-lead.light { color: rgba(255, 255, 255, 0.78); }
+.landing-h3.light { color: var(--white); }
 
 .landing-section { scroll-margin-top: 90px; }
 .landing-section.alt {
@@ -2845,7 +3000,7 @@ h1 {
   display: grid; place-items: center;
   border-radius: 13px;
   background: linear-gradient(135deg, #10b981 0%, #06b6d4 100%);
-  color: #fff;
+  color: var(--white);
   margin-bottom: 14px;
 }
 .landing-card h4 { margin: 0 0 8px; font-size: 18px; color: var(--text); }
@@ -2863,7 +3018,7 @@ h1 {
   background: rgba(255, 255, 255, 0.05);
   border-color: rgba(255, 255, 255, 0.1);
 }
-.landing-check { color: #10b981; margin-top: 2px; flex-shrink: 0; }
+.landing-check { color: var(--success); margin-top: 2px; flex-shrink: 0; }
 .landing-tech-row strong { color: var(--text); font-size: 16px; }
 .landing-tech-row p { margin: 4px 0 0; color: var(--muted); font-size: 14px; line-height: 1.55; }
 
@@ -2883,13 +3038,13 @@ h1 {
   background: rgba(255, 255, 255, 0.05);
   border-color: rgba(255, 255, 255, 0.1);
 }
-.landing-stat-icon { color: #0f766e; margin-bottom: 8px; }
-.dark-theme .landing-stat-icon { color: #2dd4bf; }
+.landing-stat-icon { color: var(--teal-700); margin-bottom: 8px; }
+.dark-theme .landing-stat-icon { color: var(--teal-400); }
 .landing-stat-value {
   font-size: 40px; font-weight: 800; line-height: 1;
   background: linear-gradient(135deg, #10b981, #06b6d4);
   -webkit-background-clip: text; background-clip: text;
-  -webkit-text-fill-color: transparent; color: #0f766e;
+  -webkit-text-fill-color: transparent; color: var(--teal-700);
 }
 .landing-stat-label { margin-top: 8px; font-size: 13px; color: var(--muted); }
 
@@ -2926,7 +3081,7 @@ h1 {
 }
 .dark-theme .landing-cta { background: linear-gradient(135deg, #0b3b37 0%, #06231f 100%); }
 .landing-cta .landing-btn.primary {
-  background: #fff; color: #0b4f4a; box-shadow: 0 10px 28px rgba(0,0,0,0.25);
+  background: #fff; color: var(--teal-900); box-shadow: 0 10px 28px rgba(0,0,0,0.25);
   margin-top: 18px;
 }
 
@@ -2956,6 +3111,13 @@ h1 {
    upward and slightly inward so it visibly "moves" with the scroll while the
    panels cross-fade. The calc keeps it vertically centered (translateY -50%)
    and adds a scroll-driven offset on top. */
+/* The <picture> wrapper must not generate a box of its own — the image inside
+   is absolutely positioned and the pinned-scroll animation depends on it being
+   a direct child of .hero-pin for layout purposes. */
+.hero-pin picture {
+  display: contents;
+}
+
 .hero-figure-img {
   position: absolute;
   left: 0;
@@ -3034,32 +3196,41 @@ h1 {
   pointer-events: none;
 }
 /* headline: clean clay-red + teal display type (past palette), no brick backdrop */
+/* PRIMARY hero statement — the loudest type on the site. Anton earns its
+   place here at 3.9rem. The text-shadow was muddying the letterforms, so it's
+   gone; a condensed face this large needs clean edges, not glow. */
 .hero-figure-headline {
   margin: 0;
   font-family: var(--font-display), "Arial Narrow", Impact, sans-serif;
   font-weight: 400;
-  font-size: clamp(1.7rem, 4vw, 3.6rem);
-  line-height: 1.05;
-  letter-spacing: 0.005em;
+  font-size: clamp(1.75rem, 4.2vw, 3.9rem);
+  line-height: 1;
+  letter-spacing: 0.01em;
   text-transform: uppercase;
   text-align: right;
-  color: #c8482a;
-  text-shadow: 0 2px 14px rgba(200, 72, 42, 0.18);
+  text-wrap: balance;
+  color: var(--clay-600);
 }
+/* The payoff word. Teal against the clay headline is the brand's own
+   complementary pair, so it reads as intentional emphasis. */
 .hero-figure-game {
   text-transform: uppercase;
   letter-spacing: 0.04em;
-  color: #0b4f4a;
-  -webkit-text-fill-color: #0b4f4a;
+  color: var(--teal-700);
+  -webkit-text-fill-color: var(--teal-700);
 }
+/* Supporting line — deliberately quiet and letter-spaced so it reads as a
+   caption under the headline rather than competing with it. */
 .hero-figure-sub {
-  margin: 16px 0 0;
+  margin: 14px 0 0;
   font-family: var(--font-jakarta), system-ui, sans-serif;
   font-weight: 600;
-  font-size: clamp(0.95rem, 1.4vw, 1.25rem);
-  line-height: 1.35;
+  font-size: clamp(0.9rem, 1.15vw, 1.05rem);
+  line-height: 1.4;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
   text-align: right;
-  color: #0b4f4a;
+  color: var(--ink-500);
 }
 
   /* ===== Hero accuracy panel: replaces the hero text (right side, opposite hand) on scroll-down ===== */
@@ -3089,18 +3260,23 @@ h1 {
   transform: translateY(-50%) rotateX(90deg);
   pointer-events: none;
 }
+/* SECONDARY panel title. Deliberately ink, not clay: when every panel heading
+   was clay-600 there was no hierarchy between the primary hero statement and
+   the panels that follow it. Near-black display type reads as more considered
+   and lets the red stay special. */
 .hero-accuracy-title {
   margin: 0;
   font-family: var(--font-display), "Arial Narrow", Impact, sans-serif;
   font-weight: 400;
   font-size: clamp(1.5rem, 3vw, 2.6rem);
-  line-height: 1.1;
+  line-height: 1.05;
   letter-spacing: 0.01em;
   text-transform: uppercase;
+  text-wrap: balance;
   /* align the title's left edge with the "R" in "Random guess" (cols use 28px left pad) */
   text-align: left;
   padding-left: 28px;
-  color: #c8482a;
+  color: var(--ink-900);
 }
 .hero-accuracy-cols {
   display: flex;
@@ -3115,17 +3291,23 @@ h1 {
   padding: 0 28px;
   text-align: left;
 }
+/* Column labels are small — Anton (condensed poster face) gets illegible and
+   cheap-looking below ~2rem. Jakarta as a spaced-out uppercase eyebrow reads
+   as a deliberate label instead. */
 .hero-accuracy-col h3 {
   margin: 0 0 12px;
-  font-family: var(--font-display), "Arial Narrow", Impact, sans-serif;
-  font-weight: 400;
-  font-size: clamp(1.2rem, 2vw, 1.6rem);
-  line-height: 1.05;
-  letter-spacing: 0.01em;
+  font-family: var(--font-jakarta), system-ui, sans-serif;
+  font-weight: 700;
+  font-size: clamp(0.78rem, 1vw, 0.86rem);
+  line-height: 1.2;
+  letter-spacing: 0.14em;
   text-transform: uppercase;
 }
-.hero-accuracy-random h3 { color: #555; }
-.hero-accuracy-nira h3 { color: #555; }
+/* The two columns are a contrast: a muted "before" vs. a branded "after".
+   ink-500 not ink-400 — at this label size ink-400 is only 3.4:1, which
+   fails WCAG AA for text below 18px. */
+.hero-accuracy-random h3 { color: var(--ink-500); }
+.hero-accuracy-nira h3 { color: var(--teal-700); }
 .hero-accuracy-col ul {
   margin: 0;
   padding: 0;
@@ -3139,6 +3321,21 @@ h1 {
   color: var(--text);
   padding: 8px 0;
   border-top: 1px solid rgba(16, 32, 51, 0.1);
+}
+
+/* The two columns are an argument, so they shouldn't look identical.
+   "Random guess" = the problem: muted, recessive.
+   "Nira AI report" = the answer: full-strength ink, medium-bold, teal rule.
+   The reader now sees the contrast before reading a single word. */
+.hero-accuracy-random li {
+  color: var(--ink-500);
+  font-weight: 500;
+}
+
+.hero-accuracy-nira li {
+  color: var(--text);
+  font-weight: 600;
+  border-top-color: rgba(15, 118, 110, 0.28);
 }
 .hero-accuracy-divider {
   width: 1px;
@@ -3188,22 +3385,29 @@ h1 {
   transform: translateY(-50%) rotateX(90deg);
   pointer-events: none;
 }
+/* Secondary panel title — same tier as .hero-accuracy-title, so same ink
+   treatment. The question is rhetorical, which the size carries; it doesn't
+   need to shout in red as well. */
 .hero-roles-title {
   margin: 0;
   font-family: var(--font-display), "Arial Narrow", Impact, sans-serif;
   font-weight: 400;
   font-size: clamp(1.5rem, 3vw, 2.6rem);
-  line-height: 1.1;
+  line-height: 1.05;
   letter-spacing: 0.01em;
   text-transform: uppercase;
-  color: #c8482a;
+  text-wrap: balance;
+  color: var(--ink-900);
   text-align: left;
 }
+/* The answer to the question above it — teal marks it as the payoff line. */
 .hero-roles-sub {
-  margin: 10px 0 20px;
-  font-weight: 600;
+  margin: 10px 0 22px;
+  font-weight: 700;
   font-size: clamp(1rem, 1.6vw, 1.35rem);
-  color: #4a4a4a;
+  line-height: 1.35;
+  letter-spacing: -0.01em;
+  color: var(--teal-700);
   text-align: left;
 }
 .hero-roles-list {
@@ -3212,15 +3416,23 @@ h1 {
   list-style: none;
   text-align: left;
 }
+/* Role list: ink-700 not ink-500 — these are the actual audience names, the
+   most scannable content in the panel, so they shouldn't be the faintest
+   thing on screen. Rule uses the teal token instead of a stray hex. */
 .hero-roles-list li {
   font-family: var(--font-jakarta), system-ui, sans-serif;
   font-size: clamp(0.92rem, 1.4vw, 1.12rem);
   font-weight: 600;
   line-height: 1.45;
-  color: #555;
+  color: var(--ink-700);
   padding: 9px 0 9px 18px;
   position: relative;
-  border-left: 3px solid #0b4f4a;
+  border-left: 3px solid var(--teal-700);
+  transition: border-color 180ms ease, color 180ms ease;
+}
+.hero-roles-list li:hover {
+  color: var(--ink-900);
+  border-left-color: var(--clay-600);
 }
 .hero-roles-list li::before { content: none; }
 @media (max-width: 760px) {
@@ -3286,7 +3498,7 @@ h1 {
   display: flex;
   align-items: center;
   gap: 10px;
-  color: #0b4f4a;
+  color: var(--teal-900);
 }
 .role-detail-head h3 {
   margin: 0;
@@ -3296,22 +3508,24 @@ h1 {
   line-height: 1.05;
   letter-spacing: 0.01em;
   text-transform: uppercase;
-  color: #c8482a;
+  text-wrap: balance;
+  color: var(--clay-600);
 }
 .role-detail-intro {
   margin: 14px 0 0;
   font-size: clamp(0.95rem, 1.4vw, 1.1rem);
   line-height: 1.6;
-  color: #555;
+  color: var(--ink-500);
 }
+/* Same reasoning as the accuracy column labels: too small for Anton. */
 .role-detail-helps-title {
   margin: 26px 0 14px;
-  font-family: var(--font-display), "Arial Narrow", Impact, sans-serif;
-  font-weight: 400;
-  font-size: clamp(1.1rem, 2vw, 1.4rem);
+  font-family: var(--font-jakarta), system-ui, sans-serif;
+  font-weight: 700;
+  font-size: clamp(0.78rem, 1vw, 0.86rem);
   text-transform: uppercase;
-  letter-spacing: 0.01em;
-  color: #0b4f4a;
+  letter-spacing: 0.14em;
+  color: var(--teal-700);
 }
 .role-detail-grid {
   display: grid;
@@ -3328,13 +3542,13 @@ h1 {
   margin: 0 0 6px;
   font-size: 0.98rem;
   font-weight: 700;
-  color: #0b4f4a;
+  color: var(--teal-900);
 }
 .role-detail-item p {
   margin: 0;
   font-size: 0.9rem;
   line-height: 1.5;
-  color: #555;
+  color: var(--ink-500);
 }
 
 /* RIGHT: semicircle menu, shifted left so the full arc (including end icons
@@ -3371,7 +3585,7 @@ h1 {
   border-radius: 50%;
   background: linear-gradient(160deg, #ffffff, #eaf4f2);
   box-shadow: 0 10px 24px rgba(15, 118, 110, 0.2);
-  color: #0f766e;
+  color: var(--teal-700);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3382,7 +3596,7 @@ h1 {
 .role-node.is-active {
   background: linear-gradient(160deg, #ffffff, #d6efea);
   box-shadow: 0 18px 44px rgba(15, 118, 110, 0.4);
-  color: #0b5e57;
+  color: var(--teal-900);
 }
 .role-node-tip {
   position: absolute;
@@ -3392,7 +3606,7 @@ h1 {
   white-space: nowrap;
   font-size: 0.74rem;
   font-weight: 700;
-  color: #1d2b33;
+  color: var(--ink-900);
   background: rgba(255, 255, 255, 0.92);
   padding: 4px 10px;
   border-radius: 8px;
@@ -3406,7 +3620,7 @@ h1 {
 }
 .role-node-tip.is-open {
   opacity: 1;
-  color: #0f766e;
+  color: var(--teal-700);
 }
 @keyframes faqSlide {
   from { opacity: 0; transform: translateY(-6px); }
@@ -3422,7 +3636,7 @@ h1 {
   margin: 64px 0 30px;
   font-size: clamp(1.3rem, 3vw, 1.9rem);
   font-weight: 800;
-  color: #111;
+  color: var(--ink-950);
 }
 .community-faq-hero {
   display: grid;
@@ -3463,7 +3677,7 @@ h1 {
   border: 0;
   background: transparent;
   cursor: pointer;
-  color: #111;
+  color: var(--ink-950);
   font-size: 1.02rem;
   font-weight: 700;
   text-align: left;
@@ -3471,7 +3685,7 @@ h1 {
 }
 .faq-chevron {
   flex: 0 0 auto;
-  color: #0f766e;
+  color: var(--teal-700);
   transition: transform 320ms cubic-bezier(.22,.61,.36,1);
 }
 .faq-item.is-open .faq-chevron {
@@ -3479,7 +3693,7 @@ h1 {
 }
 .faq-answer {
   padding: 0 4px 16px;
-  color: #4a4a4a;
+  color: var(--ink-700);
   font-size: 0.95rem;
   line-height: 1.6;
   animation: faqSlide 280ms ease both;
@@ -3506,7 +3720,7 @@ h1 {
   font-family: var(--font-hand), "Comic Sans MS", cursive;
   font-size: clamp(1.8rem, 3.4vw, 2.6rem);
   font-weight: 700;
-  color: #0b1437;            /* royal black */
+  color: var(--ink-900);
   line-height: 1.25;
 }
 @media (max-width: 860px) {
@@ -3515,3 +3729,143 @@ h1 {
   .community-faq-hero { grid-template-columns: 1fr; gap: 28px; }
 }
 
+
+/* =====================================================================
+   Landing page — dark theme typography
+   ---------------------------------------------------------------------
+   Most landing text colours were authored light-theme-only (ink-950,
+   teal-900, ink-500 …). On the near-black dark background those render
+   as effectively invisible. These overrides give every landing text
+   tier a dark-mode counterpart, keeping the same hierarchy:
+     display / heading -> near-white
+     supporting copy   -> muted grey
+     brand accents     -> teal-400 (light teal reads on dark; teal-700
+                          does not) and clay-400 in place of clay-600.
+   ===================================================================== */
+
+/* PRIMARY hero statement keeps the clay treatment (lightened for dark bg). */
+.dark-theme .hero-figure-headline,
+.dark-theme .role-detail-head h3 {
+  color: var(--clay-400);
+}
+
+/* SECONDARY panel titles are ink-900 in light mode; their dark counterpart is
+   near-white, preserving the same "quieter than the hero" relationship. */
+.dark-theme .hero-accuracy-title,
+.dark-theme .hero-roles-title {
+  color: var(--accent-strong);
+}
+
+.dark-theme .hero-figure-game {
+  color: var(--teal-400);
+  -webkit-text-fill-color: var(--teal-400);
+}
+
+.dark-theme .hero-figure-sub {
+  color: var(--ink-300);
+}
+
+.dark-theme .hero-roles-sub {
+  color: var(--teal-400);
+}
+
+/* Comparison columns: keep the muted-vs-strong contrast in dark mode too. */
+.dark-theme .hero-accuracy-random li {
+  color: var(--ink-300);
+}
+
+.dark-theme .hero-accuracy-nira li {
+  color: var(--text);
+  border-top-color: rgba(45, 212, 191, 0.32);
+}
+
+.dark-theme .hero-roles-list li {
+  border-left-color: var(--teal-400);
+}
+
+.dark-theme .hero-roles-list li:hover {
+  color: var(--accent-strong);
+  border-left-color: var(--clay-400);
+}
+
+.dark-theme .role-detail-head {
+  color: var(--teal-400);
+}
+
+/* Small uppercase labels */
+.dark-theme .hero-accuracy-nira h3,
+.dark-theme .role-detail-helps-title {
+  color: var(--teal-400);
+}
+
+.dark-theme .hero-accuracy-random h3 {
+  color: var(--ink-300);
+}
+
+/* Body / supporting copy.
+   NOTE: .hero-roles-sub and the .hero-accuracy-* list items are deliberately
+   NOT listed here — they get their contrast treatment above. Repeating them
+   in this later block would override it, since both rules have equal
+   specificity and the last one wins. */
+.dark-theme .role-detail-intro,
+.dark-theme .role-detail-item p,
+.dark-theme .faq-answer {
+  color: var(--muted);
+}
+
+.dark-theme .hero-roles-list li {
+  color: var(--text);
+}
+
+.dark-theme .hero-accuracy-col li {
+  border-top-color: rgba(255, 255, 255, 0.12);
+}
+
+/* Role carousel */
+.dark-theme .role-detail-item {
+  background: rgba(45, 212, 191, 0.08);
+}
+
+.dark-theme .role-detail-item h4 {
+  color: var(--teal-400);
+}
+
+.dark-theme .role-node-tip {
+  color: var(--text);
+}
+
+/* FAQ + community */
+.dark-theme .community-faq-title,
+.dark-theme .faq-question {
+  color: var(--accent-strong);
+}
+
+.dark-theme .community-faq-tagline {
+  color: var(--text);
+}
+
+.dark-theme .faq-item {
+  border-color: rgba(255, 255, 255, 0.12);
+}
+
+.dark-theme .faq-item.is-open {
+  border-color: rgba(45, 212, 191, 0.5);
+}
+
+.dark-theme .faq-chevron {
+  color: var(--teal-400);
+}
+
+.dark-theme .landing-eyebrow {
+  color: var(--teal-400);
+  background: rgba(45, 212, 191, 0.12);
+  border-color: rgba(45, 212, 191, 0.32);
+}
+
+.dark-theme .landing-stat-value {
+  background: linear-gradient(135deg, var(--teal-400), var(--info-bright));
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  color: var(--teal-400);
+}

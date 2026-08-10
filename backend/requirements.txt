@@ -1,15 +1,27 @@
+# Web layer
 fastapi
 uvicorn[standard]
+python-multipart
+
+# Config
 python-dotenv
 pydantic
 pydantic-settings
+
+# LLM + agent graph
+# (langgraph pulls in langchain-core; top-level `langchain` is not imported anywhere)
 groq
 langgraph
-langchain
-chromadb
-sentence-transformers
+
+# Document parsing
 pypdf
 python-docx
 openpyxl
-python-multipart
+
+# Report generation
 reportlab
+
+# NOTE: chromadb and sentence-transformers were previously listed but are not
+# imported anywhere in backend/app. They pulled in torch (~2GB) and a large
+# transitive tree, which slows/breaks deploys. Re-add them only if the RAG
+# layer actually moves off the local JSON index.
