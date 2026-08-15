@@ -86,6 +86,62 @@ def remove_white_background(im: Image.Image, tolerance: int = 32) -> Image.Image
     return im
 
 
+def white_to_alpha(im: Image.Image, floor: int = 246, white_point: int = 234) -> Image.Image:
+    """Convert a white studio background into a smooth alpha ramp.
+
+    Use this instead of --remove-bg for double-exposure / ink-on-white artwork,
+    where the subject deliberately *fades* into the background. A flood fill is
+    binary: it would cut a hard line exactly where the artwork is supposed to
+    dissolve, leaving a visible silhouette edge.
+
+    Here the image is treated as ink printed on white paper and the compositing
+    is inverted:
+
+        alpha = 1 - min(r, g, b) / floor        (0 for white, 1 for saturated ink)
+        rgb   = (pixel - white * (1 - alpha)) / alpha
+
+    Using min() rather than luminance keeps saturated colour opaque — the orange
+    hard hat has a low blue channel, so it survives at ~92% alpha instead of the
+    ~50% a luminance ramp would give it. Faded scaffolding stays a soft ghost,
+    which is exactly what lets the page colour show through behind it.
+
+    `floor` is the value treated as pure background; anything at or above it
+    becomes fully transparent. Real photos of "white" sit around 235-250, so the
+    default is slightly below 255.
+    """
+    im = im.convert("RGB")
+    w, h = im.size
+    out = Image.new("RGBA", (w, h))
+    src = im.load()
+    dst = out.load()
+
+    # Real "white" backgrounds are rarely flat — this source drifts from 253 in
+    # the centre to 235 at the corners. Without normalisation that vignette is
+    # darker than `floor`, so it survives as a grey haze over the page colour.
+    # Clipping the top of the range to pure white first removes it outright.
+    if white_point and white_point < 255:
+        lut = [min(255, round(v * 255 / white_point)) for v in range(256)]
+        im = im.point(lut * 3)
+        src = im.load()
+
+    for y in range(h):
+        for x in range(w):
+            r, g, b = src[x, y]
+            m = min(r, g, b)
+            if m >= floor:
+                dst[x, y] = (0, 0, 0, 0)
+                continue
+            a = 1.0 - m / floor
+            inv = 255.0 * (1.0 - a)
+            # Unpremultiply against white to recover the original ink colour.
+            nr = min(255, max(0, round((r - inv) / a)))
+            ng = min(255, max(0, round((g - inv) / a)))
+            nb = min(255, max(0, round((b - inv) / a)))
+            dst[x, y] = (nr, ng, nb, min(255, round(a * 255)))
+
+    return out
+
+
 def decontaminate_edges(im: Image.Image) -> Image.Image:
     """Pull leftover light fringe out of semi-transparent edge pixels.
 
@@ -101,10 +157,29 @@ def decontaminate_edges(im: Image.Image) -> Image.Image:
     return im
 
 
+def _resample(im: Image.Image, size: tuple[int, int]) -> Image.Image:
+    """Resize, stepping up in stages when enlarging.
+
+    A single large Lanczos jump (e.g. 516px -> 2560px) smears edges, because the
+    kernel is sampling far apart in the source. Enlarging at most 2x at a time
+    and re-sharpening between steps keeps edges defined. This does NOT invent
+    detail — nothing can — but it noticeably beats one big jump and beats
+    letting the browser scale the image itself.
+    """
+    if size[0] <= im.width:
+        return im.resize(size, Image.LANCZOS)
+
+    cur = im
+    while cur.width * 2 < size[0]:
+        cur = cur.resize((cur.width * 2, cur.height * 2), Image.LANCZOS)
+        cur = cur.filter(ImageFilter.UnsharpMask(radius=0.8, percent=38, threshold=2))
+    return cur.resize(size, Image.LANCZOS)
+
+
 def export(im: Image.Image, out_dir: Path, name: str, target_w: int, label: str) -> None:
     ratio = im.height / im.width
     size = (target_w, max(1, round(target_w * ratio)))
-    resized = im.resize(size, Image.LANCZOS)
+    resized = _resample(im, size)
 
     # A light unsharp pass counteracts the softening that any resample introduces.
     resized = resized.filter(ImageFilter.UnsharpMask(radius=1.1, percent=55, threshold=3))
@@ -132,6 +207,14 @@ def main() -> None:
     ap.add_argument("--remove-bg", action="store_true")
     ap.add_argument("--tolerance", type=int, default=32)
     ap.add_argument(
+        "--white-to-alpha",
+        action="store_true",
+        help="soft alpha ramp for ink-on-white / double-exposure art (see white_to_alpha)",
+    )
+    ap.add_argument("--floor", type=int, default=246, help="value treated as pure white background")
+    ap.add_argument("--white-point", type=int, default=234,
+                    help="clip input levels at/above this to pure white before the alpha ramp")
+    ap.add_argument(
         "--out",
         type=Path,
         default=Path(__file__).resolve().parent.parent / "public" / "assets",
@@ -144,11 +227,17 @@ def main() -> None:
     im = Image.open(args.source).convert("RGBA")
     print(f"source: {args.source.name}  {im.width}x{im.height}")
 
-    if args.remove_bg:
+    if args.white_to_alpha:
+        print(f"converting white background to a soft alpha ramp (floor={args.floor}, white-point={args.white_point})...")
+        im = white_to_alpha(im, args.floor, args.white_point)
+    elif args.remove_bg:
         print("removing white background (edge-connected flood fill)...")
         im = remove_white_background(im, args.tolerance)
 
-    im = decontaminate_edges(im)
+    # The alpha ramp is the point of white-to-alpha mode; hardening it would
+    # reintroduce the very edge this mode exists to avoid.
+    if not args.white_to_alpha:
+        im = decontaminate_edges(im)
 
     bbox = im.getbbox()
     if bbox and bbox != (0, 0, im.width, im.height):

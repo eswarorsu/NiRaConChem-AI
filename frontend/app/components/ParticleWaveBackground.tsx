@@ -106,8 +106,8 @@ const cloudVertexShader = `
     vec4 mvPosition = modelViewMatrix * vec4(p, 1.0);
     
     float ptSize = 1.3 * (10.0 / -mvPosition.z);
-    // Twinkling sparkle
-    ptSize *= (0.55 + 0.45 * sin(uTime * 4.5 + aRandom.y * 12.0));
+    // Subtle shimmer (kept restrained rather than sparkly)
+    ptSize *= (0.78 + 0.22 * sin(uTime * 2.6 + aRandom.y * 12.0));
     
     gl_PointSize = ptSize;
     gl_Position = projectionMatrix * mvPosition;
@@ -235,9 +235,9 @@ function ParticleBall() {
           fragmentShader={globeFragmentShader}
           transparent
           uniforms={{
-            uBlue: { value: new Color("#1085ff") },
-            uFuchsia: { value: new Color("#d946ef") },
-            uWhite: { value: new Color("#ffffff") },
+            uBlue: { value: new Color("#c4a373") },
+            uFuchsia: { value: new Color("#a8542f") },
+            uWhite: { value: new Color("#fdf8ec") },
             uTime: { value: 0 },
           }}
           vertexShader={globeVertexShader}
@@ -263,8 +263,8 @@ function ParticleBall() {
           fragmentShader={cloudFragmentShader}
           transparent
           uniforms={{
-            uBlue: { value: new Color("#1085ff") },
-            uFuchsia: { value: new Color("#d946ef") },
+            uBlue: { value: new Color("#c4a373") },
+            uFuchsia: { value: new Color("#a8542f") },
             uTime: { value: 0 },
           }}
           vertexShader={cloudVertexShader}

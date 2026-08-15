@@ -1,25 +1,21 @@
 import type { Metadata } from "next";
-import { Anton, Caveat, Plus_Jakarta_Sans } from "next/font/google";
+import { Lora, Playfair_Display } from "next/font/google";
 import { ServiceWorkerRegistration } from "./components/ServiceWorkerRegistration";
 import "./globals.css";
 
-const handFont = Caveat({
+// Body serif for the cream paper theme. The CSS variable keeps its original
+// name so the ~13 font-family declarations in globals.css don't need edits.
+const jakarta = Lora({
   subsets: ["latin"],
-  weight: ["500", "600", "700"],
-  variable: "--font-hand",
-  display: "swap",
-});
-
-const jakarta = Plus_Jakarta_Sans({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700", "800"],
+  weight: ["400", "500", "600", "700"],
+  style: ["normal", "italic"],
   variable: "--font-jakarta",
   display: "swap",
 });
 
-const displayFont = Anton({
+const displayFont = Playfair_Display({
   subsets: ["latin"],
-  weight: ["400"],
+  weight: ["400", "700", "800", "900"],
   variable: "--font-display",
   display: "swap",
 });
@@ -58,7 +54,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en" className={`${handFont.variable} ${jakarta.variable} ${displayFont.variable}`}>
+    <html lang="en" className={`${jakarta.variable} ${displayFont.variable}`}>
       <body>
         {children}
         <ServiceWorkerRegistration />

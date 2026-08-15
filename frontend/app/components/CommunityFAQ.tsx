@@ -48,7 +48,7 @@ export default function CommunityFAQ() {
           />
         </div>
         <p className="community-faq-tagline">
-          Join! the engineers and manufacturers already running their sourcing decisions through NiRa AI
+          Join the engineers and manufacturers already running their sourcing decisions through NiRa AI.
         </p>
       </div>
 
