@@ -1,7 +1,7 @@
 "use client";
 
 import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
-import { MoreVertical, Moon, Paperclip, SendHorizontal, Sun, Trash2, LogIn, X, Mail, Lock, UserPlus, ArrowRight, Download, Store, Bot, User, FileText, CreditCard } from "lucide-react";
+import { MoreVertical, Moon, Paperclip, SendHorizontal, Sun, Trash2, LogIn, X, Mail, Lock, UserPlus, ArrowRight, Download, Store, Bot, User, FileText, CreditCard, MapPin, Calendar, Phone } from "lucide-react";
 import { ParticleWaveBackground } from "./components/ParticleWaveBackground";
 import BrandScroller from "./components/BrandScroller";
 import RoleCarousel from "./components/RoleCarousel";
@@ -376,35 +376,53 @@ export default function Home() {
     return products.length ? products : (qconMarketData.products as MarketProduct[]).slice(0, 8);
   }, [marketSearchText]);
 
-  const [showMoreMenu, setShowMoreMenu] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [showProfileModal, setShowProfileModal] = useState(false);
   const [showReportsModal, setShowReportsModal] = useState(false);
   const [showSubModal, setShowSubModal] = useState(false);
+  // Which view fills the main content area in place of the chat panel.
+  const [sidePanel, setSidePanel] = useState<"chat" | "reports" | "subscription" | "profile">("chat");
   const [loginMode, setLoginMode] = useState<"login" | "register">("login");
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [loginConfirmPassword, setLoginConfirmPassword] = useState("");
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  // Test/demo credentials — login is gated on these only.
+  const DEMO_USER = "demo@niraconchem.ai";
+  const DEMO_PASS = "demo1234";
+  // Holds the first query the user typed before they were logged in,
+  // so we can auto-send it once they authenticate.
+  const pendingQueryRef = useRef("");
+
+  const profileUserEmail = loginEmail || "guest@niraconchem.ai";
+  const profileData = {
+    name: "Eswar Orsu",
+    handle: "@" + (loginEmail ? loginEmail.split("@")[0] : "guest"),
+    email: profileUserEmail,
+    phone: "+971 50 123 4567",
+    location: "Dubai, UAE",
+    joined: "March 2024",
+    role: "Site Engineer",
+    company: "NIRA ConChem Gulf",
+    department: "Construction Chemicals",
+    account: loginEmail ? "Registered" : "Guest",
+    plan: "Free",
+    bio: "Construction-chemicals specialist helping UAE & GCC contractors pick the right admixtures, grouts and waterproofing systems for real site conditions.",
+    about:
+      "Eswar works across high-rise and infrastructure projects in the Emirates, turning spec sheets and site constraints into practical product recommendations. On NIRA AI he tracks recommendation reports, saved products and active project chats — and logs field notes back to the team.",
+    stats: {
+      reports: chatMessages.filter((m) => m.role === "assistant" && m.report_ready).length,
+      chats: chatMessages.filter((m) => m.role === "user").length,
+      projects: 6,
+      saved: 14,
+    },
+  };
 
   // Hero stage driven by scroll position:
   //   0 = nothing (search bar in view, hand not yet on screen)
   //   1 = hero text panel ("No more random guesses…")
   //   2 = accuracy panel (replaces hero text once hand has scrolled in)
   const [heroStage, setHeroStage] = useState(0);
-
-  useEffect(() => {
-    if (!showMoreMenu) return;
-
-    function handleOutsideClick(event: MouseEvent) {
-      const target = event.target as HTMLElement;
-      if (!target.closest(".more-options-button") && !target.closest(".more-options-menu")) {
-        setShowMoreMenu(false);
-      }
-    }
-
-    document.addEventListener("click", handleOutsideClick);
-    return () => document.removeEventListener("click", handleOutsideClick);
-  }, [showMoreMenu]);
 
   function handleClearChat() {
     setChatMessages([]);
@@ -414,11 +432,25 @@ export default function Home() {
     setFileAnalysis(null);
     setQuery("");
     setError("");
-    setShowMoreMenu(false);
+    setSidePanel("chat");
+  }
+
+  function handleLogout() {
+    // Return the user to the landing page.
+    setChatMessages([]);
+    setSessionId(null);
+    setLatestChat(null);
+    setReportPayload(null);
+    setFileAnalysis(null);
+    setQuery("");
+    setError("");
+    setSidePanel("chat");
+    setIsLoggedIn(false);
+    setLoginEmail("");
+    setShowLoginModal(false);
   }
 
   function handleLoginClick() {
-    setShowMoreMenu(false);
     setLoginMode("login");
     setLoginEmail("");
     setLoginPassword("");
@@ -439,9 +471,20 @@ export default function Home() {
       alert("Passwords do not match!");
       return;
     }
-    // Placeholder â€” wire up real auth here
-    alert(`${loginMode === "login" ? "Login" : "Registration"} submitted for: ${loginEmail}`);
+    // Demo gate — only the test credentials are accepted.
+    if (loginEmail.trim().toLowerCase() !== DEMO_USER || loginPassword !== DEMO_PASS) {
+      alert(`Invalid credentials.\n\nUse the demo login:\n  Email: ${DEMO_USER}\n  Password: ${DEMO_PASS}`);
+      return;
+    }
+    setIsLoggedIn(true);
     handleCloseLoginModal();
+    // After login, the persistent sidebar appears automatically once the chat
+    // starts (hasChatStarted becomes true when the pending query is sent).
+    const pending = pendingQueryRef.current;
+    if (pending) {
+      pendingQueryRef.current = "";
+      void submitChat(pending);
+    }
   }
 
   useEffect(() => {
@@ -633,6 +676,16 @@ export default function Home() {
       setError("Enter a construction chemical requirement first.");
       return;
     }
+    // First query requires login — capture it, then pop the login modal.
+    if (!isLoggedIn) {
+      pendingQueryRef.current = trimmedQuery;
+      setLoginEmail("");
+      setLoginPassword("");
+      setLoginConfirmPassword("");
+      setLoginMode("login");
+      setShowLoginModal(true);
+      return;
+    }
     void submitChat(trimmedQuery);
   }
 
@@ -765,18 +818,40 @@ export default function Home() {
           </span>
         </button>
       ) : null}
-      <button
-        aria-label="More options"
-        className={`more-options-button${showMoreMenu ? " active" : ""}`}
-        onClick={() => setShowMoreMenu((prev) => !prev)}
-        title="More options"
-        type="button"
-      >
-        <MoreVertical size={24} strokeWidth={2.4} aria-hidden="true" />
-      </button>
-
-      {showMoreMenu ? (
-        <div className="more-options-menu" role="menu">
+      {hasChatStarted ? (
+        <nav className="more-options-menu sidebar" aria-label="Menu">
+          <div className="sidebar-brand">NIRA AI</div>
+          <div className="sidebar-spacer" />
+          {activeMode !== "market" ? (
+            <button
+              className="menu-item"
+              onClick={() => { setActiveMode("market"); setSidePanel("chat"); }}
+              role="menuitem"
+              type="button"
+            >
+              <Store size={16} strokeWidth={2.2} />
+              <span>Market Result</span>
+            </button>
+          ) : (
+            <button
+              className="menu-item"
+              onClick={() => { setActiveMode("nira"); setSidePanel("chat"); }}
+              role="menuitem"
+              type="button"
+            >
+              <Bot size={16} strokeWidth={2.2} />
+              <span>NIRA AI</span>
+            </button>
+          )}
+          <button
+            className="menu-item"
+            onClick={() => setSidePanel("reports")}
+            role="menuitem"
+            type="button"
+          >
+            <FileText size={16} strokeWidth={2.2} />
+            <span>Reports History</span>
+          </button>
           <button
             className="menu-item"
             onClick={handleClearChat}
@@ -788,77 +863,44 @@ export default function Home() {
           </button>
           <button
             className="menu-item"
-            onClick={handleLoginClick}
-            role="menuitem"
-            type="button"
-          >
-            <LogIn size={16} strokeWidth={2.2} />
-            <span>Log In</span>
-          </button>
-          <button
-            className="menu-item"
-            onClick={() => {
-              setShowProfileModal(true);
-              setShowMoreMenu(false);
-            }}
-            role="menuitem"
-            type="button"
-          >
-            <User size={16} strokeWidth={2.2} />
-            <span>Profile</span>
-          </button>
-          <button
-            className="menu-item"
-            onClick={() => {
-              setShowReportsModal(true);
-              setShowMoreMenu(false);
-            }}
-            role="menuitem"
-            type="button"
-          >
-            <FileText size={16} strokeWidth={2.2} />
-            <span>Reports History</span>
-          </button>
-          <button
-            className="menu-item"
-            onClick={() => {
-              setShowSubModal(true);
-              setShowMoreMenu(false);
-            }}
+            onClick={() => setSidePanel("subscription")}
             role="menuitem"
             type="button"
           >
             <CreditCard size={16} strokeWidth={2.2} />
             <span>Subscription</span>
           </button>
-          {activeMode !== "market" ? (
+          <button
+            className="menu-item"
+            onClick={() => setSidePanel("profile")}
+            role="menuitem"
+            type="button"
+          >
+            <User size={16} strokeWidth={2.2} />
+            <span>Profile</span>
+          </button>
+          {isLoggedIn ? (
             <button
               className="menu-item"
-              onClick={() => {
-                setActiveMode("market");
-                setShowMoreMenu(false);
-              }}
+              onClick={handleLogout}
               role="menuitem"
               type="button"
             >
-              <Store size={16} strokeWidth={2.2} />
-              <span>Market Result</span>
+              <LogIn size={16} strokeWidth={2.2} />
+              <span>Log Out</span>
             </button>
           ) : (
             <button
               className="menu-item"
-              onClick={() => {
-                setActiveMode("nira");
-                setShowMoreMenu(false);
-              }}
+              onClick={handleLoginClick}
               role="menuitem"
               type="button"
             >
-              <Bot size={16} strokeWidth={2.2} />
-              <span>NIRA AI</span>
+              <LogIn size={16} strokeWidth={2.2} />
+              <span>Log In</span>
             </button>
           )}
-        </div>
+        </nav>
       ) : null}
 
       {showLoginModal ? (
@@ -981,27 +1023,61 @@ export default function Home() {
 
       {showProfileModal ? (
         <div className="login-modal-overlay" role="dialog" aria-modal="true" aria-label="Profile" onClick={(e) => { if ((e.target as HTMLElement).classList.contains("login-modal-overlay")) setShowProfileModal(false); }}>
-          <div className="login-modal-card">
+          <div className="profile-card">
             <button className="login-modal-close" aria-label="Close" onClick={() => setShowProfileModal(false)} type="button">
               <X size={18} strokeWidth={2.2} />
             </button>
-            <div className="login-modal-header">
-              <div className="login-brand-mark" aria-hidden="true">
-                <span className="login-brand-orbit" />
-                <User size={26} strokeWidth={2.2} />
+            <div className="profile-cover" aria-hidden="true" />
+            <div className="profile-avatar">
+              <img
+                src="/assets/profile.jpg"
+                alt={profileData.name}
+                className="profile-avatar-img"
+              />
+            </div>
+            <div className="profile-body">
+              <div className="profile-head">
+                <h2>{profileData.name}</h2>
+                <p className="profile-handle">{profileData.handle}</p>
+                <span className="profile-badge">{profileData.plan} plan</span>
               </div>
-              <h2>Profile</h2>
-              <p>{loginEmail ? loginEmail : "Signed in as guest"}</p>
+              <p className="profile-bio">{profileData.bio}</p>
+              <div className="profile-meta">
+                <span><MapPin size={15} strokeWidth={2.2} /> {profileData.location}</span>
+                <span><Calendar size={15} strokeWidth={2.2} /> Joined {profileData.joined}</span>
+                <span><Mail size={15} strokeWidth={2.2} /> {profileData.email}</span>
+                <span><Phone size={15} strokeWidth={2.2} /> {profileData.phone}</span>
+              </div>
+              <div className="profile-stats">
+                <div className="profile-stat"><strong>{profileData.stats.reports}</strong><span>Reports</span></div>
+                <div className="profile-stat"><strong>{profileData.stats.chats}</strong><span>Chats</span></div>
+                <div className="profile-stat"><strong>{profileData.stats.projects}</strong><span>Projects</span></div>
+                <div className="profile-stat"><strong>{profileData.stats.saved}</strong><span>Saved</span></div>
+              </div>
+              <div className="profile-section">
+                <h3>Personal details</h3>
+                <div className="profile-grid">
+                  <div className="info-row"><span>Full name</span><strong>{profileData.name}</strong></div>
+                  <div className="info-row"><span>Role</span><strong>{profileData.role}</strong></div>
+                  <div className="info-row"><span>Company</span><strong>{profileData.company}</strong></div>
+                  <div className="info-row"><span>Department</span><strong>{profileData.department}</strong></div>
+                  <div className="info-row"><span>Location</span><strong>{profileData.location}</strong></div>
+                  <div className="info-row"><span>Email</span><strong>{profileData.email}</strong></div>
+                  <div className="info-row"><span>Phone</span><strong>{profileData.phone}</strong></div>
+                  <div className="info-row"><span>Member since</span><strong>{profileData.joined}</strong></div>
+                  <div className="info-row"><span>Account type</span><strong>{profileData.account}</strong></div>
+                  <div className="info-row"><span>Plan</span><strong>{profileData.plan}</strong></div>
+                </div>
+              </div>
+              <div className="profile-section">
+                <h3>About</h3>
+                <p className="profile-about-text">{profileData.about}</p>
+              </div>
+              <button className="login-submit-pill" type="button" onClick={() => { setShowProfileModal(false); handleLoginClick(); }}>
+                <span>{loginEmail ? "Manage account" : "Log in"}</span>
+                <ArrowRight size={18} strokeWidth={2.2} />
+              </button>
             </div>
-            <div className="info-card">
-              <div className="info-row"><span>Account</span><strong>{loginEmail ? "Registered" : "Guest"}</strong></div>
-              <div className="info-row"><span>Plan</span><strong>Free</strong></div>
-              <div className="info-row"><span>Reports generated</span><strong>{chatMessages.filter((m) => m.role === "assistant" && m.report_ready).length}</strong></div>
-            </div>
-            <button className="login-submit-pill" type="button" onClick={() => { setShowProfileModal(false); handleLoginClick(); }}>
-              <span>{loginEmail ? "Manage account" : "Log in"}</span>
-              <ArrowRight size={18} strokeWidth={2.2} />
-            </button>
           </div>
         </div>
       ) : null}
@@ -1250,6 +1326,66 @@ export default function Home() {
 
         {hasChatStarted ? (
         <section className="chat-panel" aria-label="NIRACONCHEM AI chat">
+          {sidePanel === "reports" ? (
+            <div className="side-panel-view">
+              <h2 className="side-panel-title">Reports History</h2>
+              {chatMessages.filter((m) => m.role === "assistant" && m.report_ready).length === 0 ? (
+                <p className="side-panel-empty">No reports generated yet. Ask a project question to get a recommendation report.</p>
+              ) : (
+                <ul className="side-panel-list">
+                  {chatMessages.filter((m) => m.role === "assistant" && m.report_ready).map((m, i) => (
+                    <li key={i} className="side-panel-list-item">
+                      <FileText size={16} strokeWidth={2.2} />
+                      <span>{m.content.slice(0, 90)}{m.content.length > 90 ? "…" : ""}</span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          ) : sidePanel === "subscription" ? (
+            <div className="side-panel-view">
+              <h2 className="side-panel-title">Subscription</h2>
+              <p className="side-panel-empty">Manage your plan and billing. (Demo environment — checkout not configured.)</p>
+              <div className="plans">
+                <div className="plan-card">
+                  <h3>Free</h3>
+                  <p className="plan-price">$0<span>/mo</span></p>
+                  <ul><li>Basic recommendations</li><li>Up to 5 reports</li></ul>
+                  <button className="plan-btn current" type="button" disabled>Current plan</button>
+                </div>
+                <div className="plan-card featured">
+                  <h3>Pro</h3>
+                  <p className="plan-price">$29<span>/mo</span></p>
+                  <ul><li>Unlimited recommendations</li><li>Priority AI tuning</li><li>PDF reports + export</li></ul>
+                  <button className="plan-btn" type="button" onClick={() => alert("Subscription checkout is not configured in this environment.")}>Upgrade</button>
+                </div>
+              </div>
+            </div>
+          ) : sidePanel === "profile" ? (
+            <div className="side-panel-view">
+              <div className="side-panel-profile-head">
+                <img className="side-panel-avatar" src="/assets/profile.jpg" alt={profileData.name} />
+                <div>
+                  <h2 className="side-panel-title">{profileData.name}</h2>
+                  <p className="side-panel-handle">{profileData.handle}</p>
+                </div>
+              </div>
+              <p className="side-panel-bio">{profileData.bio}</p>
+              <div className="profile-grid">
+                <div className="info-row"><span>Full name</span><strong>{profileData.name}</strong></div>
+                <div className="info-row"><span>Role</span><strong>{profileData.role}</strong></div>
+                <div className="info-row"><span>Company</span><strong>{profileData.company}</strong></div>
+                <div className="info-row"><span>Department</span><strong>{profileData.department}</strong></div>
+                <div className="info-row"><span>Location</span><strong>{profileData.location}</strong></div>
+                <div className="info-row"><span>Email</span><strong>{profileData.email}</strong></div>
+                <div className="info-row"><span>Phone</span><strong>{profileData.phone}</strong></div>
+                <div className="info-row"><span>Member since</span><strong>{profileData.joined}</strong></div>
+                <div className="info-row"><span>Account type</span><strong>{profileData.account}</strong></div>
+                <div className="info-row"><span>Plan</span><strong>{profileData.plan}</strong></div>
+              </div>
+            </div>
+          ) : (
+          <>
           <div className="chat-header">
             <span>{activeMode === "market" ? "NIRACONCHEM Market Results" : "NIRACONCHEM AI Consultant"}</span>
             {activeMode === "market" ? (
@@ -1325,6 +1461,8 @@ export default function Home() {
           ) : null}
             </>
           )}
+          </>
+        )}
         </section>
       ) : null}
 
