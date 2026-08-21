@@ -1466,6 +1466,10 @@ export default function Home() {
         </section>
       ) : null}
 
+      {!hasChatStarted ? (
+        <h2 className="why-nira-heading" aria-label="Why NiRa AI">WHY NIRA AI ??</h2>
+      ) : null}
+
       {!hasChatStarted ? <CommunityFAQ /> : null}
 
       </main>

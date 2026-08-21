@@ -100,16 +100,20 @@
   box-sizing: border-box;
 }
 
+/* ---- Background layer system (landing page) ----
+   Layer 1 (bottom, this rule): flat plain white — the base sheet everything
+   else sits on. Layer 2: .home below carries the existing cream paper
+   (#faf5e8) on top of it. */
 html {
   min-height: 100%;
-  background: #faf5e8;
+  background: #ffffff;
   overscroll-behavior-y: none;
 }
 
 body {
   min-height: 100%;
   margin: 0;
-  background: #faf5e8;
+  background: #ffffff;
   color: var(--text);
   font-family: var(--font-jakarta), Georgia, "Times New Roman", Times, serif;
   font-size: var(--fs-body-md);
@@ -142,8 +146,10 @@ body.theme-dark-body {
 .home {
   min-height: 100dvh;
   padding: 28px;
-  /* One flat sheet of #faf5e8. The old amber radial blobs pushed the page
-     toward tan; an even fill is what makes it read as paper stock. */
+  /* Layer 2 of the background system: one flat sheet of #faf5e8 sitting on
+     top of the plain-white html/body layer 1. The old amber radial blobs
+     pushed the page toward tan; an even fill is what makes it read as
+     paper stock. */
   background: #faf5e8;
   display: flex;
   flex-direction: column;
@@ -2779,6 +2785,9 @@ h1 {
   transform: translateY(8px);
   max-height: 0;
   pointer-events: none;
+  /* No strip background — the bar blends straight into the page's own
+     cream/dark background instead of sitting on its own white band. */
+  background: transparent;
 }
 .brand-scroller.is-visible {
   opacity: 1;
@@ -2795,6 +2804,7 @@ h1 {
   width: 100%;
   padding: 18px 0;
   overflow: hidden;
+  background: transparent;
   mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
   -webkit-mask-image: linear-gradient(90deg, transparent, #000 8%, #000 92%, transparent);
 }
@@ -3736,13 +3746,23 @@ h1 {
   font-weight: 800;
   color: var(--ink-950);
 }
+/* "Join Our Network" heading at the top center of the laptop/mobile slide */
+.community-faq-join-title {
+  margin: -4vh auto 6vh;
+  text-align: center;
+  font-family: var(--font-display), Georgia, "Times New Roman", serif;
+  font-size: clamp(1.8rem, 3.4vw, 2.8rem);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--accent-strong);
+}
 .community-faq-hero {
   display: grid;
   grid-template-columns: 1fr 1fr;
   align-items: center;
   gap: 48px;
   max-width: 1100px;
-  margin: 0 auto;
+  margin: 10vh auto 0;
 }
 .community-faq-hero .community-faq-media {
   max-width: 100%;
@@ -3822,10 +3842,111 @@ h1 {
   color: var(--ink-900);
   line-height: 1.4;
 }
+/* Centered bold "WHY NIRA AI ??" heading between the roles scroll and the
+   feature slide. */
+.why-nira-heading {
+  margin: 8vh auto 4vh;
+  text-align: center;
+  font-family: var(--font-display), Georgia, "Times New Roman", serif;
+  font-size: clamp(2rem, 4vw, 3.2rem);
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  color: var(--accent-strong);
+}
+/* New feature slide — tall track that pins the feature (image centered) while
+   the user scrolls; each scroll step advances one feature point on the right. */
+.community-faq-feature-track {
+  position: relative;
+  height: 320vh;
+  margin-top: 0vh;
+  margin-bottom: 48vh;
+}
+.community-faq-feature {
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  display: grid;
+  grid-template-columns: 1.7fr 1fr;
+  align-items: center;
+  gap: 48px;
+  max-width: 1600px;
+  margin: 0 auto;
+  padding-left: 0;
+  margin-left: -4vw;
+  text-align: left;
+}
+.community-faq-feature-media {
+  display: flex;
+  justify-content: flex-start;
+  align-items: center;
+  width: 100%;
+}
+.community-faq-feature-img {
+  width: 100%;
+  max-width: 92vw;
+  height: auto;
+  border-radius: 20px;
+  filter: drop-shadow(0 24px 60px rgba(74, 56, 34, 0.18));
+}
+/* Feature points column — stacked, right-aligned, scroll-sequenced */
+.feature-points {
+  list-style: none;
+  margin: 0;
+  padding: 8vh 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+  position: relative;
+  min-height: 320px;
+}
+.feature-point {
+  text-align: right;
+  opacity: 0;
+  transform: translateX(60px);
+  transition: opacity 500ms ease, transform 500ms ease;
+}
+.feature-point.is-active {
+  opacity: 1;
+  transform: translateX(0);
+}
+.feature-point.is-past {
+  opacity: 0;
+  transform: translateX(60px);
+}
+.feature-point-title {
+  margin: 0 0 10px;
+  font-family: var(--font-jakarta), "Helvetica Neue", Arial, sans-serif;
+  font-size: clamp(1.6rem, 2.9vw, 2.5rem);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  color: var(--accent-strong);
+  text-transform: none;
+}
+.feature-point-body {
+  margin: 0;
+  max-width: 560px;
+  margin-left: auto;
+  font-family: var(--font-jakarta), "Helvetica Neue", Arial, sans-serif;
+  font-size: clamp(1.1rem, 1.7vw, 1.4rem);
+  font-weight: 600;
+  color: var(--ink-700);
+  line-height: 1.5;
+}
 @media (max-width: 860px) {
   .community-faq { margin: 56px 0 48px; }
   .community-faq-title { margin: 48px 0 24px; }
   .community-faq-hero { grid-template-columns: 1fr; gap: 28px; }
+  .community-faq-feature-track { height: auto; }
+  .community-faq-feature {
+    position: static;
+    height: auto;
+    grid-template-columns: 1fr;
+    margin-left: 0;
+    margin-bottom: 40px;
+    gap: 28px;
+  }
+  .community-faq-feature-img { max-width: 100%; }
+  .feature-point, .feature-point-body { text-align: left; margin-left: 0; }
 }
 
 
