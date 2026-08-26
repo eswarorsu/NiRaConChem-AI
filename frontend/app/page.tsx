@@ -389,7 +389,7 @@ export default function Home() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   // Test/demo credentials — login is gated on these only.
   const DEMO_USER = "demo@niraconchem.ai";
-  const DEMO_PASS = "demo1234";
+  const DEMO_PASS = "Demo@4321";
   // Holds the first query the user typed before they were logged in,
   // so we can auto-send it once they authenticate.
   const pendingQueryRef = useRef("");
