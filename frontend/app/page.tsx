@@ -655,15 +655,27 @@ export default function Home() {
         setQuery("");
       }
     } catch (error) {
+      const detail =
+        error instanceof Error
+          ? `${error.name}: ${error.message}`
+          : String(error);
       setError(
         error instanceof DOMException && error.name === "AbortError"
           ? "NIRACONCHEM AI took too long to respond. The backend may be waking up."
-          : "Chat backend is not reachable. Check NEXT_PUBLIC_API_BASE_URL, backend deployment, and CORS settings.",
+          : `Chat backend not reachable (${API_BASE_URL}/chat). ${detail}`,
       );
       clearTypingAnimation();
       setIsAssistantTyping(false);
-      setChatMessages((current) => current.slice(0, -1));
-      setQuery(trimmedMessage);
+      // Keep the user's message so we stay in the chat view (don't revert to
+      // the landing page). Add an assistant error bubble instead of dropping it.
+      setChatMessages((current) => [
+        ...current,
+        {
+          role: "assistant",
+          content:
+            "⚠️ I couldn't reach the recommendation service just now. Your message was kept — please try again in a moment.",
+        },
+      ]);
     } finally {
       setIsLoading(false);
     }
@@ -912,10 +924,6 @@ export default function Home() {
             </button>
 
             <div className="login-modal-header">
-              <div className="login-brand-mark" aria-hidden="true">
-                <span className="login-brand-orbit" />
-                <LogIn size={18} strokeWidth={2.2} />
-              </div>
               <h2>{loginMode === "login" ? "Welcome back" : "Create account"}</h2>
               <p>{loginMode === "login" ? "Sign in to your account" : "Sign up for an account"}</p>
             </div>

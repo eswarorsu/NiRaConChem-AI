@@ -714,6 +714,87 @@ def groq_reply(system: str, user: str, temperature: float = 0.35, json_mode: boo
     return content.strip() if content else None
 
 
+def ollama_reply(system: str, user: str, temperature: float = 0.35, json_mode: bool = False) -> str | None:
+    """Free, local LLM via Ollama — no API key required. Falls back silently
+    to None if Ollama isn't running or the model isn't pulled."""
+    try:
+        import requests
+    except ImportError:
+        return None
+    base = os.getenv("OLLAMA_BASE_URL", "http://localhost:11434")
+    model = os.getenv("OLLAMA_MODEL", "llama3.2")
+    try:
+        resp = requests.post(
+            f"{base}/api/chat",
+            json={
+                "model": model,
+                "temperature": temperature,
+                "stream": False,
+                "messages": [
+                    {"role": "system", "content": system},
+                    {"role": "user", "content": user},
+                ],
+            },
+            timeout=120,
+        )
+        resp.raise_for_status()
+        content = resp.json().get("message", {}).get("content")
+        return content.strip() if content else None
+    except Exception:
+        return None
+
+
+def openrouter_reply(system: str, user: str, temperature: float = 0.35, json_mode: bool = False) -> str | None:
+    """Free/open models via OpenRouter (OpenAI-compatible). Uses OPENROUTER_API_KEY.
+    Tries OPENROUTER_MODEL first, then a fallback list of free models, so a
+    rate-limited model automatically rolls to the next. Returns None only if
+    every model fails."""
+    try:
+        import requests
+    except ImportError:
+        return None
+    api_key = os.getenv("OPENROUTER_API_KEY")
+    if not api_key:
+        return None
+    primary = os.getenv("OPENROUTER_MODEL", "nvidia/nemotron-3-super-120b-a12b:free")
+    fallback_models = [
+        "nvidia/nemotron-3-super-120b-a12b:free",
+        "minimax/minimax-m3:free",
+        "z-ai/glm-5.2:free",
+        "google/gemma-4-26b-a4b-it:free",
+    ]
+    models = [primary, *[m for m in fallback_models if m != primary]]
+    last_err: Exception | None = None
+    for model in models:
+        try:
+            resp = requests.post(
+                "https://openrouter.ai/api/v1/chat/completions",
+                json={
+                    "model": model,
+                    "temperature": temperature,
+                    "messages": [
+                        {"role": "system", "content": system},
+                        {"role": "user", "content": user},
+                    ],
+                },
+                headers={
+                    "Authorization": f"Bearer {api_key}",
+                    "Content-Type": "application/json",
+                    "HTTP-Referer": "https://niraconchem.ai",
+                    "X-Title": "NiRaConChem",
+                },
+                timeout=120,
+            )
+            resp.raise_for_status()
+            content = resp.json()["choices"][0]["message"]["content"]
+            if content and content.strip():
+                return content.strip()
+        except Exception as e:  # rate-limited / unavailable / empty -> try next
+            last_err = e
+            continue
+    return None
+
+
 def fallback_general_reply(message: str) -> str:
     normalized = normalize_text(message)
     if has_term(normalized, {"thank", "thanks"}):
@@ -827,7 +908,7 @@ def node_greeting(state: AgentState) -> dict[str, Any]:
         f"{BRAND_NAME} was founded by {FOUNDER_NAME}. Greet the user naturally and briefly. "
         "If they seem ready to describe a problem, invite them to share it, but keep it short and human."
     )
-    reply = groq_reply(system, message, temperature=0.6) or GREETING_REPLY
+    reply = openrouter_reply(system, message, temperature=0.6) or groq_reply(system, message, temperature=0.6) or GREETING_REPLY
     return terminal_response(state, reply)
 
 
@@ -841,7 +922,7 @@ def node_general(state: AgentState) -> dict[str, Any]:
         "Answer naturally and conversationally. For construction-chemical topics, you may answer from your "
         "own knowledge, but keep it brief and practical. Do not force follow-up questions or forms."
     )
-    reply = groq_reply(system, message, temperature=0.5) or fallback_general_reply(message)
+    reply = openrouter_reply(system, message, temperature=0.5) or groq_reply(system, message, temperature=0.5) or fallback_general_reply(message)
     return terminal_response(state, reply, sources=[])
 
 
@@ -904,7 +985,7 @@ def node_knowledge(state: AgentState) -> dict[str, Any]:
             f"User question: {message}\n\n"
             "Answer the user's specific question using the retrieved context."
         )
-    reply = groq_reply(system, user, temperature=0.3)
+    reply = openrouter_reply(system, user, temperature=0.3) or groq_reply(system, user, temperature=0.3)
     if not reply:
         reply = fallback_grounded_reply(message, context_text, profiles, chunks)
     return terminal_response(state, reply, sources=sources)
@@ -1002,7 +1083,11 @@ def node_recommend(state: AgentState) -> dict[str, Any]:
             "recommendation, add ONE short line saying those details would let you generate a full PDF "
             "technical report."
         )
-    reply = groq_reply(system, user, temperature=0.3)
+    reply = openrouter_reply(system, user, temperature=0.3)
+    if not reply:
+        reply = groq_reply(system, user, temperature=0.3)
+    if not reply:
+        reply = ollama_reply(system, user, temperature=0.3)
     if not reply:
         reply = fallback_grounded_reply(message, rag_context, retrieved_profiles, retrieved_chunks)
 

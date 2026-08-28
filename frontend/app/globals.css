@@ -39,7 +39,7 @@
   --black: #16110c;
 
   /* ---- Paper stock ---- */
-  --paper: #faf5e8;
+  --paper: #FEFFF1;
   --paper-light: #fdfaf3;
   --paper-dark: #f0e8d6;
 
@@ -146,11 +146,11 @@ body.theme-dark-body {
 .home {
   min-height: 100dvh;
   padding: 28px;
-  /* Layer 2 of the background system: one flat sheet of #faf5e8 sitting on
+  /* Layer 2 of the background system: one flat sheet of #FEFFF1 sitting on
      top of the plain-white html/body layer 1. The old amber radial blobs
      pushed the page toward tan; an even fill is what makes it read as
      paper stock. */
-  background: #faf5e8;
+  background: #FEFFF1;
   display: flex;
   flex-direction: column;
   position: relative;
@@ -2332,24 +2332,24 @@ h1 {
   position: relative;
   width: min(440px, 100%);
   padding: 40px 32px 32px;
-  background: linear-gradient(160deg, #2b2419 0%, #221c13 100%);
-  border: 1px solid rgba(255, 251, 240, 0.06);
-  border-radius: 28px;
+  background: #ffffff;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: 16px;
   box-shadow:
-    0 40px 100px rgba(20, 15, 10, 0.6),
-    0 12px 36px rgba(20, 15, 10, 0.3);
+    0 40px 100px rgba(20, 15, 10, 0.25),
+    0 12px 36px rgba(20, 15, 10, 0.12);
   overflow: hidden;
   animation: card-in 340ms cubic-bezier(0.16, 1, 0.3, 1) both;
 }
 
-/* gradient glow ring behind the card */
+/* classic thin border ring behind the card */
 .login-modal-card::before {
   content: "";
   position: absolute;
   inset: -1px;
-  border-radius: 28px;
+  border-radius: 16px;
   padding: 1px;
-  background: linear-gradient(135deg, rgba(196, 163, 115, 0.6), rgba(154, 122, 74, 0.15) 40%, transparent 70%);
+  background: linear-gradient(135deg, rgba(0, 0, 0, 0.18), rgba(0, 0, 0, 0.04) 40%, transparent 70%);
   -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
   -webkit-mask-composite: xor;
   mask-composite: exclude;
@@ -2389,18 +2389,18 @@ h1 {
   height: 32px;
   display: grid;
   place-items: center;
-  background: rgba(255, 251, 240, 0.06);
-  border: 1px solid rgba(255, 251, 240, 0.1);
+  background: rgba(0, 0, 0, 0.05);
+  border: 1px solid rgba(0, 0, 0, 0.1);
   border-radius: 50%;
-  color: rgba(255, 251, 240, 0.6);
+  color: rgba(0, 0, 0, 0.55);
   cursor: pointer;
   z-index: 10;
   transition: all 180ms ease;
 }
 
 .login-modal-close:hover {
-  background: rgba(255, 251, 240, 0.12);
-  color: var(--white);
+  background: rgba(0, 0, 0, 0.1);
+  color: #1a1a1a;
   transform: scale(1.08);
 }
 
@@ -2416,14 +2416,14 @@ h1 {
   font-size: 32px;
   font-weight: 700;
   letter-spacing: -0.03em;
-  color: var(--white);
+  color: #1a1a1a;
 }
 
 .login-modal-header p {
   margin: 0;
   font-size: 15px;
   font-weight: 500;
-  color: rgba(255, 251, 240, 0.5);
+  color: rgba(0, 0, 0, 0.55);
 }
 
 .login-brand-mark {
@@ -2456,7 +2456,7 @@ h1 {
   gap: 12px;
 }
 .login-field-icon {
-  color: rgba(255, 251, 240, 0.4);
+  color: rgba(0, 0, 0, 0.4);
   flex-shrink: 0;
   transition: color 200ms ease;
 }
@@ -2479,8 +2479,8 @@ h1 {
   display: flex;
   flex-direction: column;
   justify-content: center;
-  background: rgba(255, 251, 240, 0.03);
-  border: 1px solid rgba(255, 251, 240, 0.08);
+  background: #f5f5f5;
+  border: 1px solid rgba(0, 0, 0, 0.12);
   border-radius: 16px;
   padding: 10px 18px;
   min-height: 64px;
@@ -2488,19 +2488,19 @@ h1 {
 }
 
 .login-field-pill:hover {
-  border-color: rgba(255, 251, 240, 0.16);
-  background: rgba(255, 251, 240, 0.05);
+  border-color: rgba(0, 0, 0, 0.2);
+  background: #efefef;
 }
 
 .login-field-pill:focus-within {
-  border-color: rgba(154, 122, 74, 0.4);
-  box-shadow: 0 0 0 3px rgba(154, 122, 74, 0.1);
+  border-color: rgba(0, 0, 0, 0.45);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06);
 }
 
 .login-field-pill-label {
   font-size: 11px;
   font-weight: 600;
-  color: rgba(255, 251, 240, 0.45);
+  color: rgba(0, 0, 0, 0.45);
   margin-bottom: 2px;
 }
 
@@ -2508,7 +2508,7 @@ h1 {
   width: 100%;
   border: none;
   background: transparent;
-  color: var(--white);
+  color: #1a1a1a;
   font-size: 16px;
   font-family: inherit;
   outline: none;
@@ -2516,7 +2516,7 @@ h1 {
 }
 
 .login-field-pill input::placeholder {
-  color: rgba(255, 251, 240, 0.25);
+  color: rgba(0, 0, 0, 0.3);
 }
 
 .login-submit-pill {
@@ -2527,15 +2527,15 @@ h1 {
   align-items: center;
   justify-content: center;
   gap: 8px;
-  background: linear-gradient(135deg, #5f7a4a 0%, #7a6a4a 100%);
+  background: #000000;
   border: none;
   border-radius: 16px;
-  color: var(--white);
+  color: #ffffff;
   font-size: 15px;
   font-weight: 700;
   font-family: inherit;
   cursor: pointer;
-  box-shadow: 0 10px 28px rgba(154, 122, 74, 0.3);
+  box-shadow: 0 10px 28px rgba(0, 0, 0, 0.25);
   transition: all 200ms ease;
   position: relative;
   overflow: hidden;
@@ -2547,7 +2547,7 @@ h1 {
   left: -120%;
   width: 60%;
   height: 100%;
-  background: linear-gradient(100deg, transparent, rgba(255, 251, 240, 0.35), transparent);
+  background: linear-gradient(100deg, transparent, rgba(255, 255, 255, 0.25), transparent);
   transform: skewX(-20deg);
   transition: left 600ms ease;
 }
@@ -2557,7 +2557,8 @@ h1 {
 
 .login-submit-pill:hover {
   transform: translateY(-1px);
-  box-shadow: 0 12px 30px rgba(154, 122, 74, 0.35);
+  background: #1a1a1a;
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.3);
 }
 
 .login-submit-pill:active {
@@ -2671,11 +2672,11 @@ h1 {
 
 /* Light theme overrides for login modal */
 :not(.dark-theme) .login-modal-card {
-  background: #fffdf7;
-  border-color: var(--ink-200);
+  background: #ffffff;
+  border-color: rgba(0, 0, 0, 0.1);
   box-shadow:
-    0 32px 80px rgba(74, 56, 34, 0.16),
-    0 8px 24px rgba(74, 56, 34, 0.08);
+    0 32px 80px rgba(20, 15, 10, 0.18),
+    0 8px 24px rgba(20, 15, 10, 0.1);
 }
 
 :not(.dark-theme) .login-modal-overlay {
@@ -2683,89 +2684,89 @@ h1 {
 }
 
 :not(.dark-theme) .login-modal-close {
-  background: rgba(20, 15, 10, 0.04);
-  border-color: rgba(20, 15, 10, 0.08);
-  color: var(--ink-700);
+  background: rgba(0, 0, 0, 0.05);
+  border-color: rgba(0, 0, 0, 0.1);
+  color: rgba(0, 0, 0, 0.55);
 }
 
 :not(.dark-theme) .login-modal-close:hover {
-  background: rgba(20, 15, 10, 0.08);
-  color: var(--ink-900);
+  background: rgba(0, 0, 0, 0.1);
+  color: #1a1a1a;
 }
 
 :not(.dark-theme) .login-modal-header h2 {
-  color: var(--ink-900);
+  color: #1a1a1a;
   text-shadow: none;
 }
 
 :not(.dark-theme) .login-modal-header p {
-  color: var(--ink-400);
+  color: rgba(0, 0, 0, 0.55);
 }
 
 :not(.dark-theme) .login-field-pill {
-  background: #f8f3e6;
-  border-color: var(--ink-100);
+  background: #f5f5f5;
+  border-color: rgba(0, 0, 0, 0.12);
 }
 
 :not(.dark-theme) .login-field-pill:hover {
-  border-color: var(--ink-200);
+  border-color: rgba(0, 0, 0, 0.2);
 }
 
 :not(.dark-theme) .login-field-pill:focus-within {
-  border-color: var(--success);
-  box-shadow: 0 0 0 3px rgba(154, 122, 74, 0.1);
+  border-color: rgba(0, 0, 0, 0.45);
+  box-shadow: 0 0 0 3px rgba(0, 0, 0, 0.06);
 }
 
 :not(.dark-theme) .login-field-pill-label {
-  color: var(--ink-400);
+  color: rgba(0, 0, 0, 0.45);
 }
 
 :not(.dark-theme) .login-field-pill input {
-  color: var(--ink-900);
+  color: #1a1a1a;
 }
 
 :not(.dark-theme) .login-field-pill input::placeholder {
-  color: var(--ink-300);
+  color: rgba(0, 0, 0, 0.3);
 }
 
 :not(.dark-theme) .login-divider-line {
-  background: #e2d7c2;
+  background: rgba(0, 0, 0, 0.1);
 }
 
 :not(.dark-theme) .login-divider-text {
-  color: var(--ink-300);
+  color: rgba(0, 0, 0, 0.4);
 }
 
 :not(.dark-theme) .social-login-button {
-  background: #f8f3e6;
-  border-color: var(--ink-100);
-  color: #4a3c2c;
+  background: #f5f5f5;
+  border-color: rgba(0, 0, 0, 0.12);
+  color: #1a1a1a;
 }
 
 :not(.dark-theme) .social-login-button:hover {
-  background: #f1eadb;
-  border-color: var(--ink-200);
-  color: var(--ink-900);
+  background: #efefef;
+  border-color: rgba(0, 0, 0, 0.2);
+  color: #1a1a1a;
 }
 
 :not(.dark-theme) .social-arrow {
-  color: var(--ink-300);
+  color: rgba(0, 0, 0, 0.4);
 }
 
 :not(.dark-theme) .social-login-button:hover .social-arrow {
-  color: var(--ink-700);
+  color: rgba(0, 0, 0, 0.7);
 }
 
 :not(.dark-theme) .login-modal-footer span {
-  color: var(--ink-400);
+  color: rgba(0, 0, 0, 0.5);
 }
 
 :not(.dark-theme) .login-modal-footer button {
-  color: #6b4f2a;
+  color: #1a1a1a;
 }
 
 :not(.dark-theme) .login-modal-footer button:hover {
-  color: var(--teal-700);
+  color: #000000;
 }
 
 /* ===== Brand Scroller (flat horizontal logo marquee below search bar) ===== */
