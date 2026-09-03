@@ -10,6 +10,16 @@ from groq import Groq
 from langgraph.graph import END, START, StateGraph
 
 from app.agent_prompt import NIRACONCHEM_AGENT_SYSTEM_PROMPT
+from app.answer_schema import (
+    RetrievalQuality,
+    SourceRef,
+    StructuredAnswer,
+    build_system_prompt,
+    extract_json,
+    fallback_answer,
+    render_answer,
+    validate_answer,
+)
 from app.rag_store import (
     load_product_profiles,
     rag_source_labels,
@@ -260,6 +270,7 @@ class AgentState(TypedDict, total=False):
     report_endpoint: str | None
     report_payload: dict[str, Any] | None
     missing_slots: list[str]
+    structured: dict[str, Any] | None
 
 
 _recommendation_builder: Callable[[str], Any] | None = None
@@ -639,24 +650,88 @@ def is_product_profile_query(text: str) -> bool:
     return False
 
 
-def product_profiles_for_query(text: str, limit: int = 5) -> list[dict[str, Any]]:
-    scored = [
-        (profile_score(text, profile), profile)
-        for profile in load_product_profiles()
-    ]
-    scored = [(score, profile) for score, profile in scored if score > 0]
-    scored.sort(
+# Words that appear in generic profile names ("Waterproofing system", "Joint sealant
+# system"). A name match built only from these is not the user naming a product.
+GENERIC_NAME_TOKENS = {
+    "system", "systems", "product", "products", "construction", "chemical", "chemicals",
+    "waterproof", "waterproofing", "membrane", "coating", "coatings", "mortar", "sealant",
+    "adhesive", "grout", "grouting", "concrete", "repair", "flooring", "floor", "admixture",
+    "protective", "protection", "anchor", "anchoring", "primer", "epoxy", "polyurethane",
+    "cementitious", "liquid", "applied", "sheet", "roofing", "hybrid", "acrylic", "based",
+}
+
+
+def plain_tokens(text: str) -> set[str]:
+    """Literal tokens only - no synonym expansion.
+
+    tokenize_query_keywords() bolts on synonyms ("waterproof" pulls in
+    "waterproofing" and "membrane"), which is right for search but wrong for deciding
+    whether the user typed a product's name: it made every waterproofing query look
+    like an exact match for the profile literally called "Waterproofing system".
+    """
+    return {token for token in re.findall(r"[a-z0-9]+", (text or "").lower()) if len(token) >= 2}
+
+
+def named_product_profiles(text: str, limit: int = 5) -> list[dict[str, Any]]:
+    """Profiles the user named outright ("what is Sikadur-31 for?").
+
+    Kept as a separate, narrow path: exact-name lookup should beat semantic ranking
+    only when a name was actually given, and only on distinctive tokens.
+    """
+    query_tokens = plain_tokens(text)
+    if not query_tokens:
+        return []
+    query_flat = " ".join(re.findall(r"[a-z0-9]+", (text or "").lower()))
+    hits: list[tuple[float, dict[str, Any]]] = []
+    for profile in load_product_profiles():
+        display_name = profile_value(profile, "product_name")
+        name_flat = " ".join(re.findall(r"[a-z0-9]+", display_name.lower()))
+        # The whole product name typed out is the least ambiguous signal there is.
+        if name_flat and len(name_flat.split()) >= 2 and name_flat in query_flat:
+            hits.append((profile_score(text, profile) + 100, profile))
+            continue
+        name_tokens = plain_tokens(display_name)
+        distinctive = {token for token in name_tokens if token not in GENERIC_NAME_TOKENS}
+        matched = distinctive & query_tokens
+        if not matched:
+            continue
+        # Two distinctive tokens, or one carrying a product code. A single ordinary
+        # word ("traffic", "decking") is a topic, not a product name - let the
+        # retrieval engine rank those.
+        strong = len(matched) >= 2 or any(any(char.isdigit() for char in token) for token in matched)
+        if strong:
+            hits.append((profile_score(text, profile), profile))
+    hits.sort(
         key=lambda item: (
             item[0],
-            bool(profile_value(item[1], "price")),
             bool(profile_value(item[1], "product_url")),
             bool(profile_value(item[1], "description", "usage")),
         ),
         reverse=True,
     )
-    if scored:
-        return [profile for _, profile in scored[:limit]]
-    return retrieve_product_profiles(text, limit=limit)
+    return [profile for _, profile in hits[:limit]]
+
+
+def product_profiles_for_query(text: str, limit: int = 5) -> list[dict[str, Any]]:
+    """Rank products for the chat agent.
+
+    This used to run its own `profile_score` heuristic over every profile and only
+    fall back to retrieve_product_profiles() when nothing scored, which meant the
+    chat path and the benchmarked retrieval engine were two different rankers that
+    could disagree. The tuned engine is now the ranker; the name-match path only
+    promotes products the user explicitly named.
+    """
+    ranked = retrieve_product_profiles(text, limit=limit)
+    named = named_product_profiles(text, limit=limit)
+    if not named:
+        return ranked
+
+    def identity(profile: dict[str, Any]) -> tuple[str, str]:
+        return (profile_value(profile, "product_name"), profile_value(profile, "brand", "manufacturer"))
+
+    seen = {identity(profile) for profile in named}
+    merged = named + [profile for profile in ranked if identity(profile) not in seen]
+    return merged[:limit]
 
 
 def tokenize_query_keywords(text: str) -> list[str]:
@@ -697,7 +772,6 @@ def groq_reply(system: str, user: str, temperature: float = 0.35, json_mode: boo
     if not api_key:
         return None
 
-    client = Groq(api_key=api_key)
     model = os.getenv("GROQ_MODEL", "llama-3.1-8b-instant")
     kwargs: dict[str, Any] = {
         "model": model,
@@ -709,8 +783,15 @@ def groq_reply(system: str, user: str, temperature: float = 0.35, json_mode: boo
     }
     if json_mode:
         kwargs["response_format"] = {"type": "json_object"}
-    completion = client.chat.completions.create(**kwargs)
-    content = completion.choices[0].message.content
+    # Every other provider helper returns None on failure so the caller can fall
+    # through to the next one. This one used to raise, which turned a transient Groq
+    # outage into a 500 for the whole /chat request.
+    try:
+        client = Groq(api_key=api_key)
+        completion = client.chat.completions.create(**kwargs)
+        content = completion.choices[0].message.content
+    except Exception:
+        return None
     return content.strip() if content else None
 
 
@@ -767,16 +848,19 @@ def openrouter_reply(system: str, user: str, temperature: float = 0.35, json_mod
     last_err: Exception | None = None
     for model in models:
         try:
+            body: dict[str, Any] = {
+                "model": model,
+                "temperature": temperature,
+                "messages": [
+                    {"role": "system", "content": system},
+                    {"role": "user", "content": user},
+                ],
+            }
+            if json_mode:
+                body["response_format"] = {"type": "json_object"}
             resp = requests.post(
                 "https://openrouter.ai/api/v1/chat/completions",
-                json={
-                    "model": model,
-                    "temperature": temperature,
-                    "messages": [
-                        {"role": "system", "content": system},
-                        {"role": "user", "content": user},
-                    ],
-                },
+                json=body,
                 headers={
                     "Authorization": f"Bearer {api_key}",
                     "Content-Type": "application/json",
@@ -866,6 +950,11 @@ def node_route_intent(state: AgentState) -> dict[str, str]:
     context_score = construction_score(normalize_text(state.get("context", "")))
 
     if knowledge_shape:
+        # A question about construction chemicals must be answered from retrieval,
+        # not from the model's own memory. Only genuinely off-domain questions go to
+        # the ungrounded conversational node.
+        if current_score or context_score or is_slot_detail:
+            return {"intent": "knowledge_question"}
         return {"intent": "general_question"}
     if is_slot_detail:
         return {"intent": "technical_consultation"}
@@ -883,9 +972,11 @@ def terminal_response(
     report_ready: bool = False,
     report_payload: dict[str, Any] | None = None,
     sources: list[str] | None = None,
+    structured: dict[str, Any] | None = None,
 ) -> dict[str, Any]:
     return {
         "reply": reply,
+        "structured": structured,
         "needs_clarification": needs_clarification,
         "questions": questions or [],
         "sources": sources or [],
@@ -926,69 +1017,166 @@ def node_general(state: AgentState) -> dict[str, Any]:
     return terminal_response(state, reply, sources=[])
 
 
+# --------------------------------------------------------------------------- #
+# Grounded answering: retrieval -> cited context -> validated structured answer
+# --------------------------------------------------------------------------- #
+CONTEXT_CHUNK_CHARS = 900
+CONTEXT_MAX_CHUNKS = 5
+
+
+def assemble_context(
+    profiles: list[dict[str, Any]],
+    chunks: list[dict[str, Any]],
+) -> tuple[str, list[SourceRef], RetrievalQuality]:
+    """Build the model's context block with a stable citation id on every item.
+
+    The ids (P1, P2, ... for product profiles and C1, C2, ... for datasheet chunks)
+    are what the alignment layer validates against: a citation the model returns is
+    only honoured if it names one of these.
+    """
+    refs: list[SourceRef] = []
+    parts: list[str] = []
+
+    if profiles:
+        parts.append("## Product profiles")
+        for index, profile in enumerate(profiles, start=1):
+            source_id = f"P{index}"
+            name = profile_value(profile, "product_name") or "Unnamed product"
+            brand = profile_value(profile, "brand", "manufacturer")
+            label = f"{name}" + (f" ({brand})" if brand else "")
+            refs.append(
+                SourceRef(
+                    source_id=source_id,
+                    label=label,
+                    kind="profile",
+                    product_name=name,
+                    url=profile.get("product_url") or profile.get("datasheet_url"),
+                )
+            )
+            lines = [f"[{source_id}] {label}"]
+            category = profile_value(profile, "system_type", "category")
+            if category:
+                lines.append(f"    type: {category}")
+            description = profile_value(profile, "description")
+            if description:
+                lines.append(f"    description: {description}")
+            usage = profile_value(profile, "usage")
+            if usage:
+                lines.append(f"    intended use: {usage}")
+            areas = profile_list(profile, "application_areas")
+            if areas:
+                lines.append(f"    application areas: {', '.join(areas)}")
+            performance = profile.get("performance") or {}
+            if isinstance(performance, dict) and performance:
+                rendered = "; ".join(f"{key.replace('_', ' ')}: {value}" for key, value in performance.items())
+                lines.append(f"    stated performance: {rendered[:400]}")
+            parts.append("\n".join(lines))
+
+    if chunks:
+        parts.append("## Datasheet excerpts")
+        for index, chunk in enumerate(chunks[:CONTEXT_MAX_CHUNKS], start=1):
+            source_id = f"C{index}"
+            filename = chunk.get("filename", "datasheet")
+            label = f"{filename} chunk {chunk.get('chunk_id')}"
+            refs.append(
+                SourceRef(
+                    source_id=source_id,
+                    label=label,
+                    kind="chunk",
+                    product_name=str(filename).split(" (")[0],
+                    url=(chunk.get("document_profile") or {}).get("product_url"),
+                )
+            )
+            snippet = " ".join(str(chunk.get("text", "")).split())
+            if len(snippet) > CONTEXT_CHUNK_CHARS:
+                snippet = snippet[:CONTEXT_CHUNK_CHARS] + "..."
+            parts.append(f"[{source_id}] {label}: {snippet}")
+
+    quality = RetrievalQuality(
+        profile_count=len(profiles),
+        chunk_count=len(chunks),
+        top_profile_score=float(profiles[0].get("match_score") or 0.0) if profiles else 0.0,
+        top_chunk_score=float(chunks[0].get("score") or 0.0) if chunks else 0.0,
+    )
+    return "\n\n".join(parts), refs, quality
+
+
 def build_rag_context(state: AgentState) -> tuple[str, list[dict[str, Any]], list[dict[str, Any]], list[str]]:
-    """Retrieve product profiles + datasheet chunks for the user query and build a
-    grounded context block. Returns (context_text, profiles, chunks, source_labels)."""
+    """Backwards-compatible wrapper: (context_text, profiles, chunks, source_labels)."""
     message = state.get("context", state.get("message", "")) or state.get("message", "")
     profiles = product_profiles_for_query(message, limit=5)
     chunks = retrieve_rag_chunks(message, limit=6)
-    sources = rag_source_labels(chunks) if chunks else []
+    context_text, refs, _quality = assemble_context(profiles, chunks)
+    return context_text, profiles, chunks, [ref.label for ref in refs]
 
-    parts: list[str] = []
-    if profiles:
-        parts.append("## Matching product profiles")
-        for profile in profiles:
-            name = profile_value(profile, "product_name") or profile_value(profile, "name") or "Unnamed product"
-            brand = profile_value(profile, "brand", "manufacturer")
-            category = profile_value(profile, "category", "system_type")
-            description = profile_value(profile, "description")
-            usage = profile_value(profile, "usage")
-            lines = [f"- {name}" + (f" ({brand})" if brand else "") + (f" [{category}]" if category else "")]
-            if description:
-                lines.append(f"  description: {description}")
-            if usage:
-                lines.append(f"  usage: {usage}")
-            products = profile_list(profile, "products")
-            if products:
-                lines.append(f"  related products: {', '.join(products)}")
-            parts.append("\n".join(lines))
-            source_name = name + (f" ({brand})" if brand else "")
-            if source_name not in sources:
-                sources.append(source_name)
-    if chunks:
-        parts.append("\n## Retrieved datasheet context")
-        for chunk in chunks[:4]:
-            snippet = " ".join(chunk.get("text", "").split())
-            if len(snippet) > 700:
-                snippet = snippet[:700] + "…"
-            parts.append(f"- [{chunk.get('filename', 'datasheet')} chunk {chunk.get('chunk_id')}]: {snippet}")
 
-    return "\n\n".join(parts), profiles, chunks, sources
+def grounded_answer(
+    state: AgentState,
+    mode: Literal["recommendation", "knowledge"],
+) -> tuple[StructuredAnswer, list[SourceRef]]:
+    """Ask the model for a structured answer, then validate it before anyone sees it.
+
+    The model is never trusted directly: whatever comes back goes through
+    validate_answer(), which strips invented citation ids, quarantines uncited
+    statements, caps confidence by measured retrieval strength and attaches the
+    handling precautions the recommended chemistry requires.
+    """
+    question = state.get("message", "")
+    retrieval_query = state.get("context") or question
+    profiles = state.get("retrieved_profiles")
+    chunks = state.get("retrieved_chunks")
+    if profiles is None or chunks is None:
+        profiles = product_profiles_for_query(retrieval_query, limit=5)
+        chunks = retrieve_rag_chunks(retrieval_query, limit=6)
+
+    context_text, refs, quality = assemble_context(profiles, chunks)
+
+    if not quality.has_evidence:
+        # Guardrail 2: nothing retrieved means abstain, not improvise.
+        return (
+            fallback_answer(question, refs, quality, profiles, context_text, mode),
+            refs,
+        )
+
+    system = build_system_prompt(BRAND_NAME, mode)
+    user = (
+        f"Available sources (cite by id):\n{context_text}\n\n"
+        f"User question: {question}\n"
+        + (f"Known project details: {captured_slots_text(state.get('slots') or {})}\n" if state.get("slots") else "")
+        + "\nReturn the JSON object now."
+    )
+
+    raw = (
+        openrouter_reply(system, user, temperature=0.2, json_mode=True)
+        or groq_reply(system, user, temperature=0.2, json_mode=True)
+        or ollama_reply(system, user, temperature=0.2, json_mode=True)
+    )
+    payload = extract_json(raw or "")
+    if not payload:
+        return (
+            fallback_answer(question, refs, quality, profiles, context_text, mode),
+            refs,
+        )
+    answer = validate_answer(payload, refs, quality, context_text=context_text, mode=mode)
+    if not answer.summary and not answer.products:
+        return (
+            fallback_answer(question, refs, quality, profiles, context_text, mode),
+            refs,
+        )
+    return answer, refs
 
 
 def node_knowledge(state: AgentState) -> dict[str, Any]:
-    message = state.get("message", "")
-    context_text, profiles, chunks, sources = build_rag_context(state)
-
-    system = (
-        f"You are {BRAND_NAME}, a senior construction chemicals expert for UAE/GCC projects. "
-        "Answer the user's specific question directly and accurately using the retrieved context below. "
-        "Lead with a direct answer, then give practical detail. Do not invent product names, standards, "
-        "or datasheet values that are not present in the context. If the context does not cover the question, "
-        "say so and answer from general engineering knowledge, clearly marking it as general guidance. "
-        "Do not ask the user for project details in a knowledge question unless essential."
+    answer, refs = grounded_answer(state, mode="knowledge")
+    sources = [f"{ref.source_id} {ref.label}" for ref in refs if ref.source_id in {
+        citation["id"] for citation in answer.citations
+    }] or [ref.label for ref in refs]
+    return terminal_response(
+        state,
+        render_answer(answer),
+        sources=sources,
+        structured=answer.as_dict(),
     )
-    user = message
-    if context_text:
-        user = (
-            f"Retrieved context:\n{context_text}\n\n"
-            f"User question: {message}\n\n"
-            "Answer the user's specific question using the retrieved context."
-        )
-    reply = openrouter_reply(system, user, temperature=0.3) or groq_reply(system, user, temperature=0.3)
-    if not reply:
-        reply = fallback_grounded_reply(message, context_text, profiles, chunks)
-    return terminal_response(state, reply, sources=sources)
 
 
 def fallback_grounded_reply(
@@ -1054,63 +1242,39 @@ def node_recommend(state: AgentState) -> dict[str, Any]:
     slots = state.get("slots", {})
     pdf_missing = missing_slot_keys(slots)
 
-    # Always answer the user's specific query from retrieved RAG context instead of
-    # stonewalling for missing slots. We already retrieved profiles/chunks in node_technical.
-    rag_context = state.get("rag_context", "")
-    retrieved_profiles = state.get("retrieved_profiles") or []
-    retrieved_chunks = state.get("retrieved_chunks") or []
-    sources = state.get("sources") or []
-    message = state.get("message", "")
+    answer, refs = grounded_answer(state, mode="recommendation")
 
-    system = (
-        f"You are {BRAND_NAME}, a senior construction chemicals expert for UAE/GCC projects. "
-        "Answer the user's question directly and naturally, as a real consultant would speak. "
-        "Use the retrieved context below to ground your recommendation in actual product names, "
-        "manufacturers, and datasheet facts. Lead with the recommended chemical/system, then give brief "
-        "practical guidance. Do NOT start your reply with phrases like 'Based on the retrieved context' or "
-        "'Based on your query' — just answer. Do not invent product names, standards, or datasheet values "
-        "that are not present in the context. If the context does not cover the question, say so and answer "
-        "from general engineering knowledge, clearly marking it as general guidance. Do not force long "
-        "clarification questions unless the user asks for a formal PDF report."
-    )
-    user = message
-    if rag_context:
-        user = (
-            f"Reference product data (use it to ground your answer, but do not mention 'retrieved context'):\n{rag_context}\n\n"
-            f"User question: {message}\n\n"
-            "Answer naturally and directly, recommending the specific chemical/system from the data above. "
-            "At the end, if project details (substrate, exposure, location) are still missing for a formal "
-            "recommendation, add ONE short line saying those details would let you generate a full PDF "
-            "technical report."
-        )
-    reply = openrouter_reply(system, user, temperature=0.3)
-    if not reply:
-        reply = groq_reply(system, user, temperature=0.3)
-    if not reply:
-        reply = ollama_reply(system, user, temperature=0.3)
-    if not reply:
-        reply = fallback_grounded_reply(message, rag_context, retrieved_profiles, retrieved_chunks)
+    # Fold the slots the user has not given into the object's own
+    # missing_information, so the UI has one place to look.
+    for key in pdf_missing:
+        label = MISSING_LABELS.get(key, key)
+        if not any(label.lower() in item.lower() for item in answer.missing_information):
+            answer.missing_information.append(label)
+    answer.missing_information = answer.missing_information[:6]
 
-    # Only mark clarification-needed when something is genuinely missing AND we have
-    # no retrieved data to answer with. Otherwise we already answered above.
-    needs_clarification = bool(pdf_missing) and not (retrieved_profiles or retrieved_chunks)
+    cited_ids = {citation["id"] for citation in answer.citations}
+    sources = [f"{ref.source_id} {ref.label}" for ref in refs if ref.source_id in cited_ids] or [
+        ref.label for ref in refs
+    ]
+
+    # Clarification is only "needed" when there is genuinely nothing to answer with.
+    has_evidence = bool(answer.products or answer.claims)
+    needs_clarification = bool(pdf_missing) and not has_evidence
     questions = clarification_questions(pdf_missing) if needs_clarification else []
 
-    profiles_found = bool(product_profiles_for_query(context, limit=5))
-    report_ready = profiles_found and not pdf_missing
+    report_ready = has_evidence and not pdf_missing
 
     return terminal_response(
         state,
-        str(reply).strip(),
+        render_answer(answer),
         needs_clarification=needs_clarification,
         questions=questions,
         recommendation=None,
         report_ready=report_ready,
         report_payload={"query": context, "slots": dict(slots)},
         sources=sources,
-    ) | (
-        {"missing_slots": pdf_missing}
-    )
+        structured=answer.as_dict(),
+    ) | {"missing_slots": pdf_missing}
 
 
 def route_after_intent(
@@ -1176,6 +1340,7 @@ def run_chat_agent(
         "report_endpoint": None,
         "report_payload": None,
         "missing_slots": [],
+        "structured": None,
     }
     final = _graph.invoke(initial, config={"configurable": {"thread_id": thread_id}})
     slots = final.get("slots") or {}
@@ -1192,4 +1357,5 @@ def run_chat_agent(
         "report_ready": final.get("report_ready", False),
         "report_endpoint": final.get("report_endpoint"),
         "report_payload": final.get("report_payload"),
+        "structured": final.get("structured"),
     }

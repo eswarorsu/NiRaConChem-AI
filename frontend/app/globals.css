@@ -4398,3 +4398,306 @@ h1 {
   color: var(--ink-700);
 }
 .dark-theme .side-panel-bio { color: var(--ink-700); }
+
+/* ==========================================================================
+   Structured answer card
+   Renders the validated object from /chat (backend/app/answer_schema.py).
+   Sits on the same cream paper stock as the rest of the chat, separated by
+   rules rather than boxes so a long answer still reads as one document.
+   ========================================================================== */
+
+.answer-card {
+  min-width: 0;
+  color: var(--text);
+  font-size: var(--fs-body-md);
+  line-height: var(--lh-normal);
+  overflow-wrap: anywhere;
+}
+
+/* Product and chemistry names. Uppercasing is done in CSS rather than in the
+   text so the DOM keeps the real casing and copy/paste stays faithful. */
+.chem-term {
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  color: var(--teal-900);
+}
+
+.answer-summary {
+  margin: 0 0 14px;
+  font-size: calc(var(--fs-body-md) + 1px);
+  line-height: 1.55;
+}
+
+.answer-block {
+  margin: 0 0 14px;
+  padding-top: 12px;
+  border-top: 1px solid var(--line);
+}
+
+.answer-block:last-of-type {
+  margin-bottom: 10px;
+}
+
+.answer-block-title {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0 0 8px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.09em;
+  text-transform: uppercase;
+  color: var(--teal-700);
+}
+
+.answer-block-title svg {
+  flex: 0 0 auto;
+  opacity: 0.8;
+}
+
+.answer-block-note {
+  margin-left: 4px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  text-transform: none;
+  color: var(--muted);
+}
+
+/* ---- recommended products ---- */
+.answer-products {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.answer-product + .answer-product {
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px dashed var(--line);
+}
+
+.answer-product-head {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 8px;
+}
+
+.answer-product-head .chem-term {
+  font-size: calc(var(--fs-body-md) + 1px);
+}
+
+.answer-product-brand {
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.answer-role-tag {
+  padding: 1px 7px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--paper-dark);
+  font-size: 10px;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--teal-700);
+}
+
+.answer-product-why {
+  margin: 4px 0 0;
+  color: var(--ink-700);
+}
+
+/* ---- ordered application steps ---- */
+.answer-steps {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: answer-step;
+}
+
+.answer-step {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.answer-step + .answer-step {
+  margin-top: 8px;
+}
+
+.answer-step-index {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+  border: 1px solid var(--teal-400);
+  border-radius: 50%;
+  background: var(--paper-light);
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: var(--teal-700);
+}
+
+.answer-step-text {
+  min-width: 0;
+  padding-top: 1px;
+}
+
+/* ---- datasheet claims ---- */
+.answer-claims,
+.answer-precautions,
+.answer-missing,
+.answer-sources {
+  margin: 0;
+  padding-left: 17px;
+}
+
+.answer-claims li + li,
+.answer-precautions li + li,
+.answer-missing li + li,
+.answer-sources li + li {
+  margin-top: 5px;
+}
+
+.answer-cite {
+  margin-left: 5px;
+  padding: 0 5px;
+  border-radius: 3px;
+  background: var(--paper-dark);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  color: var(--teal-700);
+  white-space: nowrap;
+}
+
+.answer-block-warning .answer-block-title {
+  color: var(--warning);
+}
+
+.answer-precautions li {
+  color: var(--ink-700);
+}
+
+.answer-missing li {
+  color: var(--muted);
+}
+
+.answer-followup {
+  margin: 12px 0 0;
+  color: var(--ink-700);
+  font-style: italic;
+}
+
+/* ---- footer: confidence + collapsed sources ---- */
+.answer-footer {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px 12px;
+  margin-top: 12px;
+  padding-top: 10px;
+  border-top: 1px solid var(--line);
+}
+
+.answer-confidence {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 2px 9px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--paper-light);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+  color: var(--ink-700);
+}
+
+.answer-confidence-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--muted);
+}
+
+.answer-confidence-high .answer-confidence-dot {
+  background: var(--success);
+}
+
+.answer-confidence-medium .answer-confidence-dot {
+  background: var(--warning);
+}
+
+.answer-confidence-low .answer-confidence-dot {
+  background: var(--danger);
+}
+
+.answer-unverified {
+  font-size: 11px;
+  color: var(--muted);
+}
+
+.answer-sources-toggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+  padding: 2px 6px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--teal-700);
+  cursor: pointer;
+}
+
+.answer-sources-toggle:hover {
+  background: var(--paper-dark);
+}
+
+.answer-sources-toggle svg {
+  transition: transform 140ms ease;
+}
+
+.answer-sources-toggle svg.is-open {
+  transform: rotate(180deg);
+}
+
+.answer-sources {
+  margin-top: 8px;
+  font-size: 12px;
+  color: var(--muted);
+}
+
+.answer-sources a {
+  color: var(--teal-700);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.answer-confidence-reason {
+  margin: 6px 0 0;
+  font-size: 11px;
+  line-height: 1.45;
+  color: var(--muted);
+}
+
+@media (max-width: 640px) {
+  .answer-block-title {
+    font-size: 10px;
+  }
+
+  .answer-sources-toggle {
+    margin-left: 0;
+  }
+}

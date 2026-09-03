@@ -84,6 +84,7 @@ class FileAnalysisResponse(BaseModel):
 class RagIngestResponse(BaseModel):
     files_processed: int
     chunk_count: int
+    product_profile_count: int = 0
 
 
 class ChatMessage(BaseModel):
@@ -110,6 +111,7 @@ class ChatResponse(BaseModel):
     report_ready: bool = False
     report_endpoint: str | None = None
     report_payload: dict | None = None
+    structured: dict | None = None
     session: dict = Field(default_factory=dict)
 
 

@@ -4,6 +4,7 @@ from pathlib import Path
 
 from app.file_parser import AREA_KEYWORDS, REQUIREMENT_KEYWORDS, extract_text_from_file, find_keywords, normalize_text
 from app.rag_store import CHUNKS_PATH, INDEX_PATH, PRODUCT_PROFILES_PATH, tokenize
+from app.sika_catalog_ingest import build_catalog as build_sika_catalog
 
 ROOT_DIR = Path(__file__).resolve().parents[2]
 DATASHEETS_DIR = ROOT_DIR / "data" / "datasheets"
@@ -335,11 +336,74 @@ def build_product_profile(document_profile: dict, text: str, filename: str) -> d
     }
 
 
+def _profile_key(profile: dict) -> str:
+    """Identity used for cross-source de-duplication: the product name, stripped of
+    trademark marks, punctuation and case."""
+    name = (profile.get("product_name") or "").lower()
+    name = name.replace("\u00ae", "").replace("\u2122", "")
+    return re.sub(r"[^a-z0-9]+", "", name)
+
+
+def _profile_richness(profile: dict) -> int:
+    """Higher wins when two sources describe the same product. A profile carrying
+    description / usage / technical values grounds the LLM far better than one
+    inferred from a product name alone."""
+    richness = 0
+    if profile.get("description"):
+        richness += 3
+    if profile.get("usage"):
+        richness += 3
+    if profile.get("performance"):
+        richness += 2
+    if any((profile.get("system_layers") or {}).values()):
+        richness += 2
+    if profile.get("application_areas"):
+        richness += 1
+    if profile.get("datasheet_url") or profile.get("product_url"):
+        richness += 1
+    if (profile.get("manufacturer") or "Unknown") != "Unknown":
+        richness += 1
+    return richness
+
+
+def merge_profiles(*sources: list[dict]) -> list[dict]:
+    """Merge profile lists, keeping the richest profile per product name."""
+    best: dict[str, dict] = {}
+    order: list[str] = []
+    for source in sources:
+        for profile in source:
+            key = _profile_key(profile)
+            if not key:
+                continue
+            if key not in best:
+                best[key] = profile
+                order.append(key)
+            elif _profile_richness(profile) > _profile_richness(best[key]):
+                best[key] = profile
+    return [best[key] for key in order]
+
+
+def build_legacy_catalog_profiles() -> list[dict]:
+    """Regenerate the name-inferred QCon catalog profiles from their raw source so a
+    re-ingest never silently drops them."""
+    try:
+        from app.build_profiles_from_catalog import FINAL, transform
+    except Exception:
+        return []
+    if not FINAL.exists():
+        return []
+    try:
+        records = json.loads(FINAL.read_text(encoding="utf-8"))
+    except json.JSONDecodeError:
+        return []
+    return [transform(record) for record in records if isinstance(record, dict)]
+
+
 def ingest_datasheets() -> dict[str, int]:
     INDEX_PATH.parent.mkdir(parents=True, exist_ok=True)
     chunks = []
     documents = []
-    product_profiles = []
+    document_profiles = []
     files_processed = 0
     supported_extensions = {".pdf", ".docx", ".xlsx", ".txt"}
 
@@ -355,7 +419,7 @@ def ingest_datasheets() -> dict[str, int]:
         files_processed += 1
         profile = build_document_profile(path.name, path.suffix.lower(), text)
         documents.append(profile)
-        product_profiles.append(build_product_profile(profile, text, path.name))
+        document_profiles.append(build_product_profile(profile, text, path.name))
         for index, chunk in enumerate(chunk_text(text), start=1):
             chunks.append(
                 {
@@ -370,18 +434,43 @@ def ingest_datasheets() -> dict[str, int]:
                 }
             )
 
+    # Structured catalogs. These are not parseable documents, so they get their own
+    # preprocessing path and are appended to the same index.
+    sika_profiles, sika_chunks = build_sika_catalog()
+    if sika_chunks:
+        chunks.extend(sika_chunks)
+        files_processed += 1
+
+    legacy_catalog_profiles = build_legacy_catalog_profiles()
+
+    # Precedence: rich structured catalog > document-derived > name-inferred catalog.
+    product_profiles = merge_profiles(sika_profiles, document_profiles, legacy_catalog_profiles)
+
     chunks_payload = {
-        "version": 2,
+        "version": 3,
         "files_processed": files_processed,
         "chunk_count": len(chunks),
+        "sources": {
+            "datasheet_chunks": len(chunks) - len(sika_chunks),
+            "sika_catalog_chunks": len(sika_chunks),
+        },
         "chunks": chunks,
     }
     INDEX_PATH.write_text(json.dumps(documents, indent=2), encoding="utf-8")
-    CHUNKS_PATH.write_text(json.dumps(chunks_payload, indent=2), encoding="utf-8")
-    PRODUCT_PROFILES_PATH.write_text(json.dumps(product_profiles, indent=2), encoding="utf-8")
-    return {"files_processed": files_processed, "chunk_count": len(chunks)}
+    CHUNKS_PATH.write_text(json.dumps(chunks_payload, ensure_ascii=False), encoding="utf-8")
+    PRODUCT_PROFILES_PATH.write_text(
+        json.dumps(product_profiles, indent=2, ensure_ascii=False), encoding="utf-8"
+    )
+    return {
+        "files_processed": files_processed,
+        "chunk_count": len(chunks),
+        "product_profile_count": len(product_profiles),
+    }
 
 
 if __name__ == "__main__":
     result = ingest_datasheets()
-    print(f"Ingested {result['files_processed']} files into {result['chunk_count']} chunks.")
+    print(
+        f"Ingested {result['files_processed']} sources into {result['chunk_count']} chunks "
+        f"and {result['product_profile_count']} product profiles."
+    )

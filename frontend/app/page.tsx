@@ -1,7 +1,8 @@
 "use client";
 
-import { ChangeEvent, FormEvent, useEffect, useMemo, useRef, useState } from "react";
+import { ChangeEvent, FormEvent, Fragment, useEffect, useMemo, useRef, useState, type ReactNode } from "react";
 import { MoreVertical, Moon, Paperclip, SendHorizontal, Sun, Trash2, LogIn, X, Mail, Lock, UserPlus, ArrowRight, Download, Store, Bot, User, FileText, CreditCard, MapPin, Calendar, Phone } from "lucide-react";
+import AnswerCard, { type StructuredAnswer } from "./components/AnswerCard";
 import { ParticleWaveBackground } from "./components/ParticleWaveBackground";
 import BrandScroller from "./components/BrandScroller";
 import RoleCarousel from "./components/RoleCarousel";
@@ -36,6 +37,7 @@ type ChatMessage = {
   content: string;
   visibleContent?: string;
   report_ready?: boolean;
+  structured?: StructuredAnswer | null;
 };
 
 type ChatResponse = {
@@ -55,6 +57,7 @@ type ChatResponse = {
     document_context?: string;
     document_name?: string;
   } | null;
+  structured?: StructuredAnswer | null;
 };
 
 type BeforeInstallPromptEvent = Event & {
@@ -267,6 +270,20 @@ function normalizeChatReply(reply: string, query: string) {
   return reply;
 }
 
+/** Minimal inline markdown: **bold** and *italic*. The backend renders its answers
+ *  as markdown, and the previous plain-text renderer showed the asterisks verbatim. */
+function renderInline(text: string, keyPrefix: string): ReactNode {
+  const parts = text.split(/(\*\*[^*]+\*\*)/g).filter(Boolean);
+  if (parts.length === 1) return text;
+  return parts.map((part, index) =>
+    part.startsWith("**") && part.endsWith("**") ? (
+      <strong key={`${keyPrefix}-${index}`}>{part.slice(2, -2)}</strong>
+    ) : (
+      <Fragment key={`${keyPrefix}-${index}`}>{part}</Fragment>
+    ),
+  );
+}
+
 function renderAssistantContent(content: string, showCursor: boolean) {
   const blocks = content.split(/\n{2,}/).filter((block) => block.trim());
 
@@ -281,7 +298,9 @@ function renderAssistantContent(content: string, showCursor: boolean) {
           return (
             <ul className="chat-answer-list" key={`${block}-${blockIndex}`}>
               {lines.map((line, lineIndex) => (
-                <li key={`${line}-${lineIndex}`}>{line.replace(/^[-*•]\s+/, "")}</li>
+                <li key={`${line}-${lineIndex}`}>
+                  {renderInline(line.replace(/^[-*•]\s+/, ""), `li-${lineIndex}`)}
+                </li>
               ))}
             </ul>
           );
@@ -290,10 +309,12 @@ function renderAssistantContent(content: string, showCursor: boolean) {
         if (hasHeadingWithList) {
           return (
             <section className="chat-answer-section" key={`${block}-${blockIndex}`}>
-              <strong>{lines[0]}</strong>
+              <strong>{renderInline(lines[0], `head-${blockIndex}`)}</strong>
               <ul className="chat-answer-list">
                 {lines.slice(1).map((line, lineIndex) => (
-                  <li key={`${line}-${lineIndex}`}>{line.replace(/^[-*•]\s+/, "")}</li>
+                  <li key={`${line}-${lineIndex}`}>
+                    {renderInline(line.replace(/^[-*•]\s+/, ""), `sli-${lineIndex}`)}
+                  </li>
                 ))}
               </ul>
               {showCursor && blockIndex === blocks.length - 1 ? <span className="typing-cursor" aria-hidden="true" /> : null}
@@ -309,11 +330,11 @@ function renderAssistantContent(content: string, showCursor: boolean) {
           <p className={blockIndex === 0 ? "chat-answer-lead" : ""} key={`${text}-${blockIndex}`}>
             {hasShortLabel ? (
               <>
-                <strong>{label}:</strong>
-                {rest.join(":")}
+                <strong>{renderInline(label, `lbl-${blockIndex}`)}:</strong>
+                {renderInline(rest.join(":"), `rest-${blockIndex}`)}
               </>
             ) : (
-              text
+              renderInline(text, `txt-${blockIndex}`)
             )}
             {showCursor && blockIndex === blocks.length - 1 ? <span className="typing-cursor" aria-hidden="true" /> : null}
           </p>
@@ -550,7 +571,7 @@ export default function Home() {
     }
   }
 
-  function animateAssistantMessage(content: string) {
+  function animateAssistantMessage(content: string, structured?: StructuredAnswer | null) {
     clearTypingAnimation();
     setIsAssistantTyping(true);
     setChatMessages((current) => [
@@ -559,6 +580,7 @@ export default function Home() {
         role: "assistant",
         content,
         visibleContent: "",
+        structured: structured ?? null,
       },
     ]);
 
@@ -633,7 +655,7 @@ export default function Home() {
       setSessionId(normalizedData.session_id);
       setLatestChat(normalizedData);
       setReportPayload(normalizedData.report_payload || null);
-      animateAssistantMessage(normalizedData.reply);
+      animateAssistantMessage(normalizedData.reply, normalizedData.structured);
 
       // Tag the assistant message so Reports History can list it.
       if (normalizedData.report_ready) {
@@ -1440,10 +1462,21 @@ export default function Home() {
                     )}
                   </span>
                   {message.role === "assistant" ? (
-                    renderAssistantContent(
-                      message.visibleContent ?? message.content,
-                      message.visibleContent !== undefined && message.visibleContent.length < message.content.length,
-                    )
+                    (() => {
+                      const stillTyping =
+                        message.visibleContent !== undefined &&
+                        message.visibleContent.length < message.content.length;
+                      // The structured card replaces the markdown once the typing
+                      // animation has caught up; mid-animation we show the text so
+                      // the reveal still reads as the assistant writing.
+                      if (message.structured && !stillTyping) {
+                        return <AnswerCard answer={message.structured} />;
+                      }
+                      return renderAssistantContent(
+                        message.visibleContent ?? message.content,
+                        stillTyping,
+                      );
+                    })()
                   ) : (
                     <p>{message.content}</p>
                   )}

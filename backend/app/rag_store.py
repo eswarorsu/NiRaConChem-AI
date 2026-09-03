@@ -35,6 +35,18 @@ QUERY_EXPANSIONS = {
     "waterproof": ["waterproofing", "membrane", "coating"],
     "basement": ["tanking", "retaining", "groundwater"],
     "heat": ["uv", "thermal", "temperature"],
+    # Trade vocabulary that names a product family rather than a category.
+    "waterstop": ["waterbar", "swellable", "joint", "waterproofing"],
+    "waterbar": ["waterstop", "swellable", "joint", "waterproofing"],
+    "bonding": ["bond", "adhesive", "bonding agent"],
+    "screed": ["floor", "flooring", "topping", "levelling"],
+    "curing": ["cure", "curing compound", "admixture"],
+    "superplasticiser": ["superplasticizer", "plasticiser", "water", "reducing", "reducer", "admixture"],
+    "superplasticizer": ["superplasticiser", "plasticiser", "water", "reducing", "reducer", "admixture"],
+    "plasticiser": ["water", "reducing", "reducer", "admixture"],
+    "retarder": ["retarding", "retardation", "admixture"],
+    "accelerator": ["accelerating", "admixture"],
+    "workability": ["workable", "water", "reducing", "plasticiser"],
 }
 
 
@@ -57,19 +69,40 @@ def has_any_term(text: str, terms: tuple[str, ...]) -> bool:
     return any(re.search(rf"(?<![a-z0-9]){re.escape(term)}(?![a-z0-9])", text) for term in terms)
 
 
-def load_index() -> list[dict[str, Any]]:
-    if not CHUNKS_PATH.exists():
-        return []
-    with CHUNKS_PATH.open("r", encoding="utf-8") as file:
+# The index grew from 56 chunks to ~900 once the structured catalogs were added.
+# Re-parsing multi-megabyte JSON on every retrieval call made each chat turn pay for
+# it several times over, so both loaders cache on the file's mtime+size and reload
+# automatically after a re-ingest.
+_CACHE: dict[str, tuple[tuple[float, int], Any]] = {}
+
+
+def _load_json_cached(path: Path, key: str) -> Any:
+    if not path.exists():
+        _CACHE.pop(key, None)
+        return None
+    stat = path.stat()
+    stamp = (stat.st_mtime, stat.st_size)
+    cached = _CACHE.get(key)
+    if cached and cached[0] == stamp:
+        return cached[1]
+    with path.open("r", encoding="utf-8") as file:
         payload = json.load(file)
+    _CACHE[key] = (stamp, payload)
+    return payload
+
+
+def clear_cache() -> None:
+    """Drop the in-process index cache (called after a re-ingest)."""
+    _CACHE.clear()
+
+
+def load_index() -> list[dict[str, Any]]:
+    payload = _load_json_cached(CHUNKS_PATH, "chunks")
     return list(payload.get("chunks", [])) if isinstance(payload, dict) else []
 
 
 def load_product_profiles() -> list[dict[str, Any]]:
-    if not PRODUCT_PROFILES_PATH.exists():
-        return []
-    with PRODUCT_PROFILES_PATH.open("r", encoding="utf-8") as file:
-        payload = json.load(file)
+    payload = _load_json_cached(PRODUCT_PROFILES_PATH, "profiles")
     return list(payload) if isinstance(payload, list) else []
 
 
@@ -78,6 +111,14 @@ def profile_search_text(profile: dict[str, Any]) -> str:
         profile.get("manufacturer", ""),
         profile.get("country", ""),
         profile.get("product_name", ""),
+        # Free-text fields carried by the structured catalogs. Without these, a query
+        # like "curing compound" or "corrosion protection primer" can only match a
+        # product whose NAME happens to contain the words - which is why several
+        # correctly-categorised products were unreachable before.
+        profile.get("tagline", "") or "",
+        profile.get("description", "") or "",
+        profile.get("usage", "") or "",
+        " ".join(profile.get("catalog_path", []) or []),
         profile.get("system_type", ""),
         profile.get("category", ""),
         " ".join(profile.get("products", [])),
@@ -90,6 +131,126 @@ def profile_search_text(profile: dict[str, Any]) -> str:
         " ".join(str(value) for value in profile.get("performance", {}).values()),
     ]
     return " ".join(parts)
+
+
+def admixture_affinity(query_text: str, system_type: str) -> float:
+    """Discriminate between admixture sub-types.
+
+    The catalog holds 389 admixtures; matching only the `admixture` category is not
+    enough, and picking an accelerator for a hot-weather pour is a real site error.
+    """
+    system = (system_type or "").lower()
+    if not system:
+        return 0.0
+    score = 0.0
+    wants_retarder = has_any_term(query_text, ("retarder", "retarding", "hot weather", "extend setting", "slow setting", "delay set"))
+    wants_accelerator = has_any_term(query_text, ("accelerator", "accelerating", "early strength", "fast setting", "rapid set"))
+    wants_reducer = has_any_term(
+        query_text,
+        ("superplasticiser", "superplasticizer", "plasticiser", "plasticizer", "water reducer", "water reducing", "workable", "workability", "slump"),
+    )
+    if wants_retarder:
+        score += 0.7 if "retard" in system else 0.0
+        score -= 0.5 if "acceler" in system else 0.0
+    if wants_accelerator:
+        score += 0.7 if "acceler" in system else 0.0
+        score -= 0.5 if "retard" in system else 0.0
+    if wants_reducer:
+        score += 0.7 if "water-reducing" in system or "water reducing" in system else 0.0
+        score -= 0.4 if ("acceler" in system or "retard" in system or "fibre" in system or "curing" in system) else 0.0
+    if has_any_term(query_text, ("curing compound", "curing", "cure")) and "curing" in system:
+        score += 0.6
+    # Mix-in fibres only: "carbon fibre plate" is a structural strengthening laminate,
+    # not something you add to the concrete.
+    if (
+        has_any_term(query_text, ("fibre", "fiber", "shrinkage crack", "micro crack"))
+        and not has_any_term(query_text, ("strengthening", "plate", "laminate", "wrap", "carbon"))
+        and "fibre" in system
+    ):
+        score += 0.6
+    return score
+
+
+def category_affinity(
+    query_text: str,
+    all_categories: set[str],
+    areas: list[str],
+    wants_waterproofing: bool,
+    system_type: str = "",
+) -> float:
+    """Align query intent with a product's category / application areas.
+
+    Shared by BOTH retrievers. Previously only retrieve_product_profiles() applied
+    these rules, so the datasheet excerpts handed to the LLM were ranked on raw token
+    overlap alone and could disagree with the products recommended alongside them.
+
+    `all_categories` is the union of the primary category and the `categories` list,
+    so a product filed under a broad family still matches its niche.
+    """
+    score = 0.0
+    if has_any_term(query_text, ("crack", "injection", "inject", "resin", "structural crack")) and (
+        "repair" in all_categories or "crack injection" in all_categories
+    ):
+        score += 0.7
+    if has_any_term(query_text, ("tile adhesive", "tile fix", "tiling", "fix tiles", "ceramic adhesive")) and (
+        "adhesive" in all_categories or "tile adhesive" in all_categories
+    ):
+        score += 0.7
+    if has_any_term(query_text, ("grout", "tile joint", "jointing")) and "grout" in all_categories:
+        score += 0.6
+    if has_any_term(
+        query_text, ("admixture", "plasticiser", "superplasticiser", "water reducer", "concrete additive")
+    ) and "admixture" in all_categories:
+        score += 0.6
+    if has_any_term(query_text, ("anchor", "anchoring", "rebar fixation", "chemical anchor")) and "anchor" in all_categories:
+        score += 0.6
+    # Durability / protection intent: carbonation and chloride ingress are what a
+    # protective coating is for, even when the element is a floor or soffit.
+    if has_any_term(
+        query_text,
+        ("carbonation", "anti-carbonation", "chloride ingress", "protective coating", "protect concrete", "concrete protection"),
+    ) and "coating" in all_categories:
+        score += 0.7
+    # A waterstop/waterbar is a joint-waterproofing product, not a gun-grade sealant.
+    # Without this the generic "joint" -> sealant boost buries them.
+    if has_any_term(query_text, ("waterstop", "waterbar", "water stop", "swellable", "hydrophilic")):
+        if "waterproofing" in all_categories:
+            score += 0.7
+        elif "sealant" in all_categories:
+            score -= 0.25
+    # Bonding agents / grab adhesives. "self-adhesive sheet membrane" is a
+    # waterproofing query that merely contains the word adhesive, so this stands
+    # down when the query is clearly about a membrane.
+    if (
+        not wants_waterproofing
+        and has_any_term(query_text, ("adhesive", "bonding agent", "bonding", "bond coat", "glue"))
+        and "adhesive" in all_categories
+    ):
+        score += 0.6
+    if "admixture" in all_categories:
+        score += admixture_affinity(query_text, system_type)
+    # Named membrane technologies: when the query specifies FPO / PVC / TPO /
+    # bituminous, the chemistry is the requirement, not a nice-to-have.
+    system_lower = (system_type or "").lower()
+    for technology, aliases in (
+        ("fpo", ("fpo", "flexible polyolefin")),
+        ("pvc", ("pvc", "polyvinyl-chloride", "polyvinyl chloride")),
+        ("tpo", ("tpo",)),
+        ("bituminous", ("bituminous", "bitumen", "torch applied", "torch-applied", "app membrane", "sbs membrane")),
+    ):
+        if has_any_term(query_text, aliases):
+            if technology in system_lower or any(alias in system_lower for alias in aliases):
+                score += 0.8
+            elif "membrane" in system_lower or "roofing" in system_lower:
+                score -= 0.4
+    if has_any_term(query_text, ("tank", "reservoir", "potable", "liner", "tank lining")):
+        if "water tank" in areas:
+            score += 0.85
+        if "coating" in all_categories:
+            score += 0.65
+        if "roof" in areas and "water tank" not in areas:
+            score -= 0.45
+    return score
 
 
 def retrieve_product_profiles(query: str, document_context: str | None = None, limit: int = 3) -> list[dict[str, Any]]:
@@ -125,6 +286,12 @@ def retrieve_product_profiles(query: str, document_context: str | None = None, l
         profile_tokens = set(tokenize(text))
         if not profile_tokens:
             continue
+        # A product's niche is often carried in `categories` (e.g. a Sika injection
+        # resin is filed under waterproofing but is also a "crack injection"
+        # product). Affinity checks below use this union so the niche still counts.
+        all_categories = {str(profile.get("category", "")).lower()} | {
+            str(label).lower() for label in (profile.get("categories") or [])
+        }
         overlap = sum(weight for token, weight in query_counts.items() if token in profile_tokens)
         score = overlap / math.sqrt(max(len(profile_tokens), 1))
         score += float(profile.get("score", 0)) / 20
@@ -150,7 +317,7 @@ def retrieve_product_profiles(query: str, document_context: str | None = None, l
                 score -= 0.8
 
         if wants_waterproofing:
-            if category == "waterproofing" or "waterproofing" in profile.get("categories", []):
+            if "waterproofing" in all_categories:
                 score += 0.35
             if any(layers.values()):
                 score += 0.2
@@ -164,38 +331,30 @@ def retrieve_product_profiles(query: str, document_context: str | None = None, l
         if active_requested_areas and not wants_roof and "roof" in areas:
             score -= 0.3
 
-        if has_any_term(query_text, ("floor",)) and ("flooring" in profile.get("categories", []) or category == "flooring"):
+        # A floor mention does not make it a flooring query: "membrane under screed"
+        # wants a waterproofing layer, so the flooring boost stands down when the
+        # query explicitly asks for waterproofing.
+        if (
+            not wants_waterproofing
+            and has_any_term(query_text, ("floor", "screed", "topping"))
+            and "flooring" in all_categories
+        ):
             score += 0.55
-        if has_any_term(query_text, ("repair", "spall", "honeycomb")) and ("repair mortar" in profile.get("categories", []) or category == "repair"):
+        if has_any_term(query_text, ("repair", "spall", "honeycomb", "fairing", "reprofile")) and ("repair" in all_categories or "repair mortar" in all_categories):
             score += 0.55
             if "vetorep" in product_text or category == "repair":
                 score += 0.8
             elif category == "waterproofing":
                 score -= 0.35
-        if has_any_term(query_text, ("joint", "sealant")) and ("sealant" in profile.get("categories", []) or category == "sealant"):
+        if has_any_term(query_text, ("joint", "sealant")) and "sealant" in all_categories:
             score += 0.55
-        # Category-affinity boosts: align query intent with product category so the
-        # correct system type wins even when token overlap with other categories is high.
-        if has_any_term(query_text, ("crack", "injection", "inject", "resin", "structural crack")) and category == "repair":
-            score += 0.7
-        if has_any_term(query_text, ("tile adhesive", "tile fix", "tiling", "fix tiles", "ceramic adhesive")) and category == "adhesive":
-            score += 0.7
-        if has_any_term(query_text, ("grout", "tile joint", "jointing")) and category == "grout":
-            score += 0.6
-        if has_any_term(query_text, ("admixture", "plasticiser", "superplasticiser", "water reducer", "concrete additive")) and category == "admixture":
-            score += 0.6
-        if has_any_term(query_text, ("anchor", "anchoring", "rebar fixation", "chemical anchor")) and category == "anchor":
-            score += 0.6
-
-        if has_any_term(query_text, ("tank", "reservoir", "potable", "liner")):
-            if "water tank" in areas:
-                score += 0.85
-            if category == "coating" or "coating" in profile.get("categories", []):
-                score += 0.65
-            if "ec722" in product_text or "ep722" in product_text:
-                score += 0.45
-            if "roof" in areas and "water tank" not in areas:
-                score -= 0.45
+        score += category_affinity(
+            query_text, all_categories, areas, wants_waterproofing, profile.get("system_type", "")
+        )
+        if has_any_term(query_text, ("tank", "reservoir", "potable", "liner")) and (
+            "ec722" in product_text or "ep722" in product_text
+        ):
+            score += 0.45
 
         if wants_heat:
             if "solar_reflective_index" in performance:
@@ -282,6 +441,19 @@ def retrieve_rag_chunks(query: str, document_context: str | None = None, limit: 
                 score += 0.1
             if "membrane" in text:
                 score += 0.08
+
+        # Same intent alignment the profile retriever uses, so the excerpts quoted to
+        # the LLM agree with the products recommended beside them. Scaled down
+        # because chunk scores live on a smaller scale than profile scores.
+        chunk_categories = (
+            {str(profile.get("category", "")).lower()}
+            | {str(label).lower() for label in (profile.get("categories") or [])}
+            | {str(label).lower() for label in (chunk.get("categories") or [])}
+        )
+        chunk_areas = list(chunk.get("areas") or profile.get("application_areas") or [])
+        score += 0.45 * category_affinity(
+            query_text, chunk_categories, chunk_areas, wants_waterproofing, profile.get("system_type", "")
+        )
 
         profile_text = profile_search_text(profile).lower()
         for area in active_requested_areas:

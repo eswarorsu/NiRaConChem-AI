@@ -24,3 +24,4 @@ reports/*
 frontend/app/.hermes-tmp*
 
 repo-inspect-climatic-AI/
+ollama-install.log
