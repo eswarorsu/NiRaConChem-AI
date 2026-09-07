@@ -440,7 +440,7 @@
 
 .nrc-hero {
   position: relative;
-  padding-top: clamp(112px, 13vh, 148px);
+  padding-top: clamp(160px, 18vh, 220px);
   padding-bottom: 0;
   overflow: hidden;
   text-align: center;
