@@ -1,0 +1,317 @@
+/* ============================================================================
+   NiRaConChem AI — design tokens · "Warm Glow"
+   ----------------------------------------------------------------------------
+   White ground, a soft amber-to-rose gradient field, near-black warm ink, and
+   one saturated terracotta that runs to rose in gradients. Geometry is round
+   throughout: nothing on this site has a sharp corner or a hairline rule.
+
+     1. PALETTE   raw ramps, referenced only by the semantic layer.
+     2. SEMANTIC  what a thing is. Components use these and nothing else.
+     3. LEGACY    older variable names re-pointed here, so the application's
+                  existing CSS inherits the system. Retired as components move.
+
+   Theming is a token override, not a selector override — see [data-theme="ink"]
+   at the bottom.
+   ========================================================================== */
+
+:root {
+  color-scheme: light;
+
+  /* ══ 1. PALETTE ═══════════════════════════════════════════════════════════ */
+
+  /* Ground — white, with warm tints for raised and recessed surfaces. */
+  --white: #ffffff;
+  --sand-050: #fffaf6;
+  --sand-100: #fff1e8;
+  --sand-200: #ffe2cc;
+  --sand-300: #f6ded1;
+
+  /* Ink — warm near-black. 900 measures 17.6:1 on white, 500 is 5.4:1. */
+  --ink-900: #171110;
+  --ink-800: #2a2120;
+  --ink-700: #453a37;
+  --ink-500: #6b5f5b;
+  --ink-400: #7d716c;
+  --ink-300: #9a8f8b;
+  --ink-200: #c9bfba;
+  --ink-100: #e8dfda;
+
+  /* Ember — the accent. Terracotta into rose; 4.6:1 on white at 600. */
+  --ember-700: #9a4a1e;
+  --ember-600: #c85a2b;
+  --ember-500: #e4703a;
+  --ember-400: #f08b57;
+  --ember-100: #ffe6d6;
+  --rose-500: #c9436b;
+  --rose-100: #ffe0e8;
+
+  /* Cool counterweight — used only to keep the gradient field from going
+     entirely warm, never as a UI colour. */
+  --sky-200: #b4cdff;
+
+  --positive-600: #2f7d5b;
+  --caution-600: #9a6a12;
+  --critical-600: #c0392f;
+
+  /* ══ 2. SEMANTIC ══════════════════════════════════════════════════════════ */
+
+  --surface-page: var(--white);
+  --surface-raised: var(--white);
+  --surface-sunken: var(--sand-050);
+  --surface-tint: var(--sand-100);
+  --surface-inverse: var(--ink-900);
+
+  /* Frosted panels sit over the gradient field; they need their own token so
+     the blur and the fill stay in step. */
+  --surface-glass: rgba(255, 255, 255, 0.72);
+  --surface-glass-strong: rgba(255, 255, 255, 0.86);
+  --glass-edge: rgba(255, 255, 255, 0.95);
+  --glass-blur: 24px;
+
+  --text-primary: var(--ink-900);
+  --text-secondary: var(--ink-500);
+  --text-tertiary: var(--ink-400);
+  --text-inverse: var(--white);
+  --text-accent: var(--ember-600);
+
+  /* Borders are soft tints, never hairline greys. */
+  --edge-soft: rgba(24, 17, 16, 0.07);
+  --edge: rgba(24, 17, 16, 0.1);
+  --edge-strong: rgba(24, 17, 16, 0.16);
+  --edge-accent: rgba(228, 112, 58, 0.28);
+
+  --accent: var(--ember-500);
+  --accent-hover: var(--ember-400);
+  --accent-pressed: var(--ember-600);
+  --accent-contrast: var(--white);
+  --accent-wash: var(--sand-100);
+  --accent-gradient: linear-gradient(96deg, var(--ember-500), var(--rose-500));
+  --accent-gradient-soft: linear-gradient(140deg, var(--sand-100), var(--rose-100));
+
+  /* The signature field. One declaration, reused by every surface that needs
+     the glow so it is always the same glow. */
+  --glow-field:
+    radial-gradient(60% 50% at 78% 8%, rgba(255, 176, 120, 0.55), transparent 60%),
+    radial-gradient(50% 44% at 98% 40%, rgba(255, 138, 150, 0.4), transparent 62%),
+    radial-gradient(46% 40% at 62% 0%, rgba(255, 214, 150, 0.55), transparent 60%),
+    radial-gradient(40% 50% at 12% 92%, rgba(180, 205, 255, 0.35), transparent 62%);
+
+  --field-surface: var(--white);
+  --field-edge: rgba(24, 17, 16, 0.1);
+  --field-edge-hover: rgba(24, 17, 16, 0.2);
+  --field-edge-focus: var(--ember-500);
+  --focus-ring: rgba(228, 112, 58, 0.32);
+
+  /* Shadows are warm-tinted and layered — a neutral grey drop shadow is the
+     fastest way to make a warm page look synthetic. */
+  --shadow-xs: 0 1px 2px rgba(120, 70, 40, 0.06);
+  --shadow-sm: 0 2px 8px rgba(120, 70, 40, 0.08);
+  --shadow-md: 0 8px 24px -10px rgba(120, 70, 40, 0.22), 0 2px 6px rgba(120, 70, 40, 0.06);
+  --shadow-lg: 0 24px 56px -26px rgba(120, 70, 40, 0.34), 0 3px 10px rgba(120, 70, 40, 0.06);
+  --shadow-xl: 0 40px 90px -30px rgba(120, 70, 40, 0.36), 0 4px 14px rgba(120, 70, 40, 0.07);
+  --shadow-accent: 0 16px 34px -14px rgba(228, 112, 58, 0.6);
+  --shadow-ink: 0 16px 34px -14px rgba(24, 17, 16, 0.55);
+
+  /* ── Type: one family, eight weights ─────────────────────────────────────
+     Plus Jakarta Sans. Rounded terminals and a tall x-height, so it reads warm
+     at display sizes and stays legible at 12px. No second family: the mixed
+     serif/grotesque/mono stack was a large part of what read as assembled. */
+  --font-sans: "Plus Jakarta Sans Variable", "Plus Jakarta Sans", ui-sans-serif,
+    system-ui, "Segoe UI", Roboto, Arial, sans-serif;
+  --font-display: var(--font-sans);
+  --font-mono: var(--font-sans);
+
+  /* The closing wordmark is the one place a second face earns its keep. OffBit
+     DotBold when the licensed file is present (see landing.css), Doto — same
+     dot-matrix construction, OFL — otherwise. */
+  --font-wordmark: "OffBit DotBold", "Doto Variable", "Doto", var(--font-sans);
+
+  /* Royal black: a deep neutral black for the wordmark, a shade below the warm
+     --ink-900 used for body copy, which reads brown at display scale. */
+  --royal-black: #08080a;
+  --wordmark-ink: var(--royal-black);
+
+  --size-display: clamp(40px, 5.6vw, 78px);
+  --size-h1: clamp(36px, 4.6vw, 64px);
+  --size-h2: clamp(30px, 3.6vw, 52px);
+  --size-h3: clamp(21px, 2.2vw, 28px);
+  --size-lead: clamp(16px, 1.3vw, 19px);
+  --size-body: 16px;
+  --size-body-sm: 14.5px;
+  --size-label: 13.5px;
+  --size-caption: 12.5px;
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semi: 600;
+  --weight-bold: 700;
+  --weight-heavy: 800;
+
+  --leading-display: 1.03;
+  --leading-tight: 1.12;
+  --leading-snug: 1.35;
+  --leading-body: 1.62;
+
+  /* Plus Jakarta Sans is already tightly fitted; past about -0.025em the word
+     spaces close up at display sizes and "NiRaConChem AI" sets as one word. */
+  --tracking-display: -0.025em;
+  --tracking-tight: -0.018em;
+  --tracking-normal: -0.008em;
+
+  /* ── Space ────────────────────────────────────────────────────────────── */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --space-6: 32px;
+  --space-7: 48px;
+  --space-8: 64px;
+  --space-9: 96px;
+  --space-10: 128px;
+
+  --gutter: clamp(22px, 5vw, 72px);
+  --measure-max: 1280px;
+  --section-y: clamp(76px, 8.5vw, 140px);
+
+  /* ── Radius — round everywhere, pills for anything you press ──────────── */
+  --radius-xs: 8px;
+  --radius-sm: 12px;
+  --radius-md: 16px;
+  --radius-lg: 20px;
+  --radius-xl: 28px;
+  --radius-2xl: 36px;
+  --radius-pill: 999px;
+
+  /* ── Motion — springs live in JS (Motion); these are for CSS states ───── */
+  --ease: cubic-bezier(0.22, 0.68, 0.24, 1);
+  --ease-out-soft: cubic-bezier(0.16, 0.84, 0.32, 1);
+  --duration-fast: 180ms;
+  --duration-base: 260ms;
+  --duration-slow: 560ms;
+
+  /* ══ 3. LEGACY ALIASES ════════════════════════════════════════════════════ */
+
+  --teal-900: var(--ember-700);
+  --teal-700: var(--ember-600);
+  --teal-500: var(--ember-500);
+  --teal-400: var(--ember-400);
+  --teal-100: var(--sand-100);
+  --clay-700: var(--ember-700);
+  --clay-600: var(--rose-500);
+  --clay-400: var(--ember-400);
+  --clay-100: var(--rose-100);
+
+  --success: var(--positive-600);
+  --info: var(--ink-500);
+  --info-bright: var(--ember-500);
+  --warning: var(--caution-600);
+  --danger: var(--critical-600);
+
+  --ink-950: var(--ink-900);
+  --ink-050: var(--sand-050);
+  --black: var(--ink-900);
+
+  --paper: var(--surface-page);
+  --paper-light: var(--surface-raised);
+  --paper-dark: var(--surface-sunken);
+
+  --text: var(--text-primary);
+  --muted: var(--text-secondary);
+  --panel: var(--surface-raised);
+  --accent-strong: var(--text-primary);
+  --line: var(--edge);
+  --rule-hairline: var(--edge);
+  --rule-strong: var(--edge-strong);
+  --rule-accent: var(--edge-accent);
+  --shadow: var(--shadow-md);
+  --elevation-1: var(--shadow-sm);
+  --elevation-2: var(--shadow-md);
+  --elevation-3: var(--shadow-xl);
+  --field-border: var(--field-edge);
+  --field-border-hover: var(--field-edge-hover);
+  --field-border-focus: var(--field-edge-focus);
+  --field-rule: var(--field-edge);
+  --field-rule-hover: var(--field-edge-hover);
+  --field-rule-focus: var(--field-edge-focus);
+
+  --grad-ink: var(--ink-900);
+  --grad-ink-hover: var(--ink-800);
+
+  --fs-display-2xl: var(--size-h1);
+  --fs-display-xl: var(--size-h2);
+  --fs-heading-lg: var(--size-h3);
+  --fs-heading-md: 21px;
+  --fs-heading-sm: 17px;
+  --fs-body-lg: var(--size-body);
+  --fs-body-md: var(--size-body-sm);
+  --fs-body-sm: var(--size-label);
+  --fs-caption: var(--size-caption);
+  --lh-tight: var(--leading-tight);
+  --lh-snug: var(--leading-snug);
+  --lh-normal: var(--leading-body);
+
+  --radius-pill: 999px;
+  --font-jakarta: var(--font-sans);
+}
+
+/* ============================================================================
+   INK — the dark theme. Warm charcoal, same glow at lower intensity.
+   ========================================================================== */
+
+[data-theme="ink"] {
+  color-scheme: dark;
+
+  --surface-page: #16110f;
+  --surface-raised: #211a18;
+  --surface-sunken: #100c0b;
+  --surface-tint: rgba(228, 112, 58, 0.12);
+  --surface-inverse: var(--white);
+
+  --surface-glass: rgba(33, 26, 24, 0.72);
+  --surface-glass-strong: rgba(33, 26, 24, 0.88);
+  --glass-edge: rgba(255, 255, 255, 0.1);
+
+  --text-primary: #f7f1ee;
+  --text-secondary: #c3b6b1;
+  --text-tertiary: #9d908b;
+  --text-inverse: var(--ink-900);
+  --text-accent: var(--ember-400);
+
+  --edge-soft: rgba(247, 241, 238, 0.06);
+  --edge: rgba(247, 241, 238, 0.1);
+  --edge-strong: rgba(247, 241, 238, 0.18);
+  --edge-accent: rgba(240, 139, 87, 0.34);
+
+  --accent: var(--ember-400);
+  --accent-hover: #f5a075;
+  --accent-pressed: var(--ember-500);
+  --accent-contrast: var(--ink-900);
+  --accent-wash: rgba(240, 139, 87, 0.14);
+
+  --glow-field:
+    radial-gradient(60% 50% at 78% 8%, rgba(228, 112, 58, 0.26), transparent 60%),
+    radial-gradient(50% 44% at 98% 40%, rgba(201, 67, 107, 0.2), transparent 62%),
+    radial-gradient(46% 40% at 62% 0%, rgba(255, 176, 120, 0.18), transparent 60%),
+    radial-gradient(40% 50% at 12% 92%, rgba(120, 150, 220, 0.16), transparent 62%);
+
+  --field-surface: rgba(247, 241, 238, 0.05);
+  --field-edge: rgba(247, 241, 238, 0.16);
+  --field-edge-hover: rgba(247, 241, 238, 0.3);
+  --field-edge-focus: var(--ember-400);
+  --focus-ring: rgba(240, 139, 87, 0.42);
+
+  --shadow-xs: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.45);
+  --shadow-md: 0 8px 24px -10px rgba(0, 0, 0, 0.7);
+  --shadow-lg: 0 24px 56px -26px rgba(0, 0, 0, 0.8);
+  --shadow-xl: 0 40px 90px -30px rgba(0, 0, 0, 0.85);
+  --shadow-ink: 0 16px 34px -14px rgba(0, 0, 0, 0.8);
+
+  --grad-ink: var(--white);
+  --grad-ink-hover: var(--sand-050);
+  --accent-strong: var(--text-primary);
+
+  /* Black on a charcoal page is an invisible wordmark; the mark inverts. */
+  --wordmark-ink: #f7f1ee;
+}

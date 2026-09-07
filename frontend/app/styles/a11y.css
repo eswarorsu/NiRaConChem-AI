@@ -1,0 +1,68 @@
+/* ============================================================================
+   Accessibility primitives
+   ----------------------------------------------------------------------------
+   Loaded last so focus is never styled away by a component rule.
+   ========================================================================== */
+
+/* A visible, consistent focus ring everywhere. Mouse users never see it;
+   keyboard users always do. */
+:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+  border-radius: var(--radius-sm);
+}
+
+/* The landing page is long. Without this, reaching the search field by keyboard
+   means tabbing through the entire marketing surface first. */
+.skip-link {
+  position: fixed;
+  top: 12px;
+  left: 12px;
+  z-index: 200;
+  padding: 12px 18px;
+  border: 1px solid var(--rule-strong);
+  border-radius: var(--radius-sm);
+  background: var(--surface-raised);
+  color: var(--text-primary);
+  font-family: var(--font-sans);
+  font-size: 14px;
+  font-weight: 550;
+  text-decoration: none;
+  transform: translateY(-160%);
+  transition: transform var(--duration-base) var(--ease);
+}
+
+.skip-link:focus-visible {
+  transform: translateY(0);
+}
+
+/* Touch targets: 24px is the WCAG 2.2 minimum for a control that has no
+   equally-reachable alternative. */
+.nrc-nav-links a,
+.nrc-footer-nav a,
+.nrc-footer-nav button,
+.nrc-console-item {
+  min-height: 32px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+}
+
+/* Honour forced-colours mode instead of disappearing: hairline rules and washes
+   both vanish against a system palette. */
+@media (forced-colors: active) {
+  .nrc-btn,
+  .menu-item,
+  .market-card,
+  .nrc-console-item {
+    border: 1px solid ButtonBorder;
+  }
+
+  .nrc-face,
+  .nrc-leader {
+    stroke: CanvasText;
+  }
+}

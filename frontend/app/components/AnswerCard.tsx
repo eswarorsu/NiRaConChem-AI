@@ -1,7 +1,7 @@
 "use client";
 
 import { Fragment, useMemo, useState, type ReactNode } from "react";
-import { AlertTriangle, BookOpen, ChevronDown, FlaskConical, ListOrdered } from "lucide-react";
+import { BookOpen, CaretDown, Flask, ListNumbers, Warning } from "@phosphor-icons/react";
 
 /* ------------------------------------------------------------------ *
  * Types — mirrors backend/app/answer_schema.py
@@ -186,13 +186,16 @@ export default function AnswerCard({
   const citations = answer.citations ?? [];
   const unverifiedCount = (answer.unverified ?? []).length;
 
+  // `products` and `citations` are fresh array literals on every render, so
+  // listing them as dependencies memoised nothing. Deriving inside the memo and
+  // depending on the answer itself makes it actually cache.
   const pattern = useMemo(() => {
     const names = [
-      ...products.map((product) => product.name),
-      ...citations.map((citation) => citation.product || ""),
+      ...(answer.products ?? []).map((product) => product.name),
+      ...(answer.citations ?? []).map((citation) => citation.product || ""),
     ].filter(Boolean);
     return buildTermPattern(names);
-  }, [products, citations]);
+  }, [answer]);
 
   const confidence = answer.confidence ?? "low";
 
@@ -208,7 +211,7 @@ export default function AnswerCard({
       {products.length ? (
         <section className="answer-block">
           <h4 className="answer-block-title">
-            <FlaskConical size={13} strokeWidth={2.4} aria-hidden="true" />
+            <Flask size={13} aria-hidden="true" weight="duotone" />
             Recommended
             {answer.recommended_system ? (
               <span className="answer-block-note">{answer.recommended_system}</span>
@@ -238,7 +241,7 @@ export default function AnswerCard({
       {steps.length ? (
         <section className="answer-block">
           <h4 className="answer-block-title">
-            <ListOrdered size={13} strokeWidth={2.4} aria-hidden="true" />
+            <ListNumbers size={13} aria-hidden="true" weight="duotone" />
             Application steps
           </h4>
           <ol className="answer-steps">
@@ -257,7 +260,7 @@ export default function AnswerCard({
       {claims.length ? (
         <section className="answer-block">
           <h4 className="answer-block-title">
-            <BookOpen size={13} strokeWidth={2.4} aria-hidden="true" />
+            <BookOpen size={13} aria-hidden="true" weight="duotone" />
             From the datasheets
           </h4>
           <ul className="answer-claims">
@@ -276,7 +279,7 @@ export default function AnswerCard({
       {precautions.length ? (
         <section className="answer-block answer-block-warning">
           <h4 className="answer-block-title">
-            <AlertTriangle size={13} strokeWidth={2.4} aria-hidden="true" />
+            <Warning size={13} aria-hidden="true" weight="duotone" />
             Precautions
           </h4>
           <ul className="answer-precautions">
@@ -319,7 +322,7 @@ export default function AnswerCard({
             onClick={() => setSourcesOpen((open) => !open)}
             type="button"
           >
-            <ChevronDown className={sourcesOpen ? "is-open" : ""} size={13} strokeWidth={2.4} aria-hidden="true" />
+            <CaretDown className={sourcesOpen ? "is-open" : ""} size={13} aria-hidden="true" weight="bold" />
             {citations.length} source{citations.length > 1 ? "s" : ""}
           </button>
         ) : null}

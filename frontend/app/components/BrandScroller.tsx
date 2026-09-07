@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 /**
@@ -52,12 +53,14 @@ export default function BrandScroller({ visible }: { visible: boolean }) {
           {loop.map((src, i) => (
             <div className="brand-item" key={`${src}-${i}`}>
               <div className="brand-logo-card">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img
+                <Image
                   src={src}
                   alt=""
                   className="brand-logo-img"
+                  height={34}
                   loading="lazy"
+                  sizes="96px"
+                  width={96}
                 />
               </div>
             </div>

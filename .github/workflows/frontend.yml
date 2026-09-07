@@ -1,0 +1,48 @@
+name: frontend
+
+# The frontend had no automated checks at all. This runs the same four gates
+# `npm run check` runs locally, so a pull request cannot merge with a lint
+# error, a type error, a failing test or a broken build.
+
+on:
+  push:
+    branches: [main]
+    paths: ["frontend/**", ".github/workflows/frontend.yml"]
+  pull_request:
+    paths: ["frontend/**", ".github/workflows/frontend.yml"]
+
+defaults:
+  run:
+    working-directory: frontend
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install
+        run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      - name: Typecheck
+        run: npm run typecheck
+
+      - name: Test
+        run: npm run test
+
+      - name: Build
+        run: npm run build
+        env:
+          # Fonts are self-hosted, so the build needs no network access; this is
+          # only the public origin used for absolute OG image URLs.
+          NEXT_PUBLIC_SITE_URL: https://example.invalid
