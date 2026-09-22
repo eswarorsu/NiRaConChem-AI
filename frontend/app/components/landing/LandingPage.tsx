@@ -3,13 +3,7 @@
 import type { ReactNode } from "react";
 import Navbar from "./Navbar";
 import Hero from "./Hero";
-import ProblemSection from "./ProblemSection";
-import BrandStrip from "./BrandStrip";
 import AIEngine from "./AIEngine";
-import ProductIntelligence from "./ProductIntelligence";
-import RecommendationDemo from "./RecommendationDemo";
-import IntelligenceNetwork from "./IntelligenceNetwork";
-import Vision from "./Vision";
 import FinalCTA from "./FinalCTA";
 import Footer from "./Footer";
 import { scrollToId } from "./nav";
@@ -42,14 +36,12 @@ export default function LandingPage({
       <div className="nrc-atmosphere" aria-hidden="true" />
       <Navbar onTryAi={onTryAi} />
       <div className="nrc-shell">
-        <Hero onExploreTechnology={() => scrollToId("technology")} searchSlot={searchSlot} />
-        <ProblemSection />
-        <BrandStrip />
+        <Hero
+          onExploreTechnology={() => scrollToId("engine")}
+          onTryAi={onTryAi}
+          searchSlot={searchSlot}
+        />
         <AIEngine />
-        <ProductIntelligence />
-        <RecommendationDemo onTryAi={onTryAi} />
-        <IntelligenceNetwork />
-        <Vision />
         <FinalCTA onTryAi={onTryAi} />
         <Footer canInstall={canInstall} onInstall={onInstall} onTryAi={onTryAi} />
       </div>

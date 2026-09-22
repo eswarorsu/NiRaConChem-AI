@@ -29,7 +29,7 @@ export default function FinalCTA({ onTryAi }: { onTryAi: () => void }) {
             </motion.button>
             <motion.button
               className="nrc-btn nrc-btn--text"
-              onClick={() => scrollToId("technology")}
+              onClick={() => scrollToId("engine")}
               transition={spring}
               type="button"
               whileHover={reduced ? undefined : { y: -2 }}

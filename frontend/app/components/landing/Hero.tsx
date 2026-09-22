@@ -6,7 +6,6 @@ import { motion, useReducedMotion, useScroll, useSpring, useTransform } from "mo
 import { ArrowRight } from "@phosphor-icons/react";
 
 import { riseIn, spring, stagger } from "../../lib/motion";
-import { scrollToId } from "./nav";
 
 /* The panel is the largest piece of markup on the page and it is not needed for
    the first paint, so it is split out of the initial payload. */
@@ -16,9 +15,10 @@ type HeroProps = {
   /** The application's live search form, owned by the page. */
   searchSlot: ReactNode;
   onExploreTechnology: () => void;
+  onTryAi: () => void;
 };
 
-export default function Hero({ searchSlot, onExploreTechnology }: HeroProps) {
+export default function Hero({ searchSlot, onExploreTechnology, onTryAi }: HeroProps) {
   const reduced = useReducedMotion();
   const ref = useRef<HTMLElement>(null);
 
@@ -65,13 +65,13 @@ export default function Hero({ searchSlot, onExploreTechnology }: HeroProps) {
         <motion.div className="nrc-hero-actions" variants={riseIn}>
           <motion.button
             className="nrc-btn nrc-btn--ink"
-            onClick={() => scrollToId("recommendation")}
+            onClick={onTryAi}
             type="button"
             whileHover={reduced ? undefined : { y: -2 }}
             whileTap={reduced ? undefined : { scale: 0.97 }}
             transition={spring}
           >
-            See a real recommendation
+            Try NiRaConChem AI
             <ArrowRight size={16} weight="bold" />
           </motion.button>
           <motion.button

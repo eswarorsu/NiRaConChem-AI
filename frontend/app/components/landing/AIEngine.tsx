@@ -2,7 +2,6 @@
 
 import { motion, useReducedMotion } from "motion/react";
 import {
-  ArrowRight,
   Cpu,
   Database,
   FileText,
@@ -14,7 +13,6 @@ import {
 import { CATALOG_COUNTS } from "./catalog.data";
 import { useReveal, useSequence } from "../../lib/hooks";
 import { inView, riseIn, spring, stagger } from "../../lib/motion";
-import { scrollToId } from "./nav";
 
 /* These stages mirror what the backend actually runs: FastAPI takes the query,
    a LangGraph agent routes it by intent, retrieval pulls datasheet chunks and
@@ -94,16 +92,6 @@ export default function AIEngine() {
               Every recommendation takes the same path. The model reasons only over context
               that was retrieved for that query.
             </p>
-            <div className="nrc-engine-links">
-              <button
-                className="nrc-btn nrc-btn--ghost nrc-btn--sm"
-                onClick={() => scrollToId("technology")}
-                type="button"
-              >
-                Technical architecture
-                <ArrowRight size={15} weight="bold" />
-              </button>
-            </div>
           </div>
 
           <div className="nrc-pipeline">

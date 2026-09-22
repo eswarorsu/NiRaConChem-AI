@@ -102,11 +102,8 @@ export default function Footer({ onTryAi, canInstall, onInstall }: FooterProps) 
             <button onClick={onTryAi} type="button">
               AI Recommendations
             </button>
-            <button onClick={() => scrollToId("technology")} type="button">
-              Technology
-            </button>
-            <button onClick={() => scrollToId("vision")} type="button">
-              About
+            <button onClick={() => scrollToId("engine")} type="button">
+              How it works
             </button>
             {canInstall ? (
               <button onClick={onInstall} type="button">
