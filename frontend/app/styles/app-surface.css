@@ -28,7 +28,9 @@
 .home.has-result {
   position: relative;
   padding: 0 0 0 264px;
-  background: var(--surface-page);
+  /* A classy step off pure white, toward cream — the "Warm Glow" ground tint
+     rather than the landing page's stark white. */
+  background: var(--sand-050);
   font-family: var(--font-sans);
   color: var(--text-primary);
   isolation: isolate;
@@ -142,7 +144,6 @@
 
 /* ── Fixed controls ────────────────────────────────────────────────────── */
 
-.home.has-result .theme-toggle,
 .home.has-result .app-install-button {
   position: fixed;
   top: 20px;
@@ -162,15 +163,8 @@
   z-index: 31;
 }
 
-.home.has-result .theme-toggle {
-  right: 24px;
-  width: 42px;
-  display: grid;
-  place-items: center;
-}
-
 .home.has-result .app-install-button {
-  right: 78px;
+  right: 24px;
   display: inline-flex;
   align-items: center;
   gap: 8px;
@@ -180,7 +174,6 @@
   font-weight: var(--weight-semi);
 }
 
-.home.has-result .theme-toggle:hover,
 .home.has-result .app-install-button:hover {
   color: var(--text-primary);
   box-shadow: var(--shadow-md);

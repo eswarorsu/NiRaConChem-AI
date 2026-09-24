@@ -238,6 +238,26 @@ export function useChatSession() {
     }
   }, [fileAnalysis, query, reportPayload]);
 
+  /** Re-opens a conversation saved in this browser (see useChatHistory). The
+   *  backend may have forgotten the session by now; a follow-up question then
+   *  simply starts a fresh one server-side while the transcript stays on screen. */
+  const loadConversation = useCallback(
+    (saved: { messages: ChatMessage[]; sessionId: string | null }) => {
+      clearTypingAnimation();
+      setChatMessages(saved.messages.map(({ visibleContent: _unused, ...message }) => message));
+      setSessionId(saved.sessionId);
+      setLatestChat(null);
+      setReportPayload(null);
+      setFileAnalysis(null);
+      setQuery("");
+      setError("");
+      setActiveMode("nira");
+      setSidePanel("chat");
+      setIsAssistantTyping(false);
+    },
+    [clearTypingAnimation],
+  );
+
   const resetSession = useCallback(() => {
     clearTypingAnimation();
     setChatMessages([]);
@@ -282,6 +302,8 @@ export function useChatSession() {
     setSidePanel,
     marketProducts,
     // lifecycle
+    sessionId,
+    loadConversation,
     resetSession,
   };
 }

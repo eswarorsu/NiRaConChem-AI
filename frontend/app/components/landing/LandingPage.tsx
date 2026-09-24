@@ -1,13 +1,20 @@
 "use client";
 
 import type { ReactNode } from "react";
-import Navbar from "./Navbar";
-import Hero from "./Hero";
-import AIEngine from "./AIEngine";
-import FinalCTA from "./FinalCTA";
-import Footer from "./Footer";
+
+// The display serif belongs to this surface only, so it loads with it rather
+// than in the root layout. Plus Jakarta Sans (loaded in layout.tsx) carries
+// every line of UI and body copy.
+import "@fontsource-variable/cormorant-garamond/wght.css";
+import "@fontsource-variable/cormorant-garamond/wght-italic.css";
+
+import BuildUp from "./BuildUp";
+import Close from "./Close";
+import HeroScene from "./HeroScene";
 import { scrollToId } from "./nav";
-// Typefaces are loaded once in app/layout.tsx — both surfaces share them now.
+import Proof from "./Proof";
+import SiteFooter from "./SiteFooter";
+import SiteNav from "./SiteNav";
 import "./landing.css";
 
 type LandingPageProps = {
@@ -21,30 +28,22 @@ type LandingPageProps = {
 
 /**
  * The marketing surface of NiRaConChem AI. It renders only while no chat has
- * started; the moment the user sends a query the page swaps to the application
- * shell, which keeps its own theme. Nothing here touches app state beyond the
- * search form it is handed.
+ * started; the moment a query is sent the page swaps to the workspace.
+ *
+ * Four beats, nothing more: a rendered dusk scene with the live search and a
+ * real product answer, the roof build-up pulled apart layer by layer, where the
+ * answers come from, and the close. All three pictures are Blender renders
+ * made for this page (see scripts/landing-renders/).
  */
-export default function LandingPage({
-  searchSlot,
-  onTryAi,
-  canInstall,
-  onInstall,
-}: LandingPageProps) {
+export default function LandingPage({ searchSlot, onTryAi, canInstall, onInstall }: LandingPageProps) {
   return (
-    <div className="nrc">
-      <div className="nrc-atmosphere" aria-hidden="true" />
-      <Navbar onTryAi={onTryAi} />
-      <div className="nrc-shell">
-        <Hero
-          onExploreTechnology={() => scrollToId("engine")}
-          onTryAi={onTryAi}
-          searchSlot={searchSlot}
-        />
-        <AIEngine />
-        <FinalCTA onTryAi={onTryAi} />
-        <Footer canInstall={canInstall} onInstall={onInstall} onTryAi={onTryAi} />
-      </div>
+    <div className="lp">
+      <SiteNav onTryAi={onTryAi} />
+      <HeroScene onShowLayers={() => scrollToId("how")} searchSlot={searchSlot} />
+      <BuildUp />
+      <Proof />
+      <Close canInstall={canInstall} onInstall={onInstall} onTryAi={onTryAi} />
+      <SiteFooter onTryAi={onTryAi} />
     </div>
   );
 }

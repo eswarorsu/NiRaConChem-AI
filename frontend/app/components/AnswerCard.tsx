@@ -210,13 +210,13 @@ export default function AnswerCard({
 
       {products.length ? (
         <section className="answer-block">
-          <h4 className="answer-block-title">
+          <h3 className="answer-block-title">
             <Flask size={13} aria-hidden="true" weight="duotone" />
             Recommended
             {answer.recommended_system ? (
               <span className="answer-block-note">{answer.recommended_system}</span>
             ) : null}
-          </h4>
+          </h3>
           <ul className="answer-products">
             {products.map((product, index) => (
               <li className="answer-product" key={`${product.name}-${index}`}>
@@ -240,10 +240,10 @@ export default function AnswerCard({
 
       {steps.length ? (
         <section className="answer-block">
-          <h4 className="answer-block-title">
+          <h3 className="answer-block-title">
             <ListNumbers size={13} aria-hidden="true" weight="duotone" />
             Application steps
-          </h4>
+          </h3>
           <ol className="answer-steps">
             {steps.map((step, index) => (
               <li className="answer-step" key={`step-${index}`}>
@@ -259,10 +259,10 @@ export default function AnswerCard({
 
       {claims.length ? (
         <section className="answer-block">
-          <h4 className="answer-block-title">
+          <h3 className="answer-block-title">
             <BookOpen size={13} aria-hidden="true" weight="duotone" />
             From the datasheets
-          </h4>
+          </h3>
           <ul className="answer-claims">
             {claims.map((claim, index) => (
               <li key={`claim-${index}`}>
@@ -278,10 +278,10 @@ export default function AnswerCard({
 
       {precautions.length ? (
         <section className="answer-block answer-block-warning">
-          <h4 className="answer-block-title">
+          <h3 className="answer-block-title">
             <Warning size={13} aria-hidden="true" weight="duotone" />
             Precautions
-          </h4>
+          </h3>
           <ul className="answer-precautions">
             {precautions.map((note, index) => (
               <li key={`precaution-${index}`}>{highlight(note, pattern, `prec-${index}`)}</li>
@@ -292,7 +292,7 @@ export default function AnswerCard({
 
       {missing.length ? (
         <section className="answer-block">
-          <h4 className="answer-block-title">Tell me this and I can firm it up</h4>
+          <h3 className="answer-block-title">Tell me this and I can firm it up</h3>
           <ul className="answer-missing">
             {missing.map((item, index) => (
               <li key={`missing-${index}`}>{item}</li>

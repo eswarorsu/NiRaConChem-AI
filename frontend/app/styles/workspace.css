@@ -1,0 +1,1047 @@
+/* ============================================================================
+   Workspace — the chat, market and session views after the first question
+   ----------------------------------------------------------------------------
+   One framed window: a rail of tools on the left, the view pills across the
+   top, the conversation card in the middle and history on the right. White
+   surfaces on a soft warm ground; the only colour is the clay-to-amber light of
+   NiRa's orb, reused for the active view and the send button.
+
+   Everything is scoped under `.home.has-result.ws` so it outranks the older
+   `.home.has-result` shell rules in app-surface.css, whose component styles
+   (messages, answer cards, market cards, side panels) still apply inside.
+   ========================================================================== */
+
+.home.has-result.ws {
+  /* palette */
+  --ws-page: #eeeae6;
+  --ws-frame: #fbfaf8;
+  --ws-card: #ffffff;
+  --ws-soft: #f6f3f0;
+  --ws-line: rgba(42, 30, 23, 0.09);
+  --ws-line-strong: rgba(42, 30, 23, 0.16);
+  --ws-ink: #231a14;
+  --ws-ink-2: #56493f;
+  --ws-ink-3: #7d6d62;
+  --ws-glow-a: #b8693f;
+  --ws-glow-b: #e3a26d;
+  --ws-gradient: linear-gradient(135deg, var(--ws-glow-a) 0%, var(--ws-glow-b) 100%);
+  --ws-shadow: 0 1px 2px rgba(42, 30, 23, 0.05), 0 10px 30px -18px rgba(60, 40, 28, 0.28);
+  --ws-radius-xl: 36px;
+  --ws-radius-lg: 28px;
+
+  /* re-tint the app-surface tokens used by messages, answers and cards */
+  --accent: #a4583a;
+  --accent-hover: #b8693f;
+  --accent-gradient: var(--ws-gradient);
+  --accent-contrast: #ffffff;
+  --accent-wash: #f7ece4;
+  --text-accent: #9a5536;
+  --edge-accent: rgba(184, 105, 63, 0.35);
+  --shadow-accent: 0 12px 24px -12px rgba(184, 105, 63, 0.6);
+  --focus-ring: rgba(184, 105, 63, 0.22);
+  --surface-tint: #f5f1ed;
+  --surface-sunken: #f4f0ec;
+  --surface-glass: #ffffff;
+  --surface-glass-strong: #ffffff;
+  --glass-edge: var(--ws-line);
+  --edge-soft: var(--ws-line);
+
+  position: relative;
+  min-height: 100dvh;
+  padding: 18px;
+  background: var(--ws-page);
+  color: var(--ws-ink);
+  font-family: var(--font-sans);
+  font-size: 15px;
+  font-weight: 400;
+  text-transform: none;
+  isolation: isolate;
+}
+
+.home.has-result.ws::before {
+  display: none;
+}
+
+/* form controls do not inherit the page font by default */
+.home.has-result.ws :where(button, textarea, input) {
+  font-family: inherit;
+}
+
+/* soft coloured light behind the frame, the white version of the reference's
+   blurred green field */
+.home.has-result.ws .ws-backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(40% 50% at 12% 18%, rgba(232, 176, 132, 0.42), transparent 70%),
+    radial-gradient(38% 46% at 90% 12%, rgba(206, 196, 222, 0.5), transparent 70%),
+    radial-gradient(46% 50% at 78% 92%, rgba(235, 206, 172, 0.45), transparent 72%),
+    var(--ws-page);
+}
+
+/* ── Frame ─────────────────────────────────────────────────────────────── */
+
+.home.has-result.ws .ws-frame {
+  display: grid;
+  height: calc(100dvh - 36px);
+  min-height: 620px;
+  grid-template-columns: 64px minmax(0, 1fr) minmax(300px, 340px);
+  grid-template-rows: auto minmax(0, 1fr);
+  grid-template-areas:
+    "rail top top"
+    "rail card history";
+  gap: 18px 20px;
+  padding: 20px 22px 22px 18px;
+  border: 1px solid rgba(255, 255, 255, 0.9);
+  border-radius: 40px;
+  background: var(--ws-frame);
+  box-shadow:
+    0 0 0 1px var(--ws-line),
+    0 40px 100px -50px rgba(60, 40, 28, 0.45);
+}
+
+/* ── Buttons shared across the shell ───────────────────────────────────── */
+
+.home.has-result.ws .ws-icon-btn,
+.home.has-result.ws .ws-rail-btn {
+  display: inline-grid;
+  flex: none;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  padding: 0;
+  border: 1px solid var(--ws-line);
+  border-radius: 50%;
+  background: var(--ws-card);
+  color: var(--ws-ink-2);
+  box-shadow: var(--ws-shadow);
+  cursor: pointer;
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease,
+    transform 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.home.has-result.ws .ws-icon-btn:hover,
+.home.has-result.ws .ws-rail-btn:hover:not(:disabled) {
+  border-color: var(--edge-accent);
+  color: var(--ws-ink);
+  transform: translateY(-1px);
+}
+
+.home.has-result.ws .ws-rail-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+  box-shadow: none;
+}
+
+.home.has-result.ws .ws-pill-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 42px;
+  padding: 0 18px 0 14px;
+  border: 0;
+  border-radius: 999px;
+  background: var(--ws-ink);
+  color: #fff;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  box-shadow: 0 10px 22px -14px rgba(35, 26, 20, 0.9);
+  transition: background 0.2s ease, transform 0.2s ease;
+}
+
+.home.has-result.ws .ws-pill-btn:hover {
+  background: #3a2c22;
+  transform: translateY(-1px);
+}
+
+/* ── Rail ──────────────────────────────────────────────────────────────── */
+
+.home.has-result.ws .ws-rail {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  grid-area: rail;
+  gap: 14px;
+}
+
+.home.has-result.ws .ws-logo {
+  display: grid;
+  width: 52px;
+  height: 52px;
+  place-items: center;
+  padding: 0;
+  border: 1.5px solid transparent;
+  border-radius: 18px;
+  background:
+    linear-gradient(#fff, #fff) padding-box,
+    var(--ws-gradient) border-box;
+  box-shadow: 0 10px 24px -14px rgba(184, 105, 63, 0.8);
+  cursor: pointer;
+}
+
+.home.has-result.ws .ws-logo img {
+  mix-blend-mode: multiply;
+}
+
+.home.has-result.ws .ws-rail-tools {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  justify-content: center;
+  gap: 14px;
+}
+
+.home.has-result.ws .ws-rail-btn {
+  width: 50px;
+  height: 50px;
+}
+
+.home.has-result.ws .ws-rail-btn[aria-pressed="true"] {
+  border: 1.5px solid transparent;
+  background:
+    linear-gradient(#fff, #fff) padding-box,
+    var(--ws-gradient) border-box;
+  color: var(--accent);
+}
+
+.home.has-result.ws .ws-rail-foot {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+/* ── Top bar ───────────────────────────────────────────────────────────── */
+
+.home.has-result.ws .ws-topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  grid-area: top;
+  gap: 16px;
+  min-width: 0;
+}
+
+.home.has-result.ws .ws-views {
+  display: flex;
+  min-width: 0;
+  gap: 4px;
+  padding: 6px;
+  overflow-x: auto;
+  border: 1px solid var(--ws-line);
+  border-radius: 999px;
+  background: var(--ws-soft);
+  scrollbar-width: none;
+}
+
+.home.has-result.ws .ws-view {
+  flex: none;
+  min-height: 46px;
+  padding: 0 26px;
+  border: 1.5px solid transparent;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--ws-ink-2);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: color 0.2s ease, background 0.2s ease;
+}
+
+.home.has-result.ws .ws-view:hover {
+  color: var(--ws-ink);
+}
+
+.home.has-result.ws .ws-view[aria-current="page"] {
+  background:
+    linear-gradient(#fff, #fff) padding-box,
+    var(--ws-gradient) border-box;
+  color: var(--ws-ink);
+  font-weight: 600;
+  box-shadow: 0 8px 20px -14px rgba(184, 105, 63, 0.9);
+}
+
+.home.has-result.ws .ws-utility {
+  display: flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  padding: 6px;
+  border: 1px solid var(--ws-line);
+  border-radius: 999px;
+  background: var(--ws-soft);
+}
+
+.home.has-result.ws .ws-history-toggle {
+  display: none;
+}
+
+.home.has-result.ws .ws-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 14px;
+  color: var(--ws-ink-2);
+  font-size: 13.5px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.home.has-result.ws .ws-status-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--ws-gradient);
+  box-shadow: 0 0 0 4px rgba(227, 162, 109, 0.22);
+}
+
+.home.has-result.ws .ws-avatar {
+  display: grid;
+  width: 44px;
+  height: 44px;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--ws-gradient);
+  color: #fff;
+  box-shadow: 0 10px 20px -12px rgba(184, 105, 63, 0.9);
+}
+
+/* ── Main card ─────────────────────────────────────────────────────────── */
+
+.home.has-result.ws .ws-card {
+  position: relative;
+  outline: none;
+  display: flex;
+  min-height: 0;
+  flex-direction: column;
+  grid-area: card;
+  overflow: hidden;
+  border: 1px solid var(--ws-line);
+  border-radius: var(--ws-radius-xl);
+  background: var(--ws-card);
+  box-shadow: var(--ws-shadow);
+  isolation: isolate;
+}
+
+/* the warm light that pools in the corner of the reference's card */
+.home.has-result.ws .ws-card::before {
+  position: absolute;
+  z-index: -1;
+  inset: 0;
+  background:
+    radial-gradient(55% 45% at 8% 0%, rgba(240, 196, 160, 0.34), transparent 70%),
+    radial-gradient(45% 40% at 60% 100%, rgba(236, 214, 190, 0.35), transparent 70%);
+  content: "";
+  pointer-events: none;
+}
+
+.home.has-result.ws .ws-card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 22px 24px 8px;
+}
+
+.home.has-result.ws .ws-card-title {
+  margin: 0;
+  font-family: var(--font-sans);
+  line-height: 1.2;
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  padding: 5px 18px 5px 5px;
+  border: 1px solid var(--ws-line);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.85);
+  box-shadow: var(--ws-shadow);
+  color: var(--ws-ink);
+  font-size: 14.5px;
+  font-weight: 600;
+}
+
+.home.has-result.ws .ws-card-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.home.has-result.ws .ws-chip-status {
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: var(--accent-wash);
+  color: var(--text-accent);
+  font-size: 12.5px;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+.home.has-result.ws .ws-menu {
+  position: relative;
+}
+
+.home.has-result.ws .ws-menu-list {
+  position: absolute;
+  z-index: 20;
+  top: calc(100% + 8px);
+  right: 0;
+  display: grid;
+  min-width: 230px;
+  padding: 6px;
+  border: 1px solid var(--ws-line);
+  border-radius: 18px;
+  background: #fff;
+  box-shadow: 0 24px 50px -24px rgba(60, 40, 28, 0.45);
+}
+
+.home.has-result.ws .ws-menu-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 12px;
+  background: none;
+  color: var(--ws-ink);
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.home.has-result.ws .ws-menu-item:hover:not(:disabled),
+.home.has-result.ws .ws-menu-item:focus-visible {
+  background: var(--ws-soft);
+}
+
+.home.has-result.ws .ws-menu-item:disabled {
+  color: var(--ws-ink-3);
+  cursor: not-allowed;
+  opacity: 0.6;
+}
+
+.home.has-result.ws .ws-card-body {
+  flex: 1;
+  min-height: 0;
+  padding: 18px clamp(20px, 4vw, 56px) 24px;
+  overflow-y: auto;
+  scroll-behavior: smooth;
+  overscroll-behavior: contain;
+  /* text fades as it scrolls under the header and into the composer */
+  -webkit-mask-image: linear-gradient(to bottom, transparent 0, #000 18px, #000 calc(100% - 14px), transparent 100%);
+  mask-image: linear-gradient(to bottom, transparent 0, #000 18px, #000 calc(100% - 14px), transparent 100%);
+}
+
+.home.has-result.ws .ws-card-body > * {
+  max-width: 860px;
+  margin-inline: auto;
+}
+
+.home.has-result.ws .ws-card-body > .market-results {
+  max-width: none;
+}
+
+.home.has-result.ws .ws-card-foot {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+  padding: 0 clamp(16px, 3vw, 40px) 22px;
+}
+
+.home.has-result.ws .ws-card-foot > * {
+  width: 100%;
+  max-width: 900px;
+  margin-inline: auto;
+}
+
+/* empty state: greeting and composer meet in the middle */
+.home.has-result.ws .ws-card.is-centered {
+  justify-content: center;
+}
+
+.home.has-result.ws .ws-card.is-centered .ws-card-head {
+  position: absolute;
+  inset: 0 0 auto;
+}
+
+.home.has-result.ws .ws-card.is-centered .ws-card-body {
+  flex: 0 0 auto;
+  overflow: visible;
+  padding-bottom: 34px;
+}
+
+.home.has-result.ws .ws-greeting {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 26px;
+  text-align: center;
+}
+
+.home.has-result.ws .ws-greeting h2 {
+  margin: 0;
+  color: var(--ws-ink);
+  font-family: var(--font-sans);
+  font-size: clamp(26px, 2.4vw, 36px);
+  font-weight: 550;
+  line-height: 1.22;
+  letter-spacing: -0.02em;
+}
+
+.home.has-result.ws .ws-error {
+  margin: 0;
+  padding: 12px 18px;
+  border-radius: 16px;
+  background: #fbe9e6;
+  color: #9b2c1f;
+  font-size: 13.5px;
+}
+
+/* ── Orb ───────────────────────────────────────────────────────────────── */
+
+.home.has-result.ws .ws-orb {
+  position: relative;
+  display: inline-block;
+  flex: none;
+  width: 104px;
+  height: 104px;
+}
+
+.home.has-result.ws .ws-orb-sm {
+  width: 34px;
+  height: 34px;
+}
+
+.home.has-result.ws .ws-orb-ring {
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  background: conic-gradient(
+    from 0deg,
+    #b8693f,
+    #f2bb86 22%,
+    rgba(255, 255, 255, 0) 38%,
+    #d98c5d 58%,
+    #fbe0c5 76%,
+    #b8693f
+  );
+  -webkit-mask: radial-gradient(circle, transparent 57%, #000 59%, #000 69%, transparent 71%);
+  mask: radial-gradient(circle, transparent 57%, #000 59%, #000 69%, transparent 71%);
+  animation: ws-spin 9s linear infinite;
+}
+
+.home.has-result.ws .ws-orb-ring-2 {
+  inset: 9%;
+  opacity: 0.75;
+  filter: blur(0.6px);
+  animation-duration: 13s;
+  animation-direction: reverse;
+}
+
+.home.has-result.ws .ws-orb-core {
+  position: absolute;
+  inset: 26%;
+  border-radius: 50%;
+  background: radial-gradient(circle at 42% 38%, #fff6ee 0%, #f3c39a 38%, #cf7d52 72%, rgba(207, 125, 82, 0) 100%);
+  box-shadow:
+    0 0 26px 6px rgba(227, 162, 109, 0.45),
+    0 0 60px 18px rgba(227, 162, 109, 0.2);
+}
+
+.home.has-result.ws .ws-orb-sm .ws-orb-core {
+  box-shadow: 0 0 10px 2px rgba(227, 162, 109, 0.45);
+}
+
+@keyframes ws-spin {
+  to {
+    transform: rotate(1turn);
+  }
+}
+
+/* ── Composer ──────────────────────────────────────────────────────────── */
+
+.home.has-result.ws .ws-composer {
+  display: grid;
+  min-width: 0;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 16px;
+  padding: 18px 18px 14px;
+  border: 1px solid var(--ws-line-strong);
+  border-radius: var(--ws-radius-lg);
+  background: linear-gradient(180deg, #fdfcfb 0%, #f7f3ef 100%);
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.9) inset,
+    0 18px 40px -30px rgba(60, 40, 28, 0.5);
+  transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.home.has-result.ws .ws-composer:focus-within {
+  border-color: var(--edge-accent);
+  box-shadow:
+    0 0 0 4px var(--focus-ring),
+    0 18px 40px -30px rgba(60, 40, 28, 0.5);
+}
+
+.home.has-result.ws .ws-composer-field {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 2px 6px 0;
+}
+
+.home.has-result.ws .ws-composer-spark {
+  flex: none;
+  margin-top: 4px;
+  color: var(--ws-glow-a);
+}
+
+.home.has-result.ws .ws-composer textarea {
+  flex: 1;
+  min-height: 52px;
+  max-height: 180px;
+  padding: 2px 0;
+  border: 0;
+  background: transparent;
+  color: var(--ws-ink);
+  font-family: var(--font-sans);
+  font-size: 16px;
+  line-height: 1.55;
+  outline: none;
+  resize: none;
+}
+
+.home.has-result.ws .ws-composer textarea::placeholder {
+  color: var(--ws-ink-3);
+}
+
+.home.has-result.ws .ws-composer-bar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.home.has-result.ws .ws-starters {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  gap: 8px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.home.has-result.ws .ws-chip {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 16px 0 13px;
+  border: 1px solid var(--ws-line);
+  border-radius: 999px;
+  background: #fff;
+  color: var(--ws-ink-2);
+  font-size: 14px;
+  font-weight: 500;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: border-color 0.2s ease, color 0.2s ease;
+}
+
+.home.has-result.ws .ws-chip svg {
+  color: var(--ws-glow-a);
+}
+
+.home.has-result.ws .ws-chip:hover {
+  border-color: var(--edge-accent);
+  color: var(--ws-ink);
+}
+
+.home.has-result.ws .ws-composer-status {
+  color: var(--ws-ink-3);
+  font-size: 13px;
+  white-space: nowrap;
+}
+
+.home.has-result.ws .ws-send {
+  display: grid;
+  flex: none;
+  width: 52px;
+  height: 52px;
+  margin-left: auto;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: var(--ws-gradient);
+  color: #fff;
+  box-shadow: 0 14px 26px -12px rgba(184, 105, 63, 0.85);
+  cursor: pointer;
+  transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.2s ease;
+}
+
+.home.has-result.ws .ws-send:hover:not(:disabled) {
+  transform: translateY(-1px) scale(1.04);
+}
+
+.home.has-result.ws .ws-send:disabled {
+  background: #e6ddd6;
+  color: #a39388;
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+/* ── History ───────────────────────────────────────────────────────────── */
+
+.home.has-result.ws .ws-history-dock {
+  display: flex;
+  min-height: 0;
+  grid-area: history;
+}
+
+.home.has-result.ws .ws-history {
+  position: relative;
+  display: flex;
+  width: 100%;
+  min-height: 0;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid var(--ws-line);
+  border-radius: var(--ws-radius-xl);
+  background:
+    radial-gradient(80% 36% at 30% 0%, rgba(240, 196, 160, 0.38), transparent 75%),
+    linear-gradient(180deg, #faf7f4 0%, #fbfaf8 100%);
+  box-shadow: var(--ws-shadow);
+}
+
+.home.has-result.ws .ws-history-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 22px 20px 14px 24px;
+}
+
+.home.has-result.ws .ws-history-head h2 {
+  margin: 0;
+  color: var(--ws-ink);
+  font-family: var(--font-sans);
+  font-size: 24px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+}
+
+.home.has-result.ws .ws-history-close {
+  display: none;
+}
+
+.home.has-result.ws .ws-history-scroll {
+  flex: 1;
+  min-height: 0;
+  padding: 4px 16px 16px;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+.home.has-result.ws .ws-history-group + .ws-history-group {
+  margin-top: 18px;
+}
+
+.home.has-result.ws .ws-history-group h3 {
+  margin: 6px 8px 10px;
+  color: var(--ws-ink-2);
+  font-family: var(--font-sans);
+  font-size: 14.5px;
+  font-weight: 500;
+}
+
+.home.has-result.ws .ws-history-group ul {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.home.has-result.ws .ws-history-row {
+  display: flex;
+  width: 100%;
+  align-items: center;
+  gap: 12px;
+  min-height: 62px;
+  padding: 10px 16px 10px 10px;
+  border: 1px solid var(--ws-line);
+  border-radius: 22px;
+  background: #fff;
+  color: var(--ws-ink-2);
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+  transition: border-color 0.2s ease, box-shadow 0.2s ease, color 0.2s ease;
+}
+
+.home.has-result.ws .ws-history-row:hover {
+  border-color: var(--ws-line-strong);
+  color: var(--ws-ink);
+  box-shadow: var(--ws-shadow);
+}
+
+.home.has-result.ws .ws-history-row[aria-current="true"] {
+  border: 1.5px solid transparent;
+  background:
+    linear-gradient(#fff, #fff) padding-box,
+    var(--ws-gradient) border-box;
+  color: var(--ws-ink);
+  box-shadow: 0 10px 24px -18px rgba(184, 105, 63, 0.9);
+}
+
+.home.has-result.ws .ws-history-icon {
+  display: grid;
+  flex: none;
+  width: 40px;
+  height: 40px;
+  place-items: center;
+  border: 1px solid var(--ws-line);
+  border-radius: 50%;
+  background: var(--ws-soft);
+  color: var(--ws-glow-a);
+}
+
+.home.has-result.ws .ws-history-text {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.home.has-result.ws .ws-history-empty {
+  margin: 8px;
+  padding: 18px;
+  border: 1px dashed var(--ws-line-strong);
+  border-radius: 20px;
+  color: var(--ws-ink-3);
+  font-size: 14px;
+  line-height: 1.55;
+}
+
+.home.has-result.ws .ws-history-clear {
+  margin: 0 20px 18px;
+  padding: 8px 0;
+  border: 0;
+  background: none;
+  color: var(--ws-ink-3);
+  font-size: 13px;
+  text-align: left;
+  text-decoration: underline;
+  text-underline-offset: 4px;
+  cursor: pointer;
+}
+
+/* ── Content inside the card: slimmer spacing than the old full-page layout */
+
+.home.has-result.ws .chat-messages {
+  gap: 26px;
+  padding: 8px 0 12px;
+}
+
+.home.has-result.ws .chat-message.user p {
+  border: 1px solid var(--ws-line);
+  background: var(--ws-soft);
+}
+
+.home.has-result.ws .download-button {
+  display: block;
+  margin: 26px auto 4px;
+}
+
+.home.has-result.ws .file-summary {
+  width: 100%;
+  border-radius: 20px;
+}
+
+.home.has-result.ws .market-summary {
+  margin-bottom: 18px;
+  color: var(--ws-ink-2);
+}
+
+/* one card layout at every width: picture on top, details below */
+.home.has-result.ws .market-grid {
+  grid-template-columns: repeat(auto-fill, minmax(210px, 1fr));
+}
+
+.home.has-result.ws .market-card {
+  grid-template-columns: minmax(0, 1fr);
+  grid-template-rows: auto auto;
+}
+
+.home.has-result.ws .market-image {
+  min-height: 0;
+}
+
+.home.has-result.ws .answer-block-title {
+  flex-wrap: wrap;
+}
+
+/* ── Drawer for narrow screens ─────────────────────────────────────────── */
+
+.home.has-result.ws .ws-drawer {
+  position: fixed;
+  z-index: 100;
+  inset: 0;
+  display: flex;
+  justify-content: flex-end;
+  padding: 12px;
+}
+
+.home.has-result.ws .ws-drawer-scrim {
+  position: absolute;
+  inset: 0;
+  border: 0;
+  background: rgba(35, 26, 20, 0.28);
+  backdrop-filter: blur(2px);
+  cursor: pointer;
+}
+
+.home.has-result.ws .ws-drawer .ws-history {
+  position: relative;
+  width: min(380px, 100%);
+  height: 100%;
+}
+
+.home.has-result.ws .ws-drawer .ws-history-close {
+  display: inline-grid;
+}
+
+/* ── Responsive ────────────────────────────────────────────────────────── */
+
+@media (max-width: 1279px) {
+  .home.has-result.ws .ws-frame {
+    grid-template-columns: 64px minmax(0, 1fr);
+    grid-template-areas:
+      "rail top"
+      "rail card";
+  }
+
+  .home.has-result.ws .ws-history-dock {
+    display: none;
+  }
+
+  .home.has-result.ws .ws-history-toggle {
+    display: inline-grid;
+  }
+}
+
+@media (max-width: 760px) {
+  .home.has-result.ws {
+    padding: 0;
+  }
+
+  .home.has-result.ws .ws-frame {
+    height: 100dvh;
+    min-height: 0;
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-rows: auto auto minmax(0, 1fr);
+    grid-template-areas:
+      "rail"
+      "top"
+      "card";
+    gap: 10px;
+    padding: 10px;
+    border-radius: 0;
+  }
+
+  .home.has-result.ws .ws-rail {
+    flex-direction: row;
+    gap: 8px;
+    overflow-x: auto;
+    scrollbar-width: none;
+  }
+
+  .home.has-result.ws .ws-rail-tools,
+  .home.has-result.ws .ws-rail-foot {
+    flex: none;
+    flex-direction: row;
+    gap: 8px;
+  }
+
+  .home.has-result.ws .ws-rail-foot {
+    margin-left: auto;
+  }
+
+  .home.has-result.ws .ws-logo {
+    width: 44px;
+    height: 44px;
+    border-radius: 14px;
+  }
+
+  .home.has-result.ws .ws-rail-btn {
+    width: 44px;
+    height: 44px;
+  }
+
+  .home.has-result.ws .ws-status {
+    display: none;
+  }
+
+  .home.has-result.ws .ws-view {
+    min-height: 40px;
+    padding: 0 16px;
+    font-size: 14px;
+  }
+
+  .home.has-result.ws .ws-avatar {
+    display: none;
+  }
+
+  .home.has-result.ws .ws-card {
+    border-radius: 26px;
+  }
+
+  .home.has-result.ws .ws-card-head {
+    padding: 14px 14px 6px;
+  }
+
+  .home.has-result.ws .ws-card-body {
+    padding: 12px 14px 16px;
+  }
+
+  .home.has-result.ws .ws-card-foot {
+    padding: 0 10px 10px;
+  }
+
+  .home.has-result.ws .ws-composer {
+    padding: 14px 12px 10px;
+    border-radius: 22px;
+  }
+
+  .home.has-result.ws .ws-chip {
+    min-height: 40px;
+    padding: 0 13px 0 11px;
+    font-size: 13px;
+  }
+
+  .home.has-result.ws .ws-orb-lg {
+    width: 84px;
+    height: 84px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .home.has-result.ws .ws-orb-ring {
+    animation: none;
+  }
+}
+
+@media (forced-colors: active) {
+  .home.has-result.ws .ws-card,
+  .home.has-result.ws .ws-history,
+  .home.has-result.ws .ws-composer,
+  .home.has-result.ws .ws-view[aria-current="page"],
+  .home.has-result.ws .ws-history-row[aria-current="true"] {
+    border: 2px solid CanvasText;
+  }
+}

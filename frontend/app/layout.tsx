@@ -5,9 +5,10 @@ import type { Metadata, Viewport } from "next";
 // fonts.googleapis.com, there is no third-party request at runtime, and the
 // exact files that were design-reviewed are the ones that ship.
 //
-// Plus Jakarta Sans carries every size — display, body, UI and figures. The
-// earlier mixed serif/grotesque/mono stack is gone: three families competing
-// on one page was a large part of what read as assembled rather than designed.
+// Plus Jakarta Sans carries every size of the application — display, body, UI
+// and figures. The landing page adds one display serif (Cormorant Garamond) for
+// its headlines only; it imports that face itself in LandingPage.tsx so the
+// workspace never downloads it.
 import "@fontsource-variable/plus-jakarta-sans";
 // Doto is the dot-matrix face used by the closing wordmark and nothing else.
 // It is the licensable stand-in for OffBit DotBold — see the @font-face block
@@ -20,6 +21,9 @@ import "./globals.css";
 // Loaded after globals so the Warm Glow layer wins the cascade while the older
 // rules in globals.css are retired component by component.
 import "./styles/app-surface.css";
+// The workspace shell (rail, views, chat card, history) sits on top of the
+// app-surface component styles and re-tints their tokens for the white theme.
+import "./styles/workspace.css";
 import "./styles/a11y.css";
 
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL?.trim() || "http://localhost:3000";

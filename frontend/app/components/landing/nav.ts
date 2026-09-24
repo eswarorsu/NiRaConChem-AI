@@ -1,5 +1,8 @@
 /** Section anchors shared by the navigation, the footer and the in-page CTAs. */
-export const NAV_LINKS = [{ id: "engine", label: "How it works" }] as const;
+export const NAV_LINKS = [
+  { id: "how", label: "How it works" },
+  { id: "sources", label: "Sources" },
+] as const;
 
 /** Scrolls to a landing section, respecting the user's motion preference. */
 export function scrollToId(id: string) {
