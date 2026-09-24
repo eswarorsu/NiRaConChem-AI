@@ -1,6 +1,6 @@
 "use client";
 
-import { Sparkle, UserCircle } from "@phosphor-icons/react";
+import { Robot, User } from "@phosphor-icons/react";
 
 import AnswerCard from "../AnswerCard";
 import { renderAssistantContent } from "../../lib/chat-format";
@@ -31,7 +31,7 @@ export default function ChatPanel({
             return (
               <div className="chat-message user" key={`user-${index}`}>
                 <span className="chat-avatar" aria-hidden="true">
-                  <UserCircle size={15} weight="duotone" />
+                  <User size={15} weight="duotone" />
                 </span>
                 <p>{message.content}</p>
               </div>
@@ -47,7 +47,7 @@ export default function ChatPanel({
           return (
             <div className="chat-message assistant" key={`assistant-${index}`}>
               <span className="chat-avatar" aria-hidden="true">
-                <Sparkle size={15} weight="duotone" />
+                <Robot size={15} weight="duotone" />
               </span>
               {message.structured && !stillTyping ? (
                 <AnswerCard answer={message.structured} />
@@ -61,7 +61,7 @@ export default function ChatPanel({
         {awaitingFirstToken ? (
           <div className="chat-message assistant typing-preview">
             <span className="chat-avatar" aria-hidden="true">
-              <Sparkle size={15} weight="duotone" />
+              <Robot size={15} weight="duotone" />
             </span>
             <p aria-label="NiRaConChem AI is typing">
               <span />

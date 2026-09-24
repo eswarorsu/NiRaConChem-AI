@@ -1,9 +1,7 @@
 /** Section anchors shared by the navigation, the footer and the in-page CTAs. */
 export const NAV_LINKS = [
-  { id: "product", label: "Product" },
-  { id: "technology", label: "Technology" },
-  { id: "solutions", label: "Solutions" },
-  { id: "vision", label: "About" },
+  { id: "how", label: "How it works" },
+  { id: "sources", label: "Sources" },
 ] as const;
 
 /** Scrolls to a landing section, respecting the user's motion preference. */

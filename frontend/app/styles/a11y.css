@@ -38,10 +38,10 @@
 
 /* Touch targets: 24px is the WCAG 2.2 minimum for a control that has no
    equally-reachable alternative. */
-.nrc-nav-links a,
-.nrc-footer-nav a,
-.nrc-footer-nav button,
-.nrc-console-item {
+.lp-nav-links a,
+.lp-footer-links a,
+.lp-footer-links button,
+.lp-textlink {
   min-height: 32px;
 }
 
@@ -54,15 +54,10 @@
 /* Honour forced-colours mode instead of disappearing: hairline rules and washes
    both vanish against a system palette. */
 @media (forced-colors: active) {
-  .nrc-btn,
+  .lp-btn,
   .menu-item,
-  .market-card,
-  .nrc-console-item {
+  .market-card {
     border: 1px solid ButtonBorder;
   }
 
-  .nrc-face,
-  .nrc-leader {
-    stroke: CanvasText;
-  }
 }
