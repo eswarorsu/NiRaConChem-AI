@@ -29,7 +29,12 @@
 
   --lp-serif: "Cormorant Garamond Variable", "Cormorant Garamond", "Iowan Old Style", Georgia, serif;
   --lp-sans: var(--font-sans, "Plus Jakarta Sans Variable", system-ui, sans-serif);
-  --lp-gutter: clamp(20px, 5.2vw, 96px);
+  /* One design pixel: 1px up to a 2000px-wide window, then it grows with the
+     window. The first screen is a full-bleed composition, so on big monitors
+     (and zoomed-out tabs) its type and controls grow with the scene instead
+     of shrinking into it. */
+  --lp-u: max(1px, 0.05vw);
+  --lp-gutter: clamp(20px, 5.2vw, calc(96 * var(--lp-u)));
   --lp-ease: cubic-bezier(0.22, 0.7, 0.12, 1);
 
   position: relative;
@@ -131,38 +136,38 @@
   display: grid;
   grid-template-columns: 1fr auto 1fr;
   align-items: center;
-  padding: clamp(18px, 2.4vw, 30px) var(--lp-gutter);
+  padding: clamp(18px, 2.4vw, calc(30 * var(--lp-u))) var(--lp-gutter);
   color: var(--lp-bitumen);
 }
 
 .lp-brand {
   display: inline-flex;
   align-items: center;
-  gap: 10px;
+  gap: calc(10 * var(--lp-u));
   justify-self: start;
   color: inherit;
-  font-size: 17px;
+  font-size: calc(17 * var(--lp-u));
   font-weight: 650;
   letter-spacing: 0.005em;
   text-decoration: none;
 }
 
 .lp-brand img {
-  width: 28px;
-  height: 28px;
+  width: calc(28 * var(--lp-u));
+  height: calc(28 * var(--lp-u));
   mix-blend-mode: multiply;
 }
 
 .lp-nav-links ul {
   display: flex;
-  gap: clamp(20px, 3vw, 44px);
+  gap: clamp(20px, 3vw, calc(44 * var(--lp-u)));
 }
 
 .lp-nav-links a {
   display: inline-block;
-  padding: 6px 0;
+  padding: calc(6 * var(--lp-u)) 0;
   color: var(--lp-ink-2);
-  font-size: 14px;
+  font-size: calc(14 * var(--lp-u));
   font-weight: 550;
   text-decoration: none;
   transition: color 0.2s var(--lp-ease);
@@ -174,6 +179,9 @@
 
 .lp-nav-cta {
   justify-self: end;
+  padding: calc(4 * var(--lp-u)) 0;
+  font-size: calc(14 * var(--lp-u));
+  text-underline-offset: calc(5 * var(--lp-u));
 }
 
 /* ============================================================================
@@ -188,7 +196,7 @@
   position: relative;
   isolation: isolate;
   overflow: hidden;
-  height: clamp(720px, 100svh, 1080px);
+  height: max(720px, 100svh);
   background: var(--lp-sky);
   container-type: size;
 
@@ -261,13 +269,13 @@
   position: absolute;
   z-index: 4;
   left: var(--lp-gutter);
-  top: clamp(112px, 17cqh, 190px);
-  width: min(42cqw, 720px);
+  top: clamp(112px, 17cqh, calc(190 * var(--lp-u)));
+  width: min(42cqw, calc(720 * var(--lp-u)));
 }
 
 .lp-title {
   font-family: var(--lp-serif);
-  font-size: clamp(56px, min(6.4cqw, 12cqh), 112px);
+  font-size: clamp(56px, min(6.4cqw, 12cqh), calc(112 * var(--lp-u)));
   font-weight: 520;
   line-height: 0.9;
   letter-spacing: -0.005em;
@@ -291,9 +299,9 @@
 .lp-title-line:nth-child(2) > span { animation-delay: 0.22s; }
 
 .lp .lp-hero-tag {
-  margin-top: clamp(12px, 1.6cqh, 20px);
+  margin-top: clamp(12px, 1.6cqh, calc(20 * var(--lp-u)));
   font-family: var(--lp-serif);
-  font-size: clamp(21px, 1.75cqw, 28px);
+  font-size: clamp(21px, 1.75cqw, calc(28 * var(--lp-u)));
   font-style: italic;
   font-weight: 450;
   color: var(--lp-ink-2);
@@ -302,16 +310,16 @@
 
 .lp .lp-hero-lede {
   max-width: 44ch;
-  margin-top: clamp(14px, 2.2cqh, 26px);
+  margin-top: clamp(14px, 2.2cqh, calc(26 * var(--lp-u)));
   color: var(--lp-ink-2);
-  font-size: clamp(15px, 1.08cqw, 17px);
+  font-size: clamp(15px, 1.08cqw, calc(17 * var(--lp-u)));
   line-height: 1.6;
   animation: lp-rise 0.9s var(--lp-ease) 0.52s both;
 }
 
 .lp-hero-search {
-  margin-top: clamp(18px, 3cqh, 34px);
-  max-width: 540px;
+  margin-top: clamp(18px, 3cqh, calc(34 * var(--lp-u)));
+  max-width: calc(540 * var(--lp-u));
   animation: lp-rise 0.9s var(--lp-ease) 0.62s both;
 }
 
@@ -332,12 +340,12 @@
   z-index: auto;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: calc(6 * var(--lp-u));
   width: 100%;
   transform: none;
-  min-height: 60px;
+  min-height: calc(60 * var(--lp-u));
   margin: 0;
-  padding: 6px 6px 6px 8px;
+  padding: calc(6 * var(--lp-u)) calc(6 * var(--lp-u)) calc(6 * var(--lp-u)) calc(8 * var(--lp-u));
   border: 1px solid rgba(42, 30, 23, 0.12);
   border-radius: 999px;
   background: rgba(251, 248, 245, 0.88);
@@ -360,8 +368,8 @@
 .lp-hero-search .upload-icon-button {
   display: grid;
   flex: none;
-  width: 44px;
-  height: 44px;
+  width: calc(44 * var(--lp-u));
+  height: calc(44 * var(--lp-u));
   place-items: center;
   border-radius: 50%;
   background: transparent;
@@ -380,13 +388,13 @@
 .lp-hero-search .query-input {
   flex: 1;
   min-width: 0;
-  height: 44px;
+  height: calc(44 * var(--lp-u));
   padding: 0 4px;
   border: 0;
   background: transparent;
   color: var(--lp-bitumen);
   font-family: var(--lp-sans);
-  font-size: 15px;
+  font-size: calc(15 * var(--lp-u));
   outline: none;
 }
 
@@ -399,15 +407,15 @@
   display: inline-flex;
   flex: none;
   align-items: center;
-  gap: 8px;
-  height: 48px;
+  gap: calc(8 * var(--lp-u));
+  height: calc(48 * var(--lp-u));
   min-width: 0;
-  padding: 0 22px;
+  padding: 0 calc(22 * var(--lp-u));
   border: 0;
   border-radius: 999px;
   background: var(--lp-bitumen);
   color: var(--lp-cream);
-  font-size: 14px;
+  font-size: calc(14 * var(--lp-u));
   font-weight: 600;
   letter-spacing: 0.02em;
   box-shadow: none;
@@ -425,22 +433,37 @@
   transform: none;
 }
 
+/* Phosphor icons carry fixed width/height attributes; CSS sizes win over them. */
+.lp-hero-search .upload-icon-button svg {
+  width: calc(20 * var(--lp-u));
+  height: calc(20 * var(--lp-u));
+}
+
+.lp-hero-search .search-box button[type="submit"] svg {
+  width: calc(17 * var(--lp-u));
+  height: calc(17 * var(--lp-u));
+}
+
 /* ---- the product card (behind the villa) -------------------------------- */
 
 .lp-card {
   position: absolute;
   z-index: 1;
   left: calc(var(--fx) + var(--sw) * 0.486);
-  top: calc(var(--fy) + var(--sh) * 0.155);
+  /* pinned to the render, but never up under the nav on very wide screens */
+  top: max(
+    calc(var(--fy) + var(--sh) * 0.155),
+    calc(clamp(18px, 2.4vw, calc(30 * var(--lp-u))) + calc(62 * var(--lp-u)))
+  );
   display: grid;
   width: calc(var(--sw) * 0.44);
   height: calc(var(--sh) * 0.46);
   grid-template-columns: minmax(0, 1fr) auto;
   grid-template-rows: auto 1fr;
   align-content: start;
-  column-gap: clamp(16px, 2cqw, 32px);
-  padding: clamp(18px, 1.7cqw, 30px);
-  border-radius: clamp(26px, 2.6cqw, 46px);
+  column-gap: clamp(16px, 2cqw, calc(32 * var(--lp-u)));
+  padding: clamp(18px, 1.7cqw, calc(30 * var(--lp-u)));
+  border-radius: clamp(26px, 2.6cqw, calc(46 * var(--lp-u)));
   background: rgba(252, 250, 247, 0.93);
   box-shadow:
     0 40px 90px -50px rgba(60, 42, 32, 0.45),
@@ -451,18 +474,18 @@
 .lp-tabs {
   display: flex;
   flex-wrap: wrap;
-  gap: 6px;
+  gap: calc(6 * var(--lp-u));
   grid-column: 1;
 }
 
 .lp-tab {
-  min-height: 34px;
-  padding: 0 15px;
+  min-height: calc(34 * var(--lp-u));
+  padding: 0 calc(15 * var(--lp-u));
   border: 1px solid rgba(42, 30, 23, 0.26);
   border-radius: 999px;
   background: transparent;
   color: var(--lp-bitumen);
-  font-size: 13px;
+  font-size: calc(13 * var(--lp-u));
   font-weight: 550;
   cursor: pointer;
   transition:
@@ -483,11 +506,11 @@
 
 .lp-answer {
   grid-column: 1;
-  margin-top: clamp(14px, 2.2cqh, 24px);
+  margin-top: clamp(14px, 2.2cqh, calc(24 * var(--lp-u)));
 }
 
 .lp-answer-name {
-  font-size: clamp(22px, 1.9cqw, 38px);
+  font-size: clamp(22px, 1.9cqw, calc(38 * var(--lp-u)));
   font-weight: 450;
   line-height: 1.1;
   letter-spacing: -0.015em;
@@ -495,49 +518,49 @@
 
 .lp .lp-answer-summary {
   max-width: 40ch;
-  margin-top: 8px;
+  margin-top: calc(8 * var(--lp-u));
   color: var(--lp-ink-3);
-  font-size: 14px;
+  font-size: calc(14 * var(--lp-u));
   line-height: 1.5;
 }
 
 .lp .lp-answer-fact {
-  margin-top: 10px;
+  margin-top: calc(10 * var(--lp-u));
   color: var(--lp-bitumen);
-  font-size: 13px;
+  font-size: calc(13 * var(--lp-u));
   font-weight: 550;
 }
 
 .lp-answer-fact span {
-  margin-right: 6px;
+  margin-right: calc(6 * var(--lp-u));
   color: var(--lp-ink-3);
   font-weight: 450;
 }
 
 .lp-answer-link {
   display: inline-block;
-  margin-top: 6px;
+  margin-top: calc(6 * var(--lp-u));
   padding: 2px 0;
   color: var(--lp-bitumen);
-  font-size: 13px;
+  font-size: calc(13 * var(--lp-u));
   font-weight: 600;
   text-decoration: underline;
   text-decoration-thickness: 1px;
-  text-underline-offset: 4px;
+  text-underline-offset: calc(4 * var(--lp-u));
 }
 
 .lp-thumb {
   position: relative;
   display: flex;
-  width: clamp(124px, 10.5cqw, 170px);
+  width: clamp(124px, 10.5cqw, calc(170 * var(--lp-u)));
   flex-direction: column;
   align-self: start;
-  gap: 8px;
+  gap: calc(8 * var(--lp-u));
   grid-column: 2;
   grid-row: 1 / span 2;
-  padding: 12px 12px 10px;
+  padding: calc(12 * var(--lp-u)) calc(12 * var(--lp-u)) calc(10 * var(--lp-u));
   border: 1px solid rgba(42, 30, 23, 0.08);
-  border-radius: 20px;
+  border-radius: calc(20 * var(--lp-u));
   background: var(--lp-plaster);
   color: var(--lp-bitumen);
   text-align: left;
@@ -551,7 +574,7 @@
 }
 
 .lp-thumb-label {
-  font-size: 12.5px;
+  font-size: calc(12.5 * var(--lp-u));
   font-weight: 650;
   letter-spacing: 0.01em;
 }
@@ -561,7 +584,7 @@
   display: block;
   aspect-ratio: 1.15;
   overflow: hidden;
-  border-radius: 12px;
+  border-radius: calc(12 * var(--lp-u));
   background: #e6ddd5;
 }
 
@@ -571,11 +594,11 @@
 
 .lp-thumb-play {
   position: absolute;
-  left: -24px;
+  left: calc(-24 * var(--lp-u));
   top: 50%;
   display: grid;
-  width: 48px;
-  height: 48px;
+  width: calc(48 * var(--lp-u));
+  height: calc(48 * var(--lp-u));
   place-items: center;
   border-radius: 50%;
   background: var(--lp-clay);
@@ -584,8 +607,8 @@
 }
 
 .lp-thumb-play svg {
-  width: 20px;
-  height: 20px;
+  width: calc(20 * var(--lp-u));
+  height: calc(20 * var(--lp-u));
   fill: #fff;
 }
 
@@ -598,23 +621,23 @@
   display: grid;
   grid-template-columns: minmax(300px, 30%) 1fr minmax(250px, 28%);
   align-items: end;
-  gap: clamp(20px, 3vw, 56px);
-  padding: 0 var(--lp-gutter) clamp(22px, 4cqh, 44px);
+  gap: clamp(20px, 3vw, calc(56 * var(--lp-u)));
+  padding: 0 var(--lp-gutter) clamp(22px, 4cqh, calc(44 * var(--lp-u)));
   color: var(--lp-cream);
 }
 
 .lp-band-card {
   position: relative;
-  min-height: clamp(150px, 20cqh, 196px);
-  padding: 24px 26px;
-  border-radius: 30px 30px 30px 10px;
+  min-height: clamp(150px, 20cqh, calc(196 * var(--lp-u)));
+  padding: calc(24 * var(--lp-u)) calc(26 * var(--lp-u));
+  border-radius: calc(30 * var(--lp-u)) calc(30 * var(--lp-u)) calc(30 * var(--lp-u)) calc(10 * var(--lp-u));
   background: var(--lp-clay);
   animation: lp-rise 1s var(--lp-ease) 0.85s both;
 }
 
 .lp-band-card h2 {
   max-width: 11ch;
-  font-size: clamp(20px, 1.6cqw, 25px);
+  font-size: clamp(20px, 1.6cqw, calc(25 * var(--lp-u)));
   font-weight: 450;
   line-height: 1.15;
   letter-spacing: -0.01em;
@@ -622,16 +645,16 @@
 
 .lp .lp-band-card p {
   max-width: 21ch;
-  margin-top: 14px;
+  margin-top: calc(14 * var(--lp-u));
   color: #f0e4db;
-  font-size: 13px;
+  font-size: calc(13 * var(--lp-u));
   line-height: 1.45;
 }
 
 .lp-band-card-img {
   position: absolute;
-  right: -34px;
-  bottom: 6px;
+  right: calc(-34 * var(--lp-u));
+  bottom: calc(6 * var(--lp-u));
   width: 58%;
   aspect-ratio: 1.25;
   pointer-events: none;
@@ -645,7 +668,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 10px;
+  gap: calc(10 * var(--lp-u));
   justify-self: center;
   text-align: center;
   animation: lp-rise 1s var(--lp-ease) 0.95s both;
@@ -656,16 +679,16 @@
 }
 
 .lp-coins li {
-  width: 46px;
-  height: 46px;
+  width: calc(46 * var(--lp-u));
+  height: calc(46 * var(--lp-u));
   overflow: hidden;
-  border: 2px solid var(--lp-cream);
+  border: calc(2 * var(--lp-u)) solid var(--lp-cream);
   border-radius: 50%;
   background: #fff;
 }
 
 .lp-coins li + li {
-  margin-left: -12px;
+  margin-left: calc(-12 * var(--lp-u));
 }
 
 .lp-coins img {
@@ -682,7 +705,7 @@
 
 .lp-stat-n {
   font-family: var(--lp-serif);
-  font-size: clamp(46px, 4.2cqw, 68px);
+  font-size: clamp(46px, 4.2cqw, calc(68 * var(--lp-u)));
   font-style: italic;
   font-weight: 400;
   line-height: 1;
@@ -690,9 +713,9 @@
 
 .lp-stat-t {
   max-width: 22ch;
-  margin-top: 4px;
+  margin-top: calc(4 * var(--lp-u));
   color: var(--lp-cream-2);
-  font-size: 13px;
+  font-size: calc(13 * var(--lp-u));
   line-height: 1.4;
 }
 
@@ -703,7 +726,7 @@
 
 .lp .lp-band-note p {
   max-width: 15ch;
-  font-size: clamp(22px, 1.9cqw, 30px);
+  font-size: clamp(22px, 1.9cqw, calc(30 * var(--lp-u)));
   font-weight: 300;
   line-height: 1.12;
   letter-spacing: 0.015em;
@@ -712,14 +735,14 @@
 
 .lp-band-note a {
   display: inline-block;
-  margin-top: 18px;
-  padding: 4px 0;
+  margin-top: calc(18 * var(--lp-u));
+  padding: calc(4 * var(--lp-u)) 0;
   color: var(--lp-cream);
-  font-size: 13px;
+  font-size: calc(13 * var(--lp-u));
   font-weight: 600;
   text-decoration: underline;
   text-decoration-thickness: 1px;
-  text-underline-offset: 5px;
+  text-underline-offset: calc(5 * var(--lp-u));
 }
 
 /* ============================================================================
