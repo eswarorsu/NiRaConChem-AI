@@ -1,8 +1,16 @@
+import path from "node:path";
+
 import type { NextConfig } from "next";
 
+// The app lives in frontend/, but Vercel builds from the repository root and
+// sets outputFileTracingRoot to it. Turbopack's root has to be the same folder
+// or Next warns on every build, so both point at the repository root here.
+const repoRoot = path.join(__dirname, "..");
+
 const nextConfig: NextConfig = {
+  outputFileTracingRoot: repoRoot,
   turbopack: {
-    root: __dirname,
+    root: repoRoot,
   },
   images: {
     // The market grid falls back to the supplier's own CDN for the products
